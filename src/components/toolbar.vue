@@ -17,7 +17,7 @@
         <el-tooltip
           class="item"
           effect="dark"
-          content="消息列表"
+          content="消息"
           placement="right"
         >
           <el-button><i class="bi bi-chat-dots"></i></el-button>
@@ -27,21 +27,21 @@
         <el-tooltip
           class="item"
           effect="dark"
-          content="好友列表"
+          content="通讯录"
           placement="right"
         >
           <el-button><i class="bi bi-person-lines-fill"></i></el-button>
         </el-tooltip>
 
         <!-- 群聊列表 -->
-        <el-tooltip
+        <!-- <el-tooltip
           class="item"
           effect="dark"
           content="群聊列表"
           placement="right"
         >
           <el-button><i class="bi bi-people-fill"></i></el-button>
-        </el-tooltip>
+        </el-tooltip> -->
       </div>
 
       <!-- 底部菜单 -->
@@ -57,7 +57,7 @@
         </el-tooltip>
 
         <!-- 更多 -->
-        <el-tooltip class="item" effect="dark" content="更多" placement="right">
+        <el-tooltip class="item" effect="dark" content="更多..." placement="right">
           <el-popover
             placement="right"
             width="180"

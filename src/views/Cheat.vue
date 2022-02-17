@@ -64,7 +64,7 @@ export default {
   color: #000000;
   /* background-color: rgb(234,232,231); */
   width: 300px;
-
+  /* overflow: hidden; */
   height: 100%;
   border-right:  solid 0.5px rgb(217, 217, 217);
 
