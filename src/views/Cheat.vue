@@ -23,6 +23,7 @@
 <script>
 import toolbar from '@/components/toolbar.vue'
 import List from '@/components/List.vue'
+
 export default {
   name: 'cheat',
   data() {
@@ -57,7 +58,7 @@ export default {
   float: left;
   color: #f4f4f4;
   background-color: #2e3238;
-  width: 70px;
+  width: 65px;
 }
 .sidebar {
   float: left;

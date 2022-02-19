@@ -28,12 +28,14 @@
           <!-- 消息红点 -->
           <el-badge :is-dot="it.uncheck" class="item">
             <!-- 头像 -->
-            <el-avatar
+            <el-image fit="cover" :src="avatarUrl"> </el-image>
+
+            <!-- <el-avatar
               shape="square"
               :size="100"
               fit="cover"
               :src="avatarUrl"
-            ></el-avatar>
+            ></el-avatar> -->
           </el-badge>
           <!-- 名称、时间、最新一条记录 -->
           <div class="peopleinfo">
@@ -65,9 +67,9 @@ export default {
       //记录当前已选li的index，用于改变样式
       currentClik: -1,
       avatarUrl: '../static/logo.png',
-      ListData: [{ "id": "15", "name": "覃曦", "uncheck": true },
-      { "id": "14", "name": "覃曦2", "uncheck": false },
-      { "id": "16", "name": "覃曦3", "uncheck": true },
+      ListData: [{ "id": "15", "name": "qqq12", "uncheck": true },
+      { "id": "14", "name": "22", "uncheck": false },
+      { "id": "16", "name": "123ww", "uncheck": true },
       { "id": "17", "name": "aa", "uncheck": true },
       { "id": "18", "name": "cc", "uncheck": true },
       { "id": "19", "name": "dddddddddddasda sdasdddd", "uncheck": false },
@@ -79,7 +81,6 @@ export default {
       { "id": "13", "name": "7777", "uncheck": true },
       { "id": "12", "name": "黄军乐", "uncheck": false }
       ],
-      searchData: [],
       state: '',
       // 列表类型，后续使用vuex动态切换
       currentListType: 'message'
@@ -87,7 +88,7 @@ export default {
   },
   methods: {
     querySearch(queryString, cb) {
-      let restaurants = this.searchData;
+      let restaurants = this.ListData;
       //获取一个查询数组
       let results = queryString ? restaurants.filter(this.fuzzyFilter(queryString)) : restaurants;
       //console.log(results)
@@ -111,49 +112,45 @@ export default {
     },
     getData() {
       // 获取数据方法，可以在初始加载的时候缓存在localStorage中，然后再从中获取
-      return [{ "id": "15", "name": "覃曦", "uncheck": true },
-      { "id": "14", "name": "覃曦2", "uncheck": false },
-      { "id": "16", "name": "覃曦3", "uncheck": true },
-      { "id": "17", "name": "aa", "uncheck": true },
-      { "id": "18", "name": "cc", "uncheck": true },
-      { "id": "19", "name": "dddddddddddasda sdasdddd", "uncheck": false },
-      { "id": "20", "name": "222aaaa", "uncheck": true },
-      { "id": "21", "name": "ccccc", "uncheck": false },
-      { "id": "22", "name": "wwwww", "uncheck": true },
-      { "id": "23", "name": "2asd22aaaa", "uncheck": false },
-      { "id": "24", "name": "hhhhh", "uncheck": true },
-      { "id": "13", "name": "7777", "uncheck": true },
-      { "id": "12", "name": "黄军乐", "uncheck": false }
-      ]
+
     },
     // 选择后触发的事件,传入的是一个JSON对象
     handleSelect(item) {
-      //console.log(item);
+
       // 选中当前li，并将该值移到数组首位
       this.moveToTop(item)
       this.currentClik = 0
       //清除未读状态
-      if(item.uncheck == true){
+      if (item.uncheck == true) {
         this.ListData[0].uncheck = false
       }
-      
+      //console.log(this.ListData);
+
+      //移动滚动条到首位
+      var scroll = document.querySelector(".listbox ul")
+      if (scroll.scrollTop - 40 > 0) {
+        scroll.scrollTo(0, 0)
+      }
+      //设置为选中
+      this.SelectList(item, 0)
 
     },
     //将搜索内容放到li首位
     moveToTop(item) {
 
-      let restaurants = this.searchData;
+      let restaurants = this.ListData;
       let results = item.id ? restaurants.filter(this.accurateFilter(item.id)) : restaurants;
       let old = results[0].id
       //console.log(item.id === old)
       if (item.id === old) {
-        var len = this.ListData.length
-        for (let i = 0; i < len; i++) {
-          if (this.ListData[i].id === item.id) {
+        var i = 0
+        this.ListData.forEach(element => {
+          if (element.id === item.id) {
             this.ListData.splice(i, 1)
-            break
+            return
           }
-        }
+          i++
+        });
       }
       this.ListData.unshift(item)
       //console.log(this.ListData)
@@ -174,18 +171,17 @@ export default {
       //更改消息状态
       this.ListData[index].uncheck = false
 
+
     }
 
   },
   //页面加载时装载搜索数据
   mounted() {
-    this.searchData = this.getData();
+
   }
 }
 </script>
 <style scoped>
-
-
 /* 查询栏父div */
 .searchbox {
   height: 80px;
@@ -202,17 +198,18 @@ export default {
   height: 90%;
   /* overflow: hidden; */
   border: solid 0.5px rgb(236, 236, 236);
-  background-color: rgb(234, 232, 231);
+  background-color: rgb(237, 234, 232);
 }
 /* 选中某个li时的样式 */
 .onSelect {
   background-color: rgb(202, 200, 198);
 }
 /* 头像 */
-.el-avatar {
+.el-image {
   /* margin-top: 16px !important; */
   width: 50px !important;
   height: 50px !important;
+  border-radius: 0;
 }
 .el-badge {
   padding: 0 0 0 10px;
@@ -311,14 +308,14 @@ input:-ms-input-placeholder {
 /* ul列表滚动条样式 */
 .listbox ul::-webkit-scrollbar {
   /*滚动条整体样式*/
-  width: 8px; /*高宽分别对应横竖滚动条的尺寸*/
+  width: 10px; /*高宽分别对应横竖滚动条的尺寸*/
   height: 1px;
   /* display: none; */
 }
 .listbox ul::-webkit-scrollbar-thumb {
   /*滚动条里面小方块*/
   border-radius: 10px;
-  background-color: rgb(204, 200, 198);
+  background-color: rgba(185, 183, 180, 0.6);
 }
 /*滚动条里面轨道*/
 .listbox ul::-webkit-scrollbar-track {
@@ -341,8 +338,6 @@ input:-ms-input-placeholder {
 
 /* li高亮设置 */
 .listbox ul li:hover {
-  background-color: rgb(202, 200, 198);
+  background-color: rgb(214, 211, 209);
 }
-
-
 </style>
