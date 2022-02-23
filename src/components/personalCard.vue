@@ -1,31 +1,40 @@
 <template >
-  <div class="infocard">
+  <div class="infocard" v-loading="this.userinfo.name == null || !this.userinfo.name ">
     <!-- 姓名、头像、id -->
     <div class="maininfo">
       <!-- 名称、id -->
       <div class="idname">
         <div class="nameandicon">
-            <el-tooltip
-              popper-class="btnitem"
-              effect="dark"
-              :content="userinfo.name"
-              placement="bottom"
-            >
-              <p class="name">{{ userinfo.name }}</p>
-            </el-tooltip>
-            <!-- 性别图标 -->
-            <img class="sexicon" v-if="userinfo.sex == 1" :src="sexIcons[1]" alt="" />
-            <img class="sexicon" v-if="userinfo.sex == 0" :src="sexIcons[0]" alt="" />
-         
+          <el-tooltip
+            popper-class="btnitem"
+            effect="dark"
+            :content="userinfo.name"
+            placement="bottom"
+          >
+            <p class="name">{{ userinfo.name }}</p>
+          </el-tooltip>
+          <!-- 性别图标 -->
+          <img
+            class="sexicon"
+            v-if="userinfo.sex == 1"
+            :src="sexIcons[1]"
+            alt=""
+          />
+          <img
+            class="sexicon"
+            v-if="userinfo.sex == 0"
+            :src="sexIcons[0]"
+            alt=""
+          />
         </div>
         <div class="idinfo">
           <el-tooltip
             popper-class="btnitem"
             effect="dark"
-            :content="userinfo.id"
+            :content="userinfo.wowId"
             placement="bottom"
           >
-            <p>Wow号:　{{ userinfo.id }}</p>
+            <p>Wow号:　{{ userinfo.wowId }}</p>
           </el-tooltip>
         </div>
       </div>
@@ -76,19 +85,29 @@ export default {
       // 图片预览url
       previewSrcList: ['http://127.0.0.1:8888/static/logo.png'],
       sexIcons: ["../static/icon_woman.png", "../static/icon_man.png"],
-      userinfo: { "id": "1494927850762149888", "name": "Level6", "sex": 1, "photourl": "../static/logo.png", "address": "中国广西贵港市覃塘区" }
-    }
+      userinfo: {}
+         }
   },
   methods: {
 
 
-
   },
+  //先获取数据
+  created() {
+    console.log("初始化数据")
+    let data = JSON.parse(sessionStorage.getItem("currentUser"))
+    if(data !== null){
+      this.userinfo = data
+    }
+    
+  },
+
 }
 </script>
 
 <style scoped>
-div,p{
+div,
+p {
   padding: 0;
   margin: 0;
 }
@@ -141,7 +160,7 @@ div,p{
 }
 .nameandicon {
   display: flex;
-  
+
   text-align: center;
   align-items: center;
   padding: 0;
@@ -153,7 +172,6 @@ div,p{
   height: 24px;
   /* padding-top: 42px; */
 }
-
 
 .idname .idinfo p {
   word-break: keep-all; /*不换行*/

@@ -19,8 +19,8 @@ export default new Router({
     },
     {
       path: '/',
-      name: 'home',
-      component: home_v1,
+      name: 'cheat',
+      component: cheat,
       
     },
     {
