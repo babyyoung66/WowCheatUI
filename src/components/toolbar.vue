@@ -91,7 +91,17 @@
           content="退出"
           placement="right"
         >
-          <el-button><i class="bi bi-box-arrow-left"></i></el-button>
+          <el-popconfirm 
+            title="确定注销登录？"
+            @confirm="logout()"
+            
+          
+          >
+            <el-button slot="reference" 
+            ><i class="bi bi-box-arrow-left"></i
+          ></el-button>
+          </el-popconfirm>
+          
         </el-tooltip>
       </div>
     </div>
@@ -109,6 +119,10 @@ export default {
   },
 
   methods: {
+    logout() {
+      this.logoutRequest("/auth/logout")
+      this.$router.push({ path: '/login' })
+    }
 
   },
   components: {

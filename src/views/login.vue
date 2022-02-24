@@ -1,6 +1,5 @@
 <template>
   <el-container>
-
     <!-- <el-header>
       <el-button
         v-if="!loginForm.isAdmin"
@@ -55,7 +54,10 @@
             <img :src="verifyCode" title="点击切换验证码" @click="changeverifyCode" />
           </el-form-item> -->
 
-          <el-checkbox v-model="loginForm.rememberMe" class="loginRemember"></el-checkbox
+          <el-checkbox
+            v-model="loginForm.rememberMe"
+            class="loginRemember"
+          ></el-checkbox
           ><span> 记住我一周</span>
           <div>
             <el-button @click="Register" style="width: 45%; margin-right: 15px"
@@ -107,10 +109,10 @@ export default {
       loginForm: {
         wowId: '',
         password: '',
-        rememberMe:false
+        rememberMe: false
 
       },
-    
+
       rules: {
         wowId: [{ required: true, message: '请输入Wow号！', trigger: 'blur' }],
         password: [{ required: true, message: '请输入密码！', trigger: 'blur' }]
@@ -137,7 +139,7 @@ export default {
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.Sumiting = true
-          console.log(this.loginForm)
+          //console.log(this.loginForm)
           this.postRequest('/auth/login', this.loginForm).then(result => {
             if (result.data.success == true) {
               //存入sessionStorage
@@ -146,6 +148,7 @@ export default {
                 message: '登录成功!',
                 type: 'success'
               });
+              this.$router.push({ path: '/cheat' })
             }
 
           })

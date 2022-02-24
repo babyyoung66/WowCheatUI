@@ -308,7 +308,7 @@ input:-ms-input-placeholder {
 /* ul列表滚动条样式 */
 .listbox ul::-webkit-scrollbar {
   /*滚动条整体样式*/
-  width: 10px; /*高宽分别对应横竖滚动条的尺寸*/
+  width: 7px; /*高宽分别对应横竖滚动条的尺寸*/
   height: 1px;
   /* display: none; */
 }

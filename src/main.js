@@ -21,12 +21,14 @@ import {postRequest} from "./api/Api"
 import {getRequest} from "./api/Api"
 import {putRequest} from "./api/Api"
 import {deleteRequest} from "./api/Api"
+import {logoutRequest} from "./api/Api"
 import {CreateQRCode} from "./api/Api"
 
 Vue.prototype.postRequest=postRequest
 Vue.prototype.getRequest=getRequest
 Vue.prototype.putRequest=putRequest
 Vue.prototype.deleteRequest=deleteRequest
+Vue.prototype.logoutRequest=logoutRequest
 Vue.prototype.CreateQRCode=CreateQRCode
 
 /* eslint-disable no-new */

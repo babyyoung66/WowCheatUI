@@ -64,6 +64,30 @@
           clearable
         ></el-input>
       </el-form-item>
+
+      <el-form-item
+        label="验证码："
+        :label-width="this.formLabelWidth"
+        prop="code"
+      >
+        <el-input
+          :disabled="!this.EmailisOk"
+          type="text"
+          placeholder="请输入邮箱验证码"
+          v-model="registerForm.code"
+          maxlength="6"
+          show-word-limit
+          clearable
+        >
+        </el-input>
+        <el-button
+          @click="getEmailCode()"
+          :disabled="!this.EmailisOk || this.Btntimer !== '获取验证码'"
+          style="margin-left: 10px; padding: 12px 12px 12px 12px; width: 100px"
+          type="primary"
+          >{{ Btntimer }}</el-button
+        >
+      </el-form-item>
     </el-form>
     <div>
       <el-button
@@ -85,17 +109,9 @@
 <script>
 export default {
 
-
   name: 'Register',
   data() {
     var checkName = (value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入信息！'));
-      }
-      //限制长度 ，先计算字符长度
-      if (value.length > 16 || value.length < 1) {
-        callback(new Error('限制长度1-16字符！'));
-      }
       //限制输入字符
       let regular = /^([^\`\+\~\!\#\$\%\^\&\*\|\}\{\=\"\'\！\￥\……\（\）\——]*[\+\~\!\#\$\%\^\&\*\|\}\{\=\"\'\`\！\?\:\<\>\尠“\”\；\‘\‘\〈\ 〉\￥\……\（\）\——\｛\｝\【\】\\\/\;\：\？\《\》\。\，\、\,]+.*)$/;
       if (regular.test(value)) {
@@ -103,19 +119,13 @@ export default {
       }
     };
     var passwordCheck = (value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入密码'));
-      } else {
+      if (value !== "") {
         if (this.registerForm.checkPass !== '') {
           this.$refs.registerForm.validateField('checkPass');
         }
         let regular = /^[a-zA-Z0-9.!@#$%^&_;~,?]+$/
         if (!regular.test(value)) {
           callback(new Error('存在特殊字符！'));
-        }
-
-        if (value.length > 18 || value.length < 6) {
-          callback(new Error('限制长度6-18字符！'));
         }
       }
     }
@@ -126,17 +136,7 @@ export default {
       callback()
 
     };
-    var validateUsername = (rule, value, callback) => {
-      checkName(value, callback)
-      //检查用户名是否重复，查询localStorage也可以查询后台接口
-      let user = window.localStorage.getItem(value)
-      if (user != null) {
-        callback(new Error('用户名已存在'));
-      } else {
-        callback()
-      }
 
-    };
     var validatePass = (rule, value, callback) => {
       passwordCheck(value, callback)
       callback();
@@ -152,112 +152,145 @@ export default {
     };
 
     var checkEail = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入邮箱!'));
-      } else {
+      if (value !== "") {
         let regular = /^([a-zA-Z\d])(\w|\-)+@[a-zA-Z\d]+\.[a-zA-Z]{2,4}$/
         if (!regular.test(value)) {
           callback(new Error('邮箱格式错误！'));
-        } else {
+        }
         let user = { "email": value }
         this.postRequest("/register/isEmailHasRegister", user).then(res => {
+          //console.log(res.data)
+          if (res.data != null && res.data.success !== true) {
+            this.EmailisOk = false
+            callback(new Error(res.data.message));
+          } else if (res.data != null && res.data.success === true) {
+            this.EmailisOk = true
+          }
+          callback();
+        })
+      }
+
+    };
+    var checkWowId = (rule, value, callback) => {
+      if (value !== "") {
+        let regular = /^[a-zA-Z0-9.!@#$%^&_;~,?]+$/
+        if (!regular.test(value)) {
+          callback(new Error('存在特殊字符！'));
+        }
+        let user = { "wowId": value }
+        this.postRequest("/register/isIdHasRegister", user).then(res => {
           //console.log(res.data)
           if (res.data.success !== true) {
             callback(new Error(res.data.message));
           }
           callback();
         })
-        }
       }
+
     };
-    var checkWowId = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入Wow号!'));
-      } else {
-        let regular = /^[a-zA-Z0-9.!@#$%^&_;~,?]+$/
-        if (!regular.test(value)) {
-          callback(new Error('存在特殊字符！'));
-        } else if (value.length > 18 || value.length < 5) {
-          callback(new Error('限制长度5-18字符！'));
-        } else {
-          let user = { "wowId": value }
-          this.postRequest("/register/isIdHasRegister", user).then(res => {
-            //console.log(res.data)
-            if (res.data.success !== true) {
-              callback(new Error(res.data.message));
-            }
-            callback();
-          })
-        }
-
-
+    var checkEailCode = (rule, value, callback) => {
+      if (value !== "" && value.length == 6) {
+        let user = { "code": value, "email": this.registerForm.email }
+        this.postRequest("/register/checkEmailCode", user).then(res => {
+          if (res.data != null && res.data.success !== true) {
+            callback(new Error(res.data.message));
+          } else if (res.data != null && res.data.success === true) {
+            this.$notify(
+              {
+                title: res.data.message,
+                message: '',
+                type: 'success'
+              })
+          }
+          callback();
+        })
       }
-    };
+    }
 
 
     return {
+      waitTime: 120,
+      Btntimer: "获取验证码",
+      uploadDisabled: false,
+      //上传的文件信息列表
+      fileList: [],
+      EmailisOk: false,
       //注册表单相关
-
       formLabelWidth: '120px',
       registerForm: {
         name: '',
         wowId: '',
         password: '',
         checkPass: '',
-        email: ''
+        email: '',
+        code: ''
       },
       registerRules: {
         name: [
+          { required: true, message: '请输入名称!', trigger: 'blur' },
+          { min: 1, max: 12, message: '长度在 1 到 12 个字符!', trigger: 'blur' },
           { validator: validateNickname, trigger: 'blur' }
         ],
         wowId: [
-          { validator: validateUsername, trigger: 'blur' }
+          { required: true, message: '请输入Wow号!', trigger: 'blur' },
+          { min: 5, max: 18, message: '长度在 5 到 18 个字符!', trigger: 'blur' },
+          { validator: checkWowId, trigger: 'blur' }
         ],
         password: [
+          { required: true, message: '请输入密码!', trigger: 'blur' },
+          { min: 6, max: 18, message: '长度在 6 到 18 个字符!', trigger: 'blur' },
           { validator: validatePass, trigger: 'blur' }
         ],
         checkPass: [
+          { required: true, message: '请再次输入确认密码!', trigger: 'blur' },
+          { min: 6, max: 18, message: '长度在 6 到 18 个字符!', trigger: 'blur' },
           { validator: validatePass2, trigger: 'blur' }
         ],
         email: [
-          { validator: checkEail, trigger: 'blur' }
+          { required: true, message: '请输入邮箱!', trigger: 'blur' },
+          { validator: checkEail, trigger: 'blur' },
+          { type: 'email', message: '请输入正确的邮箱地址!', trigger: 'blur' }
+          
         ],
-        wowId: [
-          { validator: checkWowId, trigger: 'blur' }
+        code: [
+          { required: true, message: '请输入验证码!', trigger: 'blur' },
+          { min: 6, max: 6, message: '请输入6位数字!', trigger: 'blur' },
+          { validator: checkEailCode, trigger: 'blur' }
         ],
+
       },
-      uploadDisabled: false,
-      //上传的文件信息列表
-      fileList: [],
+
     }
   },
   methods: {
 
     cancelRegister() {
       this.registerForm = {//清空表单
-        nickname: '',
-        username: '',
+        name: '',
+        wowId: '',
         password: '',
         checkPass: '',
-        userProfile: '',
+        email: '',
+        code: ''
       };
+      this.EmailisOk = false
     },
 
     //提交注册操作
     submitRegisterForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          //放入localstorage 模拟数据库
-          window.localStorage.setItem(this.registerForm.username, JSON.stringify(this.registerForm))
-          this.$notify(
-            {
-              title: '注册成功！',
-              message: '',
-              type: 'success'
-            })
-
-          this.cancelRegister()
-
+          this.postRequest("/register/", this.registerForm).then(res => {
+            if (res.data != null && res.data.success === true) {
+              this.$notify(
+                {
+                  title: res.data.message,
+                  message: '',
+                  type: 'success'
+                })
+                this.cancelRegister()
+            }
+          })    
         } else {
           this.$message({
             message: '请输入相关信息！',
@@ -268,24 +301,47 @@ export default {
       });
 
     },
+    getEmailCode() {
+      this.setBtntimer()
+      this.postRequest("/register/postEmailCode", this.registerForm).then(res => {
+        //console.log(res.data)
+        if (res.data !=null && res.data.success === true) {
+          this.$notify(
+            {
+              title: res.data.message,
+              message: '',
+              type: 'success'
+            })
+        }
+        //错误信息已在api.js全局拦截
+      })
+    },
+
+    //按钮计时器
+    setBtntimer() {
+      let j = this.waitTime
+      let timer = setInterval(() => {
+        this.Btntimer = j--
+        if (j < 0){
+          clearInterval(timer)
+          this.Btntimer = "获取验证码"
+        }
+      }, 1000); 
+    },
 
     ReturnForLogin() {
       this.$router.push({ path: '/login' })
     },
-    isIdHasRegister(wowId) {
-      let user = { "wowId": wowId }
-      return this.postRequest("/register/isIdHasRegister", user).then(res => {
-        return res.data
-      })
-    },
+
 
   },
 }
 </script>
 <style>
 .RegisterContainer {
-  width: 350px;
+  width: 400px;
   margin: 100px auto;
+
   border-radius: 15px;
   border: 1px solid #eaeaea;
   /*添加阴影 h-shadow(水平阴影位置)，v-shadow(垂直阴影位置)，blur(阴影大小)，color(颜色)*/
@@ -297,5 +353,12 @@ export default {
   /*content-box：背景被裁剪到内容框*/
   background-clip: padding-box;
   padding: 25px 35px 25px 35px;
+}
+.RegisterContainer .el-form-item__content {
+  display: flex;
+  justify-content: space-between;
+}
+.RegisterContainer .el-form {
+  margin-right: 15px;
 }
 </style>

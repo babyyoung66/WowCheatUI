@@ -3,10 +3,10 @@ import axios from 'axios';
 import { Message } from "element-ui";
 import router from '../router/router'
 
-axios.defaults.timeout=5000
+axios.defaults.timeout = 5000
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 //全局配置，告诉浏览器无论如何都要携带cookie去请求资源
-axios.defaults.withCredentials=true
+axios.defaults.withCredentials = true
 
 /* 请求服务地址 */
 const base = 'http://127.0.0.1:8080';
@@ -15,34 +15,38 @@ const base = 'http://127.0.0.1:8080';
 axios.interceptors.response.use(success => {
   if (success.status && success.status == 200 && success.data.success == false) {//请求成功，但处理出现其他错误
     Message.error({ message: success.data.message })
-     return success;
-  }
-  //请求成功且服务器处理无错误
-  if (success.data.success){
-   // Message.success({message:success.data.message});
     return success;
   }
-  
+  //请求成功且服务器处理无错误
+  if (success.data.success) {
+    // Message.success({message:success.data.message});
+    return success;
+  }
+
 }, error => {
   if (error.response.status == 504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
     Message.error({ message: '找不到服务器!' })
-   } 
-  else if (error.response.status == 403 ) {	//服务器理解请求客户端的请求，但是拒绝执行此请求
-    
-    if(error.response.data != null){
+  }
+  else if (error.response.status == 403) {	//服务器理解请求客户端的请求，但是拒绝执行此请求
+
+    if (error.response.data != null) {
       Message.error({ message: error.response.data.message })
-  } else {
+    } else {
       Message.error({ message: '权限不足，请联系管理员!' })
     }
-     
-   } 
-   else if (error.response.status == 400) {//请求要求用户的身份认证
+
+  }
+  else if (error.response.status == 400) {//请求要求用户的身份认证
     Message.error({ message: '请求方式错误!' });
-   // router.replace("/");//跳转到登陆页
+    // router.replace("/");//跳转到登陆页
   }
 
   else if (error.response.status == 401) {//请求要求用户的身份认证
-    Message.error({ message: '尚未登录，请登录!' });
+    if (error.response.data != null) {
+      Message.error({ message: error.response.data.message })
+    } else {
+      Message.error({ message: '尚未登录，请登录!' });
+    }
     router.replace("/");//跳转到登陆页
   } else if (error.response.status == 404) {
     Message.error({ message: '服务器无法根据客户端的请求找到资源!' })
@@ -58,6 +62,13 @@ axios.interceptors.response.use(success => {
   }
   return;
 })
+
+export const logoutRequest = (url) => {
+  return axios({
+    method: 'post',
+    url: `${base}${url}`,
+  });
+}
 
 
 export const postRequest = (url, params) => {

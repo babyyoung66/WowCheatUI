@@ -43,8 +43,8 @@ export default {
 <style scoped>
 #app {
   margin: 20px auto !important;
-  width: 1150px !important;
-  height: 800px !important;
+  width: 1020px !important;
+  height: 720px !important;
   overflow: hidden;
   border-radius: 10px;
   border: solid 1px rgb(217, 217, 217);
@@ -87,7 +87,7 @@ export default {
 }
 
 .textbox {
-  height: 718px;
+  height: 638px;
   display: flex;
   flex-direction: column;
   align-content: space-between;
@@ -105,7 +105,9 @@ export default {
   border-bottom: solid 0.5px rgb(217, 217, 217);
 }
 .cheatText {
-  height: 30%;
+  padding: 0;
+  margin: 0;
+  height: 28%;
   background: rgb(255, 255, 255);
   /* border-bottom: solid 1px rgb(217,217,217); */
 }
