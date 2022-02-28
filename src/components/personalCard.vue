@@ -1,5 +1,9 @@
 <template >
-  <div class="infocard" v-loading="this.userinfo.name == null || !this.userinfo.name ">
+  <div
+    class="infocard"
+    v-loading="userinfo == null || !userinfo"
+    v-if="userinfo != null"
+  >
     <!-- 姓名、头像、id -->
     <div class="maininfo">
       <!-- 名称、id -->
@@ -34,7 +38,7 @@
             :content="userinfo.wowId"
             placement="bottom"
           >
-            <p>Wow号:　{{ userinfo.wowId }}</p>
+            <p>Wow号:  {{ userinfo.wowId }}</p>
           </el-tooltip>
         </div>
       </div>
@@ -80,27 +84,22 @@
 <script>
 export default {
   name: "personalCart",
+  //由父组件在标签使用:userinfo="xxx"传入具体展示信息
+  props:{
+    userinfo:{}
+  },
   data() {
     return {
       // 图片预览url
       previewSrcList: ['http://127.0.0.1:8888/static/logo.png'],
       sexIcons: ["../static/icon_woman.png", "../static/icon_man.png"],
-      userinfo: {}
-         }
+      //userinfo: {} //改由父组件传入数据
+    }
   },
   methods: {
-
-
+     
   },
-  //先获取数据
-  created() {
-    console.log("初始化数据")
-    let data = JSON.parse(sessionStorage.getItem("currentUser"))
-    if(data !== null){
-      this.userinfo = data
-    }
-    
-  },
+
 
 }
 </script>
@@ -108,11 +107,11 @@ export default {
 <style scoped>
 div,
 p {
-  padding: 0;
-  margin: 0;
+  padding: 0 ;
+  margin: 0 ;
 }
 .el-image {
-  margin: 0 !important;
+ 
   width: 75px !important;
   height: 75px !important;
   border-radius: 0;
@@ -140,11 +139,10 @@ p {
   justify-content: center;
   height: auto;
   width: auto;
-  margin: 0;
+ 
 }
 
 .idname .name {
-  margin: 0;
   margin-bottom: 0;
   height: auto;
 }
@@ -163,8 +161,7 @@ p {
 
   text-align: center;
   align-items: center;
-  padding: 0;
-  margin: 0;
+  
 }
 .sexicon {
   object-fit: cover;
@@ -179,10 +176,9 @@ p {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 16px;
-  margin-top: 0;
   text-align: left;
   padding-top: 6px;
-  font-size: 17px;
+  font-size: 16px;
   color: rgb(171, 172, 173);
 }
 

@@ -250,7 +250,7 @@ export default {
           { required: true, message: '请输入邮箱!', trigger: 'blur' },
           { validator: checkEail, trigger: 'blur' },
           { type: 'email', message: '请输入正确的邮箱地址!', trigger: 'blur' }
-          
+
         ],
         code: [
           { required: true, message: '请输入验证码!', trigger: 'blur' },
@@ -288,9 +288,9 @@ export default {
                   message: '',
                   type: 'success'
                 })
-                this.cancelRegister()
+              this.cancelRegister()
             }
-          })    
+          })
         } else {
           this.$message({
             message: '请输入相关信息！',
@@ -305,7 +305,7 @@ export default {
       this.setBtntimer()
       this.postRequest("/register/postEmailCode", this.registerForm).then(res => {
         //console.log(res.data)
-        if (res.data !=null && res.data.success === true) {
+        if (res.data != null && res.data.success === true) {
           this.$notify(
             {
               title: res.data.message,
@@ -322,11 +322,11 @@ export default {
       let j = this.waitTime
       let timer = setInterval(() => {
         this.Btntimer = j--
-        if (j < 0){
+        if (j < 0) {
           clearInterval(timer)
           this.Btntimer = "获取验证码"
         }
-      }, 1000); 
+      }, 1000);
     },
 
     ReturnForLogin() {
@@ -337,7 +337,7 @@ export default {
   },
 }
 </script>
-<style>
+<style >
 .RegisterContainer {
   width: 400px;
   margin: 100px auto;
@@ -361,4 +361,5 @@ export default {
 .RegisterContainer .el-form {
   margin-right: 15px;
 }
+
 </style>

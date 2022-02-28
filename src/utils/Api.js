@@ -2,14 +2,31 @@
 import axios from 'axios';
 import { Message } from "element-ui";
 import router from '../router/router'
+// 引入vuex的store，方便在请求方法直接设置状态
+import store from '../store/store'
 
 axios.defaults.timeout = 5000
 axios.defaults.headers.post['Content-Type'] = 'application/json';
+
+
 //全局配置，告诉浏览器无论如何都要携带cookie去请求资源
-axios.defaults.withCredentials = true
+//axios.defaults.withCredentials = true
 
 /* 请求服务地址 */
 const base = 'http://127.0.0.1:8080';
+
+axios.interceptors.request.use(config => {
+
+  let token = store.state['common'].token
+  // 判断本地的cookie中是否有token
+  if (token != null && token != "") {
+    config.headers.token = token
+  }
+  return config
+},
+  error => {
+    return Promise.reject(error)
+  })
 
 /*axios全局响应拦截*/
 axios.interceptors.response.use(success => {
@@ -24,6 +41,12 @@ axios.interceptors.response.use(success => {
   }
 
 }, error => {
+  if (error.response == null){
+    Message.error({ message:"页面请求错误！"+ error })
+    console.log(error)
+    return
+  }
+  
   if (error.response.status == 504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
     Message.error({ message: '找不到服务器!' })
   }
@@ -47,7 +70,7 @@ axios.interceptors.response.use(success => {
     } else {
       Message.error({ message: '尚未登录，请登录!' });
     }
-    router.replace("/");//跳转到登陆页
+    router.replace("/login");//跳转到登陆页
   } else if (error.response.status == 404) {
     Message.error({ message: '服务器无法根据客户端的请求找到资源!' })
   } else if (error.response.status == 500) {
@@ -64,12 +87,15 @@ axios.interceptors.response.use(success => {
 })
 
 export const logoutRequest = (url) => {
-  return axios({
+  axios({
     method: 'post',
     url: `${base}${url}`,
-  });
-}
+  }).then(res => {
 
+  }).finally(() => {
+   // store.commit('removeState')
+  })
+}
 
 export const postRequest = (url, params) => {
   return axios({

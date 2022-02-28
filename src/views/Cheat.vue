@@ -10,19 +10,29 @@
       <div class="listbox"></div> -->
       <list></list>
     </div>
-    <!-- 聊天内容显示区域 -->
+    <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
-      <div class="title"></div>
-      <div class="textbox">
-        <div class="message"></div>
-        <div class="cheatText"></div>
+      <div class="cheatMain" v-if="this.$store.state['common'].ListType == 'message'">
+        <div class="title">
+          <cheatTitle></cheatTitle>
+        </div>
+        <div class="textbox">
+          <div class="message"></div>
+          <div class="cheatText"></div>
+        </div>
       </div>
+
+      <div class="friendsMain" v-if="this.$store.state['common'].ListType == 'friend'">
+          <h1>资料显示组件待开发</h1>
+      </div>
+    
     </div>
   </div>
 </template>
 <script>
 import toolbar from '@/components/toolbar.vue'
 import List from '@/components/List.vue'
+import cheatTitle from '@/components/cheatTitle.vue'
 
 export default {
   name: 'cheat',
@@ -31,11 +41,18 @@ export default {
 
     }
   },
+  created() {
+    //在页面刷新时将vuex里的信息保存到localStorage里
+    window.addEventListener("beforeunload", () => {
+      this.$store.commit('saveState')
+    })
+  },
 
-// 导入组件，并扫描
+  // 导入组件，并扫描
   components: {
     toolbar,
-    List
+    List,
+    cheatTitle
   }
 }
 
@@ -67,7 +84,7 @@ export default {
   width: 300px;
   /* overflow: hidden; */
   height: 100%;
-  border-right:  solid 0.5px rgb(217, 217, 217);
+  border-right: solid 0.5px rgb(217, 217, 217);
 
   /* 测试样式 */
   /* display: flex;

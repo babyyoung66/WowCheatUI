@@ -9,9 +9,9 @@
         trigger="click"
       >
         <!-- 个人信息卡片 -->
-        <personal-card></personal-card>
+        <personal-card :userinfo="userinfo"></personal-card>
 
-        <el-image :src="avatarUrl" slot="reference"> </el-image>
+        <el-image :src="userinfo.photourl" slot="reference"> </el-image>
       </el-popover>
     </div>
     <!-- 菜单区域 -->
@@ -24,7 +24,7 @@
           content="消息"
           placement="right"
         >
-          <el-button><i class="bi bi-chat-dots"></i></el-button>
+          <el-button @click="changeList('message')" ><i class="bi bi-chat-dots" :class="{selected: ListType == 'message' }"></i></el-button>
         </el-tooltip>
 
         <!-- 好友列表 -->
@@ -34,7 +34,7 @@
           content="通讯录"
           placement="right"
         >
-          <el-button><i class="bi bi-person-lines-fill"></i></el-button>
+          <el-button @click="changeList('friend')" ><i :class="{selected: ListType == 'friend' }" class="bi bi-person-lines-fill"></i></el-button>
         </el-tooltip>
 
         <!-- 群聊列表 -->
@@ -57,7 +57,7 @@
           content="个人中心"
           placement="right"
         >
-          <el-button><i class="bi bi-person-circle"></i></el-button>
+          <el-button @click="changeList('personCenter')" ><i  class="bi bi-person-circle"></i></el-button>
         </el-tooltip>
 
         <!-- 更多 -->
@@ -78,9 +78,11 @@
               <li>举报</li>
               <li>清空聊天记录</li>
             </ul>
-            <el-button slot="reference"
+
+            <el-button  @click="changeList('more')" slot="reference"
               ><i class="bi bi-list-ul"></i
             ></el-button>
+
           </el-popover>
         </el-tooltip>
 
@@ -122,6 +124,18 @@ export default {
     logout() {
       this.logoutRequest("/auth/logout")
       this.$router.push({ path: '/login' })
+    },
+    changeList(type){
+      this.$store.commit('common/setListType',type)
+    }
+
+  },
+  computed:{
+    userinfo(){
+       return  this.$store.state['common'].currentUser
+    },
+    ListType(){
+      return  this.$store.state['common'].ListType
     }
 
   },
@@ -148,7 +162,9 @@ export default {
   background-color: rgb(46, 46, 46);
   text-align: center;
 }
-
+.selected{
+  color: rgb(76, 113 ,217);
+}
 #toolBar button {
   background-color: rgb(46, 46, 46);
   border: none;

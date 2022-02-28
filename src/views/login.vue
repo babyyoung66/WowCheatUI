@@ -141,9 +141,13 @@ export default {
           this.Sumiting = true
           //console.log(this.loginForm)
           this.postRequest('/auth/login', this.loginForm).then(result => {
-            if (result.data.success == true) {
-              //存入sessionStorage
-              sessionStorage.setItem("currentUser", JSON.stringify(result.data.data))
+            let data = result.data
+            if (data.success == true) {
+              sessionStorage.setItem("uuid",data.data.user.uuid) //一定要在store第一次调用前存入
+              
+              this.$store.commit('common/setUserinfo', data.data)
+              this.$store.commit('common/saveState')
+              
               this.$message({
                 message: '登录成功!',
                 type: 'success'

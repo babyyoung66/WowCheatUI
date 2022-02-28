@@ -18,13 +18,17 @@
 
     <!-- 列表区域 -->
     <div class="listbox">
-      <ul v-if="currentListType == 'message'">
+      <ul v-if="list != null">
         <li
-          v-for="(it, index) in ListData"
+          v-for="(it, index) in list"
           :key="index"
           @click="SelectList(it, index)"
-          :class="{ onSelect: currentClik === index }"
+          :class="{ onSelect: it.selected === true || currentClik == index }"
         >
+          <span
+            v-if="setClikIndex(it.selected, index)"
+            style="display: none"
+          ></span>
           <!-- 消息红点 -->
           <el-badge :is-dot="it.uncheck" class="item">
             <!-- 头像 -->
@@ -54,7 +58,7 @@
           </div>
         </li>
       </ul>
-      <ul v-if="currentListType == 'addressbook'"></ul>
+      <ul v-if="ListType == 'friend'"></ul>
     </div>
   </div>
 </template>
@@ -83,21 +87,19 @@ export default {
       ],
       state: '',
       // 列表类型，后续使用vuex动态切换
-      currentListType: 'message'
+      //ListType:''
     }
   },
   methods: {
     querySearch(queryString, cb) {
-      let restaurants = this.ListData;
+      let restaurants = this.queryData;
       //获取一个查询数组
       let results = queryString ? restaurants.filter(this.fuzzyFilter(queryString)) : restaurants;
-      //console.log(results)
       // 调用 callback 返回建议列表的数据
       cb(results);
     },
     // 模糊查询
     fuzzyFilter(queryString) {
-
       return (restaurant) => {
         //跟据name或id匹配查询结果 indexOf >= 0则模糊匹配，indexOf == 0则精确匹配
         return (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.id.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
@@ -110,21 +112,15 @@ export default {
         return (restaurant.id.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
       };
     },
-    getData() {
-      // 获取数据方法，可以在初始加载的时候缓存在localStorage中，然后再从中获取
-
-    },
-    // 选择后触发的事件,传入的是一个JSON对象
+    // 搜索内容选择后触发的事件,传入的是一个JSON对象
     handleSelect(item) {
-
       // 选中当前li，并将该值移到数组首位
       this.moveToTop(item)
       this.currentClik = 0
       //清除未读状态
       if (item.uncheck == true) {
-        this.ListData[0].uncheck = false
+        this.list[0].uncheck = false
       }
-      //console.log(this.ListData);
 
       //移动滚动条到首位
       var scroll = document.querySelector(".listbox ul")
@@ -137,22 +133,16 @@ export default {
     },
     //将搜索内容放到li首位
     moveToTop(item) {
+      let i = 0
+      this.list.forEach(element => {
+        if (element.id === item.id) {
+          this.list.splice(i, 1)
+          return
+        }
+        i++
+      });
 
-      let restaurants = this.ListData;
-      let results = item.id ? restaurants.filter(this.accurateFilter(item.id)) : restaurants;
-      let old = results[0].id
-      //console.log(item.id === old)
-      if (item.id === old) {
-        var i = 0
-        this.ListData.forEach(element => {
-          if (element.id === item.id) {
-            this.ListData.splice(i, 1)
-            return
-          }
-          i++
-        });
-      }
-      this.ListData.unshift(item)
+      this.list.unshift(item)
       //console.log(this.ListData)
     },
 
@@ -166,19 +156,73 @@ export default {
 
     // 选择列表内容时
     SelectList(data, index) {
+      let select = { "selected": true }
+      let unselect = { "selected": false }
       //将当前高亮的currentClik切到当前
+      if (this.currentClik != -1) {
+        Object.assign(this.list[this.currentClik], unselect)
+      }
+      //.selected = false
+      Object.assign(this.list[index], select)
+      //.selected = true
+      this.list[index].uncheck = false
       this.currentClik = index
-      //更改消息状态
-      this.ListData[index].uncheck = false
+      //更新vuex数据
+      this.$store.commit('common/setCurrentCheatObj', data)
 
-
+    },
+    //获取缓存中已标记选择的index
+    setClikIndex(selected, index) {
+      if (selected === true) {
+        this.currentClik = index
+        return
+      } else {
+        return
+      }
     }
 
   },
-  //页面加载时装载搜索数据
-  mounted() {
+  //绑定vuex数据
+  computed: {
+    //根据对话对象计算已选择位置
 
-  }
+    ListType() {
+      return this.$store.state['common'].ListType
+    },
+    checkdata() {
+      return this.$store.getters['list/getListByType'](this.ListType)
+    },
+    list() {
+      if (this.checkdata != null) {
+        this.$store.commit('list/setCache', this.ListType)
+        return this.$store.getters['list/getListByType'](this.ListType)
+      } else {
+        let type = this.$store.state['list'].cache
+        return this.$store.getters['list/getListByType'](type)
+      }
+
+    },
+    SelectedIndex() {
+      return this.$store.getters['list/getSelectedIndex']
+    },
+    queryData() {
+      return this.$store.getters['list/getQueryData']
+    }
+
+  },
+  //初始化状态
+  created() {
+    // let dd = [{ "id": "dd", "name": "通讯1"},
+    //   { "id": "aa", "name": "通讯2" },
+    //   { "id": "ww", "name": "通讯3" },
+    //   { "id": "qq", "name": "通讯4" },
+    //   { "id": "ss", "name": "通讯4" }]
+    // this.$store.commit('list/setMessageList',this.ListData) 
+    // this.$store.commit('list/setFriendsList',dd) 
+    // this.ListType = this.$store.state['common'].ListType
+
+  },
+
 }
 </script>
 <style scoped>

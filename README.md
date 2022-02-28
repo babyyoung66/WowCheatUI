@@ -10,3 +10,6 @@ npm install axios
 npm install vuex -g
 #安装bootstrap图标库
 npm install bootstrap-icons -g
+
+npm install vuex@3 --save 
+npm install es6-promise --save
