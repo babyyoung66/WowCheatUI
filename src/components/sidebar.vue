@@ -13,7 +13,7 @@
         @clear="afterClear"
       ></el-autocomplete>
 
-      <el-button icon="el-icon-plus"></el-button>
+      <el-button  icon="el-icon-plus"></el-button>
     </div>
 
     <!-- 列表区域 -->
@@ -65,7 +65,7 @@
 
 <script>
 export default {
-  name: "List",
+  name: "sidebar",
   data() {
     return {
       //记录当前已选li的index，用于改变样式
@@ -115,6 +115,12 @@ export default {
     // 搜索内容选择后触发的事件,传入的是一个JSON对象
     handleSelect(item) {
       // 选中当前li，并将该值移到数组首位
+      let select = { "selected": true }
+      let unselect = { "selected": false }
+      //将当前高亮的currentClik切到当前
+      if (this.currentClik != -1) {
+        Object.assign(this.list[this.currentClik], unselect)
+      }
       this.moveToTop(item)
       this.currentClik = 0
       //清除未读状态
@@ -168,7 +174,7 @@ export default {
       this.list[index].uncheck = false
       this.currentClik = index
       //更新vuex数据
-      this.$store.commit('common/setCurrentCheatObj', data)
+      this.$store.commit('list/setCurrentCheatObj', data)
 
     },
     //获取缓存中已标记选择的index
@@ -187,7 +193,7 @@ export default {
     //根据对话对象计算已选择位置
 
     ListType() {
-      return this.$store.state['common'].ListType
+      return this.$store.state['list'].ListType
     },
     checkdata() {
       return this.$store.getters['list/getListByType'](this.ListType)
@@ -226,9 +232,10 @@ export default {
 }
 </script>
 <style scoped>
+div,p{padding: 0;margin: 0;}
 /* 查询栏父div */
 .searchbox {
-  height: 80px;
+  height: 60px;
   /* border-bottom: solid 1px rgb(217, 217, 217); */
   background-color: rgb(247, 247, 247);
   display: flex;
@@ -239,7 +246,7 @@ export default {
 
 /* 列表样式 */
 .listbox {
-  height: 90%;
+  height: 91%;
   /* overflow: hidden; */
   border: solid 0.5px rgb(236, 236, 236);
   background-color: rgb(237, 234, 232);
@@ -251,16 +258,20 @@ export default {
 /* 头像 */
 .el-image {
   /* margin-top: 16px !important; */
-  width: 50px !important;
-  height: 50px !important;
+  width: 35px !important;
+  height: 35px !important;
   border-radius: 0;
 }
 .el-badge {
   padding: 0 0 0 10px;
 }
 .namewithTime {
+  padding: 5px 0 0 0;
   display: flex;
   justify-content: space-between;
+}
+.mess{
+  margin-bottom: 5px;
 }
 
 .listbox .peopleinfo {
@@ -269,14 +280,14 @@ export default {
   justify-content: space-between;
   /* align-content: stretch; */
   width: 100%;
-  height: 54px !important;
+  height: 48px !important;
   overflow: hidden;
   padding: 0 0 0 14px;
 }
 .peopleinfo .time,
 .mess {
   color: rgb(129, 129, 129);
-  font-size: 14px;
+  font-size: 12px;
 }
 .peopleinfo .time {
   width: auto;
@@ -300,28 +311,33 @@ export default {
 /* 继承或覆盖父属性则放在此 */
 /* 查询输入框 */
 .el-autocomplete {
-  margin: 5px;
-  /* margin-top: 20px !important; */
+  padding: 0 8px 0 8px !important;
   width: 80%;
 }
 .searchbox .el-autocomplete .el-input__inner,
 .el-input {
-  border-radius: 20px !important;
+  border-radius: 6px !important;
   background-color: rgb(226, 226, 226);
+  height: 25px;
+}
+/* 搜索图标及清空图标 */
+.searchbox .el-input__prefix,.el-input__suffix {
+  top: -7px;
 }
 .searchbox .el-autocomplete .el-input {
-  font-size: 18px;
+  font-size: 14px;
 }
 
+/* 加号 */
 .searchbox .el-button {
   /* margin-top: 20px ; */
   padding: 0;
-  width: 35px;
-  height: 35px;
+  width: 20px;
+  height: 20px;
   background-color: rgb(226, 226, 226) !important;
 }
 .el-button .el-icon-plus {
-  font-size: 18px !important;
+  font-size: 14px !important;
   font-weight: bold;
 }
 
@@ -374,7 +390,7 @@ input:-ms-input-placeholder {
   list-style: none;
   display: flex;
   justify-content: space-between;
-  height: 75px;
+  height: 55px;
   align-items: center;
   width: 100%;
   padding: 0;

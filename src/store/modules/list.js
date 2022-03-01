@@ -1,12 +1,23 @@
-const uuid = sessionStorage.getItem("uuid")
-const key = 'list_' + uuid
+//定时器获取uuid，确保已经获取到
+let usr = JSON.parse(localStorage.getItem("currentUser"))
+if (usr != null) {
+    var uuid = usr.user.uuid
+} else {
+    uuid = "default"
+    console.log("取默认uuid")
+}
+var key = 'list_' + uuid
 const state = localStorage.getItem(key) != null ? JSON.parse(localStorage.getItem(key)) : {
+    //当前打开的列表
+    ListType: "message",
+    //当前打开的对话对象
+    currentCheatObj: {},
     //消息列表
     messageList: [],
     //好友列表
     FriendsList: [],
     //缓存（无数据时使用上一个列表）
-    cache:""
+    cache: ""
 
 
 }
@@ -16,10 +27,20 @@ const mutations = {
     //state默认参数
     saveState(state) {
         console.log("list数据已持久化!")
-        
+        //未打开消息或通讯录列表时，清空currentCheatObj再保存
+        uuid = sessionStorage.getItem("uuid")
+        key = 'list_' + uuid
+        let open = state.ListType
+        if (open == "message" || open == "friend") {
+
+        } else {
+            state.currentCheatObj = {}
+        }
         localStorage.setItem(key, JSON.stringify(state))
     },
     removeState(state) {
+        uuid = sessionStorage.getItem("uuid")
+        key = 'list_' + uuid
         state = {}
         localStorage.removeItem(key)
     },
@@ -27,12 +48,24 @@ const mutations = {
     setMessageList(state, list) {
         state.messageList = list
     },
+
     setFriendsList(state, list) {
         state.FriendsList = list
     },
-    setCache(state,type){
+
+    setCache(state, type) {
         state.cache = type
+    },
+
+
+    setListType(state, type) {
+        state.ListType = type
+    },
+
+    setCurrentCheatObj(state, user) {
+        state.currentCheatObj = user
     }
+
 
 }
 
@@ -59,13 +92,13 @@ const getters = {
             return state.messageList != null ? state.messageList : state.FriendsList
         }
     },
-    getSelectedIndex:(state)=>{
+    getSelectedIndex: (state) => {
         let current = this.$store.state['common'].currentCheatObj
-        if(current != null){
-          let arr =  this.getListByType(state.cache)
-          arr.array.forEach(element => {
-              console.log(element)
-          });
+        if (current != null) {
+            let arr = this.getListByType(state.cache)
+            arr.array.forEach(element => {
+                console.log(element)
+            });
         }
     }
 }

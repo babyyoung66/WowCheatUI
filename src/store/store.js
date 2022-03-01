@@ -7,7 +7,6 @@ import list from './modules/list'
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
-
     modules: {
         common,
         list
@@ -16,12 +15,10 @@ const store = new Vuex.Store({
     //更新state对象数据的方法
     mutations: {
         saveState(state) {
-            this.commit('common/saveState', {}, { root: true })
-            this.commit('list/saveState', {}, { root: true })
+            this.commit('list/saveState')
         },
         removeState(state){
-            this.commit('common/removeState', {}, { root: true })
-            //this.commit('list/removeState', {}, { root: true })
+            this.commit('list/removeState', {}, { root: true })
         }
 
     },

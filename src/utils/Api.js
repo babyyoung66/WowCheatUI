@@ -4,6 +4,7 @@ import { Message } from "element-ui";
 import router from '../router/router'
 // 引入vuex的store，方便在请求方法直接设置状态
 import store from '../store/store'
+//const store = require('@/store/store') 
 
 axios.defaults.timeout = 5000
 axios.defaults.headers.post['Content-Type'] = 'application/json';
@@ -16,12 +17,14 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 const base = 'http://127.0.0.1:8080';
 
 axios.interceptors.request.use(config => {
-
-  let token = store.state['common'].token
-  // 判断本地的cookie中是否有token
-  if (token != null && token != "") {
-    config.headers.token = token
+  const local = JSON.parse(localStorage.getItem("currentUser"))
+  if(local != null ){
+    const token = local.token
+    if (token != null && token != "") {
+      config.headers.token = token
+    }
   }
+
   return config
 },
   error => {
@@ -36,21 +39,24 @@ axios.interceptors.response.use(success => {
   }
   //请求成功且服务器处理无错误
   if (success.data.success) {
-    // Message.success({message:success.data.message});
+    let token = success.headers['newtoken']
+    if (token !== null) {
+      store.state['common'].token = token
+    }
     return success;
   }
 
 }, error => {
-  if (error.response == null){
-    Message.error({ message:"页面请求错误！"+ error })
+  if (error.response == null) {
+    Message.error({ message: "页面请求错误！" + error })
     console.log(error)
     return
   }
-  
+
   if (error.response.status == 504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
     Message.error({ message: '找不到服务器!' })
   }
-  else if (error.response.status == 403) {	//服务器理解请求客户端的请求，但是拒绝执行此请求
+  else if (error.response.status == 403) {	//已登录，但是权限不足
 
     if (error.response.data != null) {
       Message.error({ message: error.response.data.message })
@@ -59,7 +65,7 @@ axios.interceptors.response.use(success => {
     }
 
   }
-  else if (error.response.status == 400) {//请求要求用户的身份认证
+  else if (error.response.status == 400) {
     Message.error({ message: '请求方式错误!' });
     // router.replace("/");//跳转到登陆页
   }
@@ -72,7 +78,7 @@ axios.interceptors.response.use(success => {
     }
     router.replace("/login");//跳转到登陆页
   } else if (error.response.status == 404) {
-    Message.error({ message: '服务器无法根据客户端的请求找到资源!' })
+    Message.error({ message: '服务器未找到请求资源!' })
   } else if (error.response.status == 500) {
     Message.error({ message: '服务器内部错误，无法完成请求!' })
   } else {
@@ -90,11 +96,14 @@ export const logoutRequest = (url) => {
   axios({
     method: 'post',
     url: `${base}${url}`,
-  }).then(res => {
-
-  }).finally(() => {
-   // store.commit('removeState')
   })
+    .then(res => {
+
+    }).finally(() => {
+      sessionStorage.removeItem("uuid")
+      localStorage.removeItem("currentUser")
+      store.commit('saveState')
+    })
 }
 
 export const postRequest = (url, params) => {

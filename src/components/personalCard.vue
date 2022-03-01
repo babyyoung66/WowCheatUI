@@ -38,7 +38,7 @@
             :content="userinfo.wowId"
             placement="bottom"
           >
-            <p>Wow号:  {{ userinfo.wowId }}</p>
+            <p>Wow号: {{ userinfo.wowId }}</p>
           </el-tooltip>
         </div>
       </div>
@@ -85,20 +85,28 @@
 export default {
   name: "personalCart",
   //由父组件在标签使用:userinfo="xxx"传入具体展示信息
-  props:{
-    userinfo:{}
+  props: {
+    userinfo: {}
   },
   data() {
     return {
       // 图片预览url
-      previewSrcList: ['http://127.0.0.1:8888/static/logo.png'],
+      //previewSrcList: ['http://127.0.0.1:8080/WowCheat/files/1.png'],
       sexIcons: ["../static/icon_woman.png", "../static/icon_man.png"],
       //userinfo: {} //改由父组件传入数据
     }
   },
   methods: {
-     
+
   },
+  computed: {
+    // 设置图片预览
+    previewSrcList() {
+      var imags = []
+      imags.push(this.userinfo.photourl)
+      return imags
+    }
+  }
 
 
 }
@@ -107,18 +115,18 @@ export default {
 <style scoped>
 div,
 p {
-  padding: 0 ;
-  margin: 0 ;
+  padding: 0;
+  margin: 0;
 }
 .el-image {
- 
-  width: 75px !important;
-  height: 75px !important;
+  padding: 24px 32px 0 18px !important;
+  width: 52px !important;
+  height: 55px !important;
   border-radius: 0;
 }
 .infocard {
-  width: 370px;
-  height: 315px;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-content: space-around;
@@ -133,13 +141,12 @@ p {
 }
 .idname {
   overflow: hidden;
-  padding: 26px 0 0 40px;
+  padding: 18px 0 0 32px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: auto;
   width: auto;
- 
 }
 
 .idname .name {
@@ -153,7 +160,7 @@ p {
   text-overflow: ellipsis;
 
   text-align: left;
-  font-size: 24px;
+  font-size: 18px;
   color: black;
 }
 .nameandicon {
@@ -161,12 +168,12 @@ p {
 
   text-align: center;
   align-items: center;
-  
 }
 .sexicon {
   object-fit: cover;
-  width: 21px;
-  height: 24px;
+  width: 16px;
+  height: 20px;
+  padding: 0 3px 0 3px;
   /* padding-top: 42px; */
 }
 
@@ -175,32 +182,28 @@ p {
   white-space: nowrap; /*不换行*/
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 16px;
+  line-height: 14px;
   text-align: left;
   padding-top: 6px;
-  font-size: 16px;
+  font-size: 14px;
   color: rgb(171, 172, 173);
 }
 
-.photo {
-  padding: 34px 48px 0 24px;
-}
 .splice {
   border-top: solid rgb(217, 217, 217) 0.1mm;
-  margin: 22px 48px 0 48px;
+  margin: 22px 40px 0 40px;
 }
 .address {
   width: auto;
-
-  max-height: 90px;
+  max-height: 60px;
   overflow: hidden;
-  padding: 22px 40px 0 40px;
+  padding: 22px 32px 0 32px;
 }
 .addrTi {
   padding: 0 10px 0 0;
   width: auto;
-  height: 90px;
-  font-size: 18px;
+  height: 60px;
+  font-size: 14px;
   color: rgb(171, 172, 173);
   float: left;
 }
@@ -222,16 +225,16 @@ p {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  padding: 0 40px 10px 40px;
+  padding: 0 32px 10px 32px;
 }
 .menue i {
-  font-size: 30px;
+  font-size: 24px;
   padding: 5px 5px 15px 5px;
 }
 /* 没有合适的图标，翻转使用 */
 .menue .bi-reply::before {
   transform: rotateY(180deg);
-  font-size: 40px;
+  font-size: 24px;
 }
 </style>
 

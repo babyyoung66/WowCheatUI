@@ -31,7 +31,7 @@ export default {
   computed: {
     cheatObj() {
       // console.log(this.$store.state['common'].currentCheatObj)
-      return this.$store.state['common'].currentCheatObj
+      return this.$store.state['list'].currentCheatObj
     }
   }
 }
@@ -43,14 +43,16 @@ p {
   margin: 0;
 }
 .title {
+  height: 100%;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
 }
 .name {
   width: 60%;
-  padding: 25px 60px 0 24px;
+  padding: 8px 60px 0 24px;
   word-break: keep-all; /*不换行*/
   white-space: nowrap; /*不换行*/
   overflow: hidden;

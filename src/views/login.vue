@@ -143,16 +143,16 @@ export default {
           this.postRequest('/auth/login', this.loginForm).then(result => {
             let data = result.data
             if (data.success == true) {
-              sessionStorage.setItem("uuid",data.data.user.uuid) //一定要在store第一次调用前存入
-              
-              this.$store.commit('common/setUserinfo', data.data)
-              this.$store.commit('common/saveState')
-              
+              //一定要在store第一次调用前存入
+              sessionStorage.setItem("uuid", data.data.user.uuid)
+              localStorage.setItem("currentUser", JSON.stringify(data.data))
+              localStorage.setItem("remember", this.loginForm.rememberMe)
               this.$message({
                 message: '登录成功!',
                 type: 'success'
               });
               this.$router.push({ path: '/cheat' })
+
             }
 
           })

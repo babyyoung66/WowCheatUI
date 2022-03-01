@@ -24,7 +24,12 @@
           content="消息"
           placement="right"
         >
-          <el-button @click="changeList('message')" ><i class="bi bi-chat-dots" :class="{selected: ListType == 'message' }"></i></el-button>
+          <el-button @click="changeList('message')"
+            ><i
+              class="bi bi-chat-dots"
+              :class="{ selected: ListType == 'message' }"
+            ></i
+          ></el-button>
         </el-tooltip>
 
         <!-- 好友列表 -->
@@ -34,7 +39,12 @@
           content="通讯录"
           placement="right"
         >
-          <el-button @click="changeList('friend')" ><i :class="{selected: ListType == 'friend' }" class="bi bi-person-lines-fill"></i></el-button>
+          <el-button @click="changeList('friend')"
+            ><i
+              :class="{ selected: ListType == 'friend' }"
+              class="bi bi-person-lines-fill"
+            ></i
+          ></el-button>
         </el-tooltip>
 
         <!-- 群聊列表 -->
@@ -57,7 +67,10 @@
           content="个人中心"
           placement="right"
         >
-          <el-button @click="changeList('personCenter')" ><i  class="bi bi-person-circle"></i></el-button>
+          <!-- @click="changeList('personCenter')"  -->
+          <el-button @click="test"
+            ><i class="bi bi-person-circle"></i
+          ></el-button>
         </el-tooltip>
 
         <!-- 更多 -->
@@ -79,10 +92,9 @@
               <li>清空聊天记录</li>
             </ul>
 
-            <el-button  @click="changeList('more')" slot="reference"
+            <el-button @click="changeList('more')" slot="reference"
               ><i class="bi bi-list-ul"></i
             ></el-button>
-
           </el-popover>
         </el-tooltip>
 
@@ -93,17 +105,11 @@
           content="退出"
           placement="right"
         >
-          <el-popconfirm 
-            title="确定注销登录？"
-            @confirm="logout()"
-            
-          
-          >
-            <el-button slot="reference" 
-            ><i class="bi bi-box-arrow-left"></i
-          ></el-button>
+          <el-popconfirm title="确定注销登录？" @confirm="logout()">
+            <el-button slot="reference"
+              ><i class="bi bi-box-arrow-left"></i
+            ></el-button>
           </el-popconfirm>
-          
         </el-tooltip>
       </div>
     </div>
@@ -125,17 +131,26 @@ export default {
       this.logoutRequest("/auth/logout")
       this.$router.push({ path: '/login' })
     },
-    changeList(type){
-      this.$store.commit('common/setListType',type)
+    changeList(type) {
+      this.$store.commit('list/setListType', type)
+    },
+    test() {
+      this.postRequest('/user/queryUser', { "wowId": "test02" }).then(res => {
+        console.log(res.data)
+      })
     }
 
   },
-  computed:{
-    userinfo(){
-       return  this.$store.state['common'].currentUser
+  computed: {
+    userinfo() {
+      let data = JSON.parse(localStorage.getItem("currentUser"))
+      if (data != null) {
+        return data.user
+      }
+
     },
-    ListType(){
-      return  this.$store.state['common'].ListType
+    ListType() {
+      return this.$store.state['list'].ListType
     }
 
   },
@@ -158,12 +173,12 @@ export default {
 }
 
 #toolBar i {
-  font-size: 30px;
+  font-size: 22px;
   background-color: rgb(46, 46, 46);
   text-align: center;
 }
-.selected{
-  color: rgb(76, 113 ,217);
+.selected {
+  color: rgb(76, 113, 217);
 }
 #toolBar button {
   background-color: rgb(46, 46, 46);
@@ -193,8 +208,8 @@ export default {
 
 .el-image {
   margin-top: 16px !important;
-  width: 45px !important;
-  height: 45px !important;
+  width: 35px !important;
+  height: 35px !important;
   border-radius: 0;
 }
 .el-menu {
@@ -256,13 +271,13 @@ export default {
   border-right-color: rgba(37, 49, 57, 0.7) !important;
 }
 
-/* 修改指定popover类 */
+/* 头像弹出层 */
 .el-popover.photoPopover {
-  margin-left: -34px !important;
-  margin-top: 24px !important;
+  margin-left: -18px !important;
+  margin-top: 12px !important;
   border-radius: 0;
-  width: 370px !important;
-  height: 315px !important;
+  width: 290px !important;
+  height: 250px !important;
   padding: 0;
 }
 
