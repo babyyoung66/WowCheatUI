@@ -16,12 +16,12 @@
     </div>
     <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
-      <div class="title" v-show="this.$store.state['list'].ListType !== 'friend'">
+      <div class="title" v-show="listType == 'talkList' || listType == 'home'  " >
           <cheatTitle></cheatTitle>
         </div>
       <div
         class="cheatMain"
-        v-show="this.$store.state['list'].ListType == 'talkList' && this.$store.state['list'].currentCheatObj.uuid != null"
+        v-show="listType == 'talkList' && this.$store.state['list'].currentCheatObj.uuid != null"
       >
         <div class="message">
           <messageform></messageform>
@@ -32,14 +32,14 @@
       <!-- 通讯录 -->
       <div
         class="friendsMain"
-        v-show="this.$store.state['list'].ListType == 'friend' && this.$store.state['list'].checkDetial !== null"
+        v-show="listType == 'friend' && this.$store.state['list'].checkDetial !== null"
       >
         <h1>资料显示组件待开发</h1>
         <br>
         <h2>{{this.$store.state['list'].checkDetial}}</h2>
       </div>
       <!-- home页 -->
-      <div class="home" v-show="this.$store.state['list'].ListType =='home'  ||  this.$store.state['list'].ListType =='' || this.$store.state['list'].currentCheatObj.uuid == null  ">
+      <div class="home" v-show="listType =='home'  ||  listType =='' || this.$store.state['list'].currentCheatObj.uuid == null  ">
           <h1>home页</h1>
       </div>
     </div>
@@ -65,6 +65,9 @@ export default {
     isInit() {
       //0完成初始化，1则未完成
       return this.$store.getters['getInitStatus']
+    },
+    listType(){
+      return this.$store.state['list'].ListType
     }
   },
 
