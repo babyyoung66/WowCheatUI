@@ -120,8 +120,8 @@ p {
 }
 .el-image {
   padding: 24px 32px 0 18px !important;
-  width: 52px !important;
-  height: 55px !important;
+  width: 62px !important;
+  height: 62px !important;
   border-radius: 0;
 }
 .infocard {
@@ -234,7 +234,7 @@ p {
 /* 没有合适的图标，翻转使用 */
 .menue .bi-reply::before {
   transform: rotateY(180deg);
-  font-size: 24px;
+  font-size: 28px;
 }
 </style>
 

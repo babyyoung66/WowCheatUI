@@ -12,4 +12,7 @@ npm install vuex -g
 npm install bootstrap-icons -g
 
 npm install vuex@3 --save 
+
 npm install es6-promise --save
+#JSON - form转换工具
+npm install qs --save 

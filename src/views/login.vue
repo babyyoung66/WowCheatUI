@@ -140,13 +140,12 @@ export default {
         if (valid) {
           this.Sumiting = true
           //console.log(this.loginForm)
-          this.postRequest('/auth/login', this.loginForm).then(result => {
+          this.Api.postRequest('/auth/login', this.loginForm).then(result => {
             let data = result.data
             if (data.success == true) {
-              //一定要在store第一次调用前存入
-              sessionStorage.setItem("uuid", data.data.user.uuid)
-              localStorage.setItem("currentUser", JSON.stringify(data.data))
               localStorage.setItem("remember", this.loginForm.rememberMe)
+              this.$store.commit('DATA_INIT',data.data)
+              // this.$store.dispatch('initMessage',data.data)
               this.$message({
                 message: '登录成功!',
                 type: 'success'

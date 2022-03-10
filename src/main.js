@@ -19,20 +19,8 @@ Vue.config.productionTip = false
 封装请求方法,供全局调用
  */
 
-import { postRequest } from "./utils/Api"
-import { getRequest } from "./utils/Api"
-import { putRequest } from "./utils/Api"
-import { deleteRequest } from "./utils/Api"
-import { logoutRequest } from "./utils/Api"
-import { CreateQRCode } from "./utils/Api"
-
-
-Vue.prototype.postRequest = postRequest
-Vue.prototype.getRequest = getRequest
-Vue.prototype.putRequest = putRequest
-Vue.prototype.deleteRequest = deleteRequest
-Vue.prototype.logoutRequest = logoutRequest
-Vue.prototype.CreateQRCode = CreateQRCode
+import Api from "./utils/Api"
+Vue.prototype.Api = Api
 
 
 /* eslint-disable no-new */
@@ -45,18 +33,17 @@ new Vue({
 
   },
   created() {
-    window.addEventListener("onbeforeunload",()=>{
-      alert("11111")
-    });
-    console.log("before")
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
     if (currentUser != null) {
-      sessionStorage.setItem("uuid", currentUser.user.uuid)
-      if (this.$route.name != '' && this.$route.name != 'cheat') {
-        this.$router.replace("/cheat");
-        ElementUI.Message.success({ message: '已自动登录，如需取消请重新登录，并取消记住登录选项！' });
-      }
-
+      this.Api.postRequest('/ping',{}).then(res => {
+        if (res.data.success) {
+          this.$store.commit('DATA_INIT', currentUser)
+          if (this.$route.name != '' && this.$route.name != 'cheat') {
+            this.$router.replace("/cheat");
+            ElementUI.Message.success({ message: '已自动登录，如需取消请重新登录，并取消记住登录选项！' });
+          }
+        }
+      })
     } else {
       if (this.$route.name != 'login') {
         ElementUI.Message.error({ message: '尚未登录，请登录!' });

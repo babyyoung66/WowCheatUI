@@ -1,5 +1,9 @@
 <template>
-  <div id="app" v-if="currentuser != null">
+  <div
+    id="app"
+    v-loading="isInit != 0 && isInit != null"
+    element-loading-text="正在初始化数据..."
+  >
     <!-- 头像信息 -->
     <div class="toolbar">
       <toolbar></toolbar>
@@ -12,24 +16,31 @@
     </div>
     <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
-      <div
-        class="cheatMain"
-        v-if="this.$store.state['list'].ListType == 'message'"
-      >
-        <div class="title">
+      <div class="title" v-show="this.$store.state['list'].ListType !== 'friend'">
           <cheatTitle></cheatTitle>
         </div>
-
-        <div class="message"></div>
+      <div
+        class="cheatMain"
+        v-show="this.$store.state['list'].ListType == 'talkList' && this.$store.state['list'].currentCheatObj.uuid != null"
+      >
+        <div class="message">
+          <messageform></messageform>
+        </div>
         <div class="cheatText"></div>
-        
       </div>
 
+      <!-- 通讯录 -->
       <div
         class="friendsMain"
-        v-if="this.$store.state['list'].ListType == 'friend'"
+        v-show="this.$store.state['list'].ListType == 'friend' && this.$store.state['list'].checkDetial !== null"
       >
         <h1>资料显示组件待开发</h1>
+        <br>
+        <h2>{{this.$store.state['list'].checkDetial}}</h2>
+      </div>
+      <!-- home页 -->
+      <div class="home" v-show="this.$store.state['list'].ListType =='home'  ||  this.$store.state['list'].ListType =='' || this.$store.state['list'].currentCheatObj.uuid == null  ">
+          <h1>home页</h1>
       </div>
     </div>
   </div>
@@ -38,6 +49,7 @@
 import toolbar from '@/components/toolbar.vue'
 import sidebar from '@/components/sidebar.vue'
 import cheatTitle from '@/components/cheatTitle.vue'
+import messageform from '@/components/MessageForm.vue'
 
 export default {
   name: 'cheat',
@@ -49,6 +61,10 @@ export default {
   computed: {
     currentuser() {
       return JSON.parse(localStorage.getItem("currentUser"))
+    },
+    isInit() {
+      //0完成初始化，1则未完成
+      return this.$store.getters['getInitStatus']
     }
   },
 
@@ -58,13 +74,14 @@ export default {
       // console.log("cheat" + this.$store.state['common'])
       this.$store.commit('saveState')
     });
-    
+
   },
   // 导入组件，并扫描
   components: {
     toolbar,
     sidebar,
-    cheatTitle
+    cheatTitle,
+    messageform
   }
 }
 

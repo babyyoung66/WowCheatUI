@@ -1,16 +1,16 @@
 <template>
   <div class="title">
-    <p class="name" v-if="cheatObj != null">{{ cheatObj.name }}</p>
-    <el-popover
-      popper-class="photoPopover"
-      placement="right-start"
-      width="200"
-      trigger="click"
-    >
-      <!-- 个人信息卡片 -->
-      <personal-card :userinfo="cheatObj"></personal-card>
-      <i class="bi bi-three-dots cardIcon" slot="reference"></i>
-    </el-popover>
+      <p class="name" v-if="cheatObj != null">{{ cheatObj.name }}</p>
+      <el-popover
+        popper-class="photoPopover"
+        placement="right-start"
+        width="200"
+        trigger="click"
+      >
+        <!-- 个人信息卡片 -->
+        <personal-card :userinfo="cheatObj"></personal-card>
+        <i class="bi bi-three-dots cardIcon" slot="reference" v-show="this.$store.state['list'].ListType == 'talkList'"></i>
+      </el-popover>
   </div>
 </template>
 <script>
@@ -48,7 +48,6 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
 }
 .name {
   width: 60%;

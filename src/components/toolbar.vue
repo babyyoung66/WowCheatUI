@@ -24,10 +24,10 @@
           content="消息"
           placement="right"
         >
-          <el-button @click="changeList('message')"
+          <el-button @click="changeList('talkList')"
             ><i
               class="bi bi-chat-dots"
-              :class="{ selected: ListType == 'message' }"
+              :class="{ selected: ListType == 'talkList' }"
             ></i
           ></el-button>
         </el-tooltip>
@@ -128,16 +128,22 @@ export default {
 
   methods: {
     logout() {
-      this.logoutRequest("/auth/logout")
+      this.Api.logoutRequest("/auth/logout")
       this.$router.push({ path: '/login' })
     },
     changeList(type) {
       this.$store.commit('list/setListType', type)
     },
     test() {
-      this.postRequest('/user/queryUser', { "wowId": "test02" }).then(res => {
-        console.log(res.data)
-      })
+      let  wowId ={
+        "name": "哈哈",
+        "password":"123456",
+        "oldPassword":"qwe11s011"
+}
+      // this.Api.postByXWForm('/user/editName',wowId ).then(res => {
+      //   console.log(res.data)
+      // })
+      this.$store.commit('list/INIT')
     }
 
   },
@@ -222,12 +228,11 @@ export default {
   padding: 0px;
   background-color: rgba(37, 49, 57, 0.7);
   height: 100%;
+  
 }
 #moreList li {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 15px;
-  font-size: 18px;
+  padding: 10px 15px 10px 15px;
+  font-size: 14px;
   color: rgb(214, 211, 211);
   list-style: none;
   cursor: pointer;
@@ -243,7 +248,8 @@ export default {
 /* 需要设置全局style */
 .el-popover.moreListPopoverClass {
   height: auto;
-  width: 150px;
+  width: auto !important;
+  min-width: 0 !important;
   /* margin: 0px; */
   margin-left: 10px;
   padding: 0px;
@@ -257,7 +263,7 @@ export default {
 
 /* topic字体大小 */
 .el-tooltip__popper {
-  font-size: 14px;
+  font-size: 12px;
   background-color: rgba(37, 49, 57, 0.7) !important;
 }
 
