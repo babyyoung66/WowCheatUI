@@ -16,3 +16,6 @@ npm install vuex@3 --save
 npm install es6-promise --save
 #JSON - form转换工具
 npm install qs --save 
+
+#图标库，可以不用引入，直接拷贝js对象（https://www.npmjs.com/package/node-emojis）
+npm install --save node-emoji

@@ -25,32 +25,34 @@
           @click="SelectList(it, index)"
           :class="{
             onSelect:
-              (it.selected != null && it.selected == true) ||
-              TalkSelectIndex == index,
+              TalkSelectIndex == index ||
+              it.uuid == $store.state['common'].currentCheatObj.uuid,
           }"
           @contextmenu="rightClik(index, it, $event)"
         >
-          <span
-            v-if="setClikIndex(it.selected, index)"
-            style="display: none"
-          ></span>
+          <span v-if="setClikIndex(it, index)" style="display: none"></span>
           <!-- 消息红点 -->
           <el-badge :is-dot="it.uncheck" class="item">
             <!-- 头像 -->
-            <el-image fit="cover" :src="it.photourl"> </el-image>
-
-            <!-- <el-avatar
-              shape="square"
-              :size="100"
-              fit="cover"
-              :src="avatarUrl"
-            ></el-avatar> -->
+            <el-image fit="cover" :src="it.photourl" lazy> </el-image>
           </el-badge>
           <!-- 名称、时间、最新一条记录 -->
           <div class="peopleinfo">
             <div class="namewithTime">
               <!-- 名称 -->
-              <span class="name" style="font-size: 18px">{{ it.name }}</span>
+              <span
+                v-if="it.friendsInfo == null || it.friendsInfo.remarks == null"
+                class="name"
+                style="font-size: 18px"
+                >{{ it.name }}</span
+              >
+              <!-- 有备注则显示备注 -->
+              <span
+                v-if="it.friendsInfo != null && it.friendsInfo.remarks != null"
+                class="name"
+                style="font-size: 18px"
+                >{{ it.friendsInfo.remarks }}</span
+              >
 
               <!-- 时间，取最近一条记录的时间，判断与当前时间间隔，分别显示昨天、前天、七天内显示星期、七天以上显示具体年月日 -->
               <span class="time" v-show="getLastMess(it.uuid) != null">{{
@@ -74,22 +76,32 @@
           @click="checkDetial(it, index)"
           :class="{
             onSelect:
-              (it.selected != null && it.selected == true) ||
-              FriendSelectIndex == index,
+              FriendSelectIndex == index ||
+              ($store.state['common'].checkDetial != null &&
+                it.uuid == $store.state['common'].checkDetial.uuid),
           }"
           :ref="index"
           style="justify-content: start"
         >
           <!-- @contextmenu="rightClik(index, it, $event)" -->
-          <span
-            v-if="setClikIndex(it.selected, index)"
-            style="display: none"
-          ></span>
+          <span v-if="setClikIndex(it, index)" style="display: none"></span>
           <!-- 头像 -->
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
-          <span class="name" style="font-size: 18px; padding: 0 30px 0 15px">
+          <span
+            v-if="it.friendsInfo == null || it.friendsInfo.remarks == null"
+            class="name"
+            style="font-size: 18px; padding: 0 30px 0 15px"
+          >
             {{ it.name }}
+          </span>
+          <!-- 备注 -->
+          <span
+            v-if="it.friendsInfo != null && it.friendsInfo.remarks != null"
+            class="name"
+            style="font-size: 18px; padding: 0 30px 0 15px"
+          >
+            {{ it.friendsInfo.remarks }}
           </span>
         </li>
       </ul>
@@ -129,24 +141,7 @@ export default {
       //记录当前已选li的index，用于改变样式
       TalkSelectIndex: -1,
       FriendSelectIndex: -1,
-      avatarUrl: '../static/logo.png',
-      ListData: [{ "uuid": "15", "name": "qqq12", "uncheck": true, "photourl": "" },
-      { "uuid": "14", "name": "22", "uncheck": false, "photourl": "" },
-      { "uuid": "16", "name": "123ww", "uncheck": true, "photourl": "" },
-      { "uuid": "17", "name": "aa", "uncheck": true, "photourl": "" },
-      { "uuid": "18", "name": "cc", "uncheck": true, "photourl": "" },
-      { "uuid": "19", "name": "dddddddddddasda sdasdddd", "uncheck": false, "photourl": "" },
-      { "uuid": "20", "name": "222aaaa", "uncheck": true, "photourl": "" },
-      { "uuid": "21", "name": "ccccc", "uncheck": false, "photourl": "" },
-      { "uuid": "22", "name": "wwwww", "uncheck": true, "photourl": "" },
-      { "uuid": "23", "name": "222aaaa", "uncheck": false, "photourl": "" },
-      { "uuid": "24", "name": "hhhhh", "uncheck": true, "photourl": "" },
-      { "uuid": "13", "name": "7777", "uncheck": true, "photourl": "" },
-      { "uuid": "12", "name": "黄军乐", "uncheck": false, "photourl": "" }
-      ],
       state: '',
-      // 列表类型，后续使用vuex动态切换
-      //ListType:''
     }
   },
   methods: {
@@ -160,8 +155,9 @@ export default {
     // 模糊查询
     fuzzyFilter(queryString) {
       return (restaurant) => {
+        let remarksInfo = restaurant.friendsInfo != null && restaurant.friendsInfo.remarks != null ? restaurant.friendsInfo.remarks : null
         //跟据name或id匹配查询结果 indexOf >= 0则模糊匹配，indexOf == 0则精确匹配
-        return (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
+        return (remarksInfo != null && remarksInfo.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
       };
     },
     // 准确查询
@@ -191,10 +187,7 @@ export default {
           this.$store.commit('message/setMessageMapByUUID', messDta)
         }
       })
-      let unselect = { "selected": false }
-      if (this.TalkSelectIndex != -1 && this.list.length != 0) {
-        Object.assign(this.list[this.TalkSelectIndex], unselect)
-      }
+
       this.moveToTop(item)
       //清除未读状态
       if (item.uncheck == true) {
@@ -204,10 +197,8 @@ export default {
       if (scroll.scrollTop > 0) {
         this.MyscrollTo(0)
       }
-
       //设置为选中
       this.SelectList(item, 0)
-
     },
 
     FriendSelect(item) {
@@ -219,28 +210,76 @@ export default {
       //根据设置refs获取对应的元素
       let target = this.$refs[index]['0']
       let targetOffset = target.offsetTop
-      console.log(this.$refs[index])
-      console.log(targetOffset)
+
       // console.log(document.querySelector(".onSelect"))
       //定位到具体位置
       this.MyscrollTo(targetOffset)
-      this.$store.commit('list/setCheckDetial', item)
+      this.$store.commit('common/setCheckDetial', item)
     },
 
     //将搜索内容放到li首位
     moveToTop(item) {
-      let i = 0
-      if (this.list != null) {
-        this.list.forEach(element => {
-          if (element.uuid === item.uuid) {
-            this.list.splice(i, 1)
-            return
-          }
-          i++
-        });
-      }
-      this.list.unshift(item)
+      this.$store.commit('common/setUserOnTopOfTalkList', item)
+      // let i = 0
+      // if (this.list != null) {
+      //   this.list.forEach(element => {
+      //     if (element.uuid === item.uuid) {
+      //       this.list.splice(i, 1)
+      //       return
+      //     }
+      //     i++
+      //   });
+      // }
+      // this.list.unshift(item)
       //console.log(this.ListData)
+    },
+
+    // 选择列表内容时
+    SelectList(item, index) {
+      if (this.ListType == '' || this.ListType == null) {
+        this.$store.commit('common/setListType', 'talkList')
+      }
+      if (this.ListType == 'talkList') {
+        this.TalkSelectIndex = index
+        this.list[index].uncheck = false
+        this.$store.commit('common/setCurrentCheatObj', item)
+      }
+      if (this.ListType == 'friend') {
+        this.FriendSelectIndex = index
+      }
+      //切换聊天框类型
+      this.changeMessageFormType(item)
+    },
+    //根据当前聊天对象设置已选
+    setClikIndex(item, index) {
+      if (item.uuid == this.$store.state['common'].currentCheatObj.uuid) {
+        this.TalkSelectIndex = index
+      }
+      if (this.$store.state['common'].checkDetial != null && item.uuid == this.$store.state['common'].checkDetial.uuid) {
+        this.FriendSelectIndex = index
+      }
+      return
+
+    },
+    //获取当前选择查看的对象index及更新到store
+    checkDetial(item, index) {
+      this.SelectList(item, index)
+      this.$store.commit('common/setCheckDetial', item)
+    },
+    // 获取最新的一条记录
+    getLastMess(uuid) {
+      if (this.$store.state['message'].messageMap != null) {
+        return this.$store.getters['message/getlastMessage'](uuid)
+      }
+    },
+    //转换显示时间
+    switchTime(t) {
+      return TimeUtils.formatForSimpleView(t)
+    },
+
+    //在选择列表对象，或者搜索到的对象时，根据对象type更改当前聊天框类型
+    changeMessageFormType(item){
+        this.$store.commit('common/setmessageFormType',item.type)
     },
 
     MyscrollTo(num) {
@@ -260,46 +299,8 @@ export default {
       active.focus()
     },
 
-    // 选择列表内容时
-    SelectList(item, index) {
-      if (this.$store.state['list'].ListType === '' || this.$store.state['list'].ListType == null) {
-        this.$store.commit('list/setListType', 'talkList')
-      }
-      let select = { "selected": true }
-      let unselect = { "selected": false }
 
-      if (this.ListType == 'talkList') {
-        if (this.TalkSelectIndex != -1 && this.list.length != 0) {
-          Object.assign(this.list[this.TalkSelectIndex], unselect)
-        }
-        this.TalkSelectIndex = index
-        this.list[index].uncheck = false
-        this.$store.commit('list/setCurrentCheatObj', item)
-      }
-      if (this.ListType == 'friend') {
-        //将当前高亮的currentClik切到当前
-        if (this.FriendSelectIndex != -1 && this.list.length != 0) {
-          Object.assign(this.list[this.FriendSelectIndex], unselect)
-        }
-        this.FriendSelectIndex = index
-      }
-      Object.assign(this.list[index], select)
 
-    },
-    //获取缓存中已标记选择的index
-    setClikIndex(selected, index) {
-      if (selected === true) {
-        if (this.ListType == 'talkList') {
-          this.TalkSelectIndex = index
-        }
-        if (this.ListType == 'friend') {
-          this.FriendSelectIndex = index
-        }
-        return
-      } else {
-        return
-      }
-    },
     //右击列表内容时
     rightClik(index, data, clickEvent) {
 
@@ -322,24 +323,11 @@ export default {
     delfromList() {
       if (this.rightClikIndex != -1) {
         this.list.splice(this.rightClikIndex, 1)
-        this.$store.commit('list/setCurrentCheatObj', {})
+        this.$store.commit('common/setCurrentCheatObj', {})
         this.rightClikIndex = -1
       }
     },
-    checkDetial(item, index) {
-      this.SelectList(item, index)
-      this.$store.commit('list/setCheckDetial', item)
-    },
-    // 获取最新的一条记录
-    getLastMess(uuid) {
-      if (this.$store.state['message'].messageMap != null) {
-        return this.$store.getters['message/getlastMessage'](uuid)
-      }
-    },
-    //转换显示时间
-    switchTime(t) {
-      return TimeUtils.formatForSimpleView(t)
-    }
+
 
 
   },
@@ -348,16 +336,16 @@ export default {
     //根据对话对象计算已选择位置
 
     ListType() {
-      return this.$store.getters['list/getListType']
+      return this.$store.getters['common/getListType']
     },
     checkdata() {
-      return this.$store.getters['list/getListByType'](this.ListType)
+      return this.$store.getters['common/getListByType'](this.ListType)
     },
     list() {
-      return this.$store.getters['list/getListByType'](this.ListType)
+      return this.$store.getters['common/getListByType'](this.ListType)
     },
     queryData() {
-      return this.$store.getters['list/getQueryData']
+      return this.$store.getters['common/getQueryData']
     },
 
 
@@ -380,14 +368,16 @@ export default {
 </script>
 <style scoped>
 div,
-p {
+p,
+li,
+ul {
   padding: 0;
   margin: 0;
 }
+
 /* 查询栏父div */
 .searchbox {
   height: 60px;
-  /* border-bottom: solid 1px rgb(217, 217, 217); */
   background-color: rgb(247, 247, 247);
   display: flex;
   /* justify-content: start; */
@@ -397,9 +387,8 @@ p {
 
 /* 列表样式 */
 .listbox {
-  height: 91%;
-  /* overflow: hidden; */
-  border: solid 0.5px rgb(236, 236, 236);
+  height: 90.7%;
+  width: 100%;
   background-color: rgb(237, 234, 232);
 }
 /* 选中某个li时的样式 */
@@ -543,7 +532,6 @@ input:-ms-input-placeholder {
   height: 55px;
   align-items: center;
   width: 100%;
-  padding: 0;
 }
 
 /* li高亮设置 */

@@ -13,6 +13,7 @@ const mutations = {
     INIT_Message(state, data) {
         if (!state.isInit) {
             console.log("初始化消息中...")
+            
             // 获取list的消息列表
             //初始化消息列表
             let idkey = 'talkId_' + data.user.uuid
@@ -30,6 +31,10 @@ const mutations = {
             state.isInit = true         
             console.log("初始化消息完毕...")
         }
+    },
+    removeState(state){
+        state.messageMap = {}
+        state.isInit = false
     },
 
     saveState(state) {
@@ -51,17 +56,21 @@ const mutations = {
         }
 
     },
-    //追加单条消息{ "uuid": "", "message": "" }
+    //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "uuid": "", "message": "" }
     pushOneMessageByUUID(state, messageData) {
         let oldmess = state.messageMap[messageData.uuid]
         if (oldmess != null) {
             //存在则追加到底部
-            state.messageMap[messageData.from].push(messageData.message)
+            let messArry = []
+            messArry = oldmess
+            messArry.push(messageData.message)
+            state.messageMap[messageData.from] = messArry
         }else{
             let messArry = []
             messArry.push(messageData.message)
             Vue.set(state.messageMap, messageData.uuid, messArry)
         }
+        
     },
     // 查询或追加历史聊天记录,请求格式 { "uuid": "", "message": "" }
     pushMessageArryByUUIDOnTop(state, messageData) {
@@ -94,6 +103,7 @@ const getters = {
 
     },
     getMessagesByuuid: (state) => (uid) => {
+        //格式化、合并时间段
         return state.messageMap[uid] != null ? state.messageMap[uid] : null
     }
 

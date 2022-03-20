@@ -158,7 +158,7 @@ export default {
           callback(new Error('邮箱格式错误！'));
         }
         let user = { "email": value }
-        this.postRequest("/register/isEmailHasRegister", user).then(res => {
+        this.Api.postRequest("/register/isEmailHasRegister", user).then(res => {
           //console.log(res.data)
           if (res.data != null && res.data.success !== true) {
             this.EmailisOk = false
@@ -178,8 +178,8 @@ export default {
           callback(new Error('存在特殊字符！'));
         }
         let user = { "wowId": value }
-        this.postRequest("/register/isIdHasRegister", user).then(res => {
-          //console.log(res.data)
+        this.Api.postRequest("/register/isIdHasRegister", user).then(res => {
+          
           if (res.data.success !== true) {
             callback(new Error(res.data.message));
           }
@@ -191,7 +191,7 @@ export default {
     var checkEailCode = (rule, value, callback) => {
       if (value !== "" && value.length == 6) {
         let user = { "code": value, "email": this.registerForm.email }
-        this.postRequest("/register/checkEmailCode", user).then(res => {
+        this.Api.postRequest("/register/checkEmailCode", user).then(res => {
           if (res.data != null && res.data.success !== true) {
             callback(new Error(res.data.message));
           } else if (res.data != null && res.data.success === true) {
@@ -206,8 +206,6 @@ export default {
         })
       }
     }
-
-
     return {
       waitTime: 120,
       Btntimer: "获取验证码",
@@ -225,6 +223,8 @@ export default {
         email: '',
         code: ''
       },
+
+      
       registerRules: {
         name: [
           { required: true, message: '请输入名称!', trigger: 'blur' },
@@ -280,7 +280,7 @@ export default {
     submitRegisterForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          this.postRequest("/register/", this.registerForm).then(res => {
+          this.Api.postRequest("/register/", this.registerForm).then(res => {
             if (res.data != null && res.data.success === true) {
               this.$notify(
                 {
@@ -303,7 +303,7 @@ export default {
     },
     getEmailCode() {
       this.setBtntimer()
-      this.postRequest("/register/postEmailCode", this.registerForm).then(res => {
+      this.Api.postRequest("/register/postEmailCode", this.registerForm).then(res => {
         //console.log(res.data)
         if (res.data != null && res.data.success === true) {
           this.$notify(

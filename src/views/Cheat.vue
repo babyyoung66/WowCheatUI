@@ -10,37 +10,39 @@
     </div>
     <!-- 好友、群聊列表 -->
     <div class="sidebar">
-      <!-- <div class="searchbox"></div>
-      <div class="listbox"></div> -->
       <sidebar></sidebar>
     </div>
     <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
-      <div class="title" v-show="listType == 'talkList' || listType == 'home'  " >
+      <div class="title" v-show="listType == 'talkList' || listType == 'notice'  " >
           <cheatTitle></cheatTitle>
         </div>
       <div
         class="cheatMain"
-        v-show="listType == 'talkList' && this.$store.state['list'].currentCheatObj.uuid != null"
+        v-show="listType == 'talkList' && this.$store.state['common'].currentCheatObj.uuid != null"
       >
+        <!-- 消息栏 -->
         <div class="message">
           <messageform></messageform>
         </div>
-        <div class="cheatText"></div>
+        <!-- 发送栏 -->
+        <div class="sendForm">
+          <sendForm></sendForm>
+        </div>
       </div>
 
       <!-- 通讯录 -->
       <div
         class="friendsMain"
-        v-show="listType == 'friend' && this.$store.state['list'].checkDetial !== null"
+        v-show="listType == 'friend' && this.$store.state['common'].checkDetial !== null"
       >
         <h1>资料显示组件待开发</h1>
         <br>
-        <h2>{{this.$store.state['list'].checkDetial}}</h2>
+        <h2>{{this.$store.state['common'].checkDetial}}</h2>
       </div>
-      <!-- home页 -->
-      <div class="home" v-show="listType =='home'  ||  listType =='' || this.$store.state['list'].currentCheatObj.uuid == null  ">
-          <h1>home页</h1>
+      <!-- notice -->
+      <div class="notice" v-show="listType =='notice'  ||  listType ==''  ">
+          <h1>Notice</h1>
       </div>
     </div>
   </div>
@@ -50,6 +52,8 @@ import toolbar from '@/components/toolbar.vue'
 import sidebar from '@/components/sidebar.vue'
 import cheatTitle from '@/components/cheatTitle.vue'
 import messageform from '@/components/MessageForm.vue'
+import sendForm from '@/components/SendForm.vue'
+
 
 export default {
   name: 'cheat',
@@ -67,7 +71,7 @@ export default {
       return this.$store.getters['getInitStatus']
     },
     listType(){
-      return this.$store.state['list'].ListType
+      return this.$store.state['common'].ListType
     }
   },
 
@@ -84,19 +88,24 @@ export default {
     toolbar,
     sidebar,
     cheatTitle,
-    messageform
+    messageform,
+    sendForm
   }
 }
 
 </script>
 <style scoped>
+div{
+  padding: 0;
+  margin: 0;
+}
 #app {
   margin: 20px auto !important;
   width: 920px !important;
   height: 640px !important;
-  overflow: hidden;
-  border-radius: 10px;
-  border: solid 1px rgb(217, 217, 217);
+  /* overflow: hidden; */
+  border-radius: 5px;
+  border: solid 1px rgb(237, 234, 232);
 }
 #app .sidebar,
 .main,
@@ -117,11 +126,7 @@ export default {
   /* overflow: hidden; */
   height: 100%;
   border-right: solid 0.1px rgb(217, 217, 217);
-
-  /* 测试样式 */
-  /* display: flex;
-      flex-direction: column;
-      align-content: space-around; */
+  
 }
 .main {
   position: relative;
@@ -129,19 +134,13 @@ export default {
   background-color: #eee;
   height: 100%;
 
-  /* 临时测试样式 */
-  /* display: flex;
-      flex-direction: column;
-      align-content: space-around; */
 }
-
-.textbox {
-  height: auto;
+.cheatMain{
   display: flex;
   flex-direction: column;
-  align-content: space-between;
-  justify-items: auto;
+  justify-content: space-between;
 }
+
 /* main测试样式 */
 .title {
   height: 60px;
@@ -152,25 +151,22 @@ export default {
 .message {
   height: 450px;
   background-color: rgb(245, 245, 245);
-  border-bottom: solid 0.5px rgb(217, 217, 217);
+  border-bottom: solid 0.1px rgb(217, 217, 217);
 }
-.cheatText {
-  padding: 0;
-  margin: 0;
-  height: 150px;
+.sendForm {
+  height: 128px;
   background: rgb(255, 255, 255);
   /* border-bottom: solid 1px rgb(217,217,217); */
 }
 
-/* sidebar 测试样式 */
-.searchbox {
-  height: 80px;
-  /* border-bottom: solid 1px rgb(217, 217, 217); */
-  background-color: rgb(247, 247, 247);
+</style>
+<style>
+/* 将头像，i标签的鼠标样式改为小手 */
+.el-image__inner,i{
+  cursor: pointer;
 }
-.listbox {
-  height: 100%;
-  border: solid 0.5px rgb(236, 236, 236);
-  background-color: rgb(234, 232, 231);
+/* 去掉bootstrap图标的底部占位 */
+.bi::before, [class^="bi-"]::before, [class*=" bi-"]::before{
+  vertical-align: 0 !important;
 }
 </style>

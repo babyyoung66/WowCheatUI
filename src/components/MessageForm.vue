@@ -3,7 +3,7 @@
     <!-- 无显示意义，仅用于触发compute属性从而触发方法 -->
     <span style="display: none">{{ currentTalkUUid }}</span>
 
-    <ul ref="MessageContainer" @scroll="&quot;MessageScroll&quot;;">
+    <ul ref="MessageContainer" @scroll="'MessageScroll'">
       <li v-show="currentScrollTop <= 1 || this.currentScrollheight == this.ScrollclientHeight" class="showmore">
         <el-button @click="showMoreMessage" type="text"
           >查看更多消息...</el-button
@@ -37,7 +37,7 @@
                 :userinfo="getUserInfo(message.from)"
               ></personal-card>
               <el-image
-                :src="$store.state['list'].FriendsMap[message.from].photourl"
+                :src="getUserInfo(message.from).photourl"
                 slot="reference"
               >
               </el-image>
@@ -45,15 +45,16 @@
           </div>
           <!-- 消息及姓名 -->
           <div class="message">
-            <!-- 群聊时才显示名称 -->
+            <!-- 群聊时才显示名称,以及自身名称不显示 -->
             <p
-              v-if="$store.state['list'].messageFormType == 'group'"
+              v-show="($store.state['common'].messageFormType == 'group' && message.from != currentUserUUid) || message.from != currentUserUUid"
               class="name"
               :class="{
                 name_self: message.from == currentUserUUid,
               }"
             >
-              {{ getUserInfo(message.from).name }}
+              <span v-show="getUserInfo(message.from).friendsInfo ==null || getUserInfo(message.from).friendsInfo.remarks ==null">{{ getUserInfo(message.from).name }}</span>
+              <span v-if="getUserInfo(message.from).friendsInfo !=null && getUserInfo(message.from).friendsInfo.remarks !=null">{{ getUserInfo(message.from).friendsInfo.remarks }}</span>
             </p>
             <div
               class="contentBox"
@@ -72,6 +73,7 @@
   </div>
 </template>
 <script>
+
 import PersonalCard from '@/components/personalCard.vue'
 export default {
   name: 'MessageForm',
@@ -89,7 +91,7 @@ export default {
   },
   methods: {
     getUserInfo(uuid) {
-      return this.$store.getters['list/getUserByuuid'](uuid)
+      return this.$store.getters['common/getUserByuuid'](uuid)
     },
     //请求更多记录
     showMoreMessage() {
@@ -189,7 +191,7 @@ export default {
   },
   computed: {
     messageData() {
-      return this.$store.getters['message/getMessagesByuuid'](this.$store.state['list'].currentCheatObj.uuid)
+      return this.$store.getters['message/getMessagesByuuid'](this.$store.state['common'].currentCheatObj.uuid)
     },
     currentUserUUid() {
       return sessionStorage.getItem('uuid')
@@ -197,11 +199,12 @@ export default {
     currentTalkUUid() {
       //切换聊天对象时，将滑块置底
       this.scrollToBottom()
-      return this.$store.state['list'].currentCheatObj.uuid
+      return this.$store.state['common'].currentCheatObj.uuid
     },
 
   },
   created() {
+   
     // this.$store.commit('list/setObj')
     //console.log(this.$store.state['list'].messageList)
     //  this.ScrollElement = this.$refs['MessageContainer']
@@ -212,10 +215,13 @@ export default {
 
   },
   mounted() {
-
-
+    this.scrollToBottom()
     //添加滚动事件
     window.addEventListener('scroll', this.handleScroll, true);
+    this.$on('MessageFormScrollToBottom',()=>{
+      console.log(333)
+      this.scrollToBottom()
+    })
   },
   destroyed() {
     //离开页面时移除事件
@@ -224,7 +230,6 @@ export default {
   },
 }
 </script>
-
 
 
 <style  scoped>
@@ -304,11 +309,12 @@ li {
 }
 /* 自身发言 */
 .contentBox_self {
+  margin: 9px 6px 0 6px;
   background-color: rgb(158, 234, 106) !important;
 }
 .content {
-  padding: 6px 12px 6px 12px;
-  font-weight: 400;
+  padding: 8px 6px 8px 8px;
+  font-weight: 450;
   text-align: justify;
 }
 

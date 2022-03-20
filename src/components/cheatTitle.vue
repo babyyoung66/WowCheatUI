@@ -1,16 +1,26 @@
 <template>
   <div class="title">
-      <p class="name" v-if="cheatObj != null">{{ cheatObj.name }}</p>
-      <el-popover
-        popper-class="photoPopover"
-        placement="right-start"
-        width="200"
-        trigger="click"
-      >
-        <!-- 个人信息卡片 -->
-        <personal-card :userinfo="cheatObj"></personal-card>
-        <i class="bi bi-three-dots cardIcon" slot="reference" v-show="this.$store.state['list'].ListType == 'talkList'"></i>
-      </el-popover>
+    <p class="name" v-show="cheatObj != null && remarks == null">
+      {{ cheatObj.name }}
+    </p>
+    <!-- 有备注则展示备注 -->
+    <p class="name" v-if="cheatObj != null && remarks != null">
+      {{ cheatObj.friendsInfo.remarks }}
+    </p>
+    <el-popover
+      popper-class="photoPopover"
+      placement="right-start"
+      width="200"
+      trigger="click"
+    >
+      <!-- 个人信息卡片 -->
+      <personal-card :userinfo="cheatObj"></personal-card>
+      <i
+        class="bi bi-three-dots cardIcon"
+        slot="reference"
+        v-show="this.$store.state['common'].ListType == 'talkList' && cheatObj.uuid != null"
+      ></i>
+    </el-popover>
   </div>
 </template>
 <script>
@@ -26,12 +36,15 @@ export default {
     PersonalCard
   },
   methods: {
-
+   
   },
   computed: {
     cheatObj() {
-      // console.log(this.$store.state['common'].currentCheatObj)
-      return this.$store.state['list'].currentCheatObj
+      return this.$store.getters['common/getCurrentCheatObj']
+    },
+    //获取备注
+    remarks() {
+      return this.cheatObj == null ? null : (this.cheatObj.friendsInfo == null ? null : this.cheatObj.friendsInfo.remarks)
     }
   }
 }
@@ -43,7 +56,6 @@ p {
   margin: 0;
 }
 .title {
-  height: 100%;
   width: 100%;
   display: flex;
   justify-content: space-between;

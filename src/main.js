@@ -8,9 +8,7 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 // bootstrap图标库
 import "bootstrap-icons/font/bootstrap-icons.css"
-import { mapGetters, mapState } from 'vuex'
-Vue.prototype.mapGetters = mapGetters
-Vue.prototype.mapState = mapState
+
 
 Vue.use(ElementUI)
 Vue.config.productionTip = false
@@ -21,6 +19,13 @@ Vue.config.productionTip = false
 
 import Api from "./utils/Api"
 Vue.prototype.Api = Api
+
+import myutils from './utils/utils'
+Vue.prototype.myutils = myutils
+
+// 可以拷贝js文件分模块引入
+// import emoji from 'node-emoji'
+// Vue.prototype.emoji = emoji
 
 
 /* eslint-disable no-new */
@@ -33,16 +38,23 @@ new Vue({
 
   },
   created() {
+   
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
     if (currentUser != null) {
-      this.Api.postRequest('/ping',{}).then(res => {
-        if (res.data.success) {
+      this.Api.postRequest('/ping', {}).then(res => {
+
+        if (res != null && res.data.success) {
           this.$store.commit('DATA_INIT', currentUser)
           if (this.$route.name != '' && this.$route.name != 'cheat') {
             this.$router.replace("/cheat");
             ElementUI.Message.success({ message: '已自动登录，如需取消请重新登录，并取消记住登录选项！' });
           }
+        } else if (res == null) {
+          ElementUI.Message.error({ message: '服务器无响应！'});
+          this.$store.commit('removeState')
         }
+
+
       })
     } else {
       if (this.$route.name != 'login') {

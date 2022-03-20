@@ -81,9 +81,9 @@
       center
     >
       <!-- 二维码 -->
-      <!-- <img :src="QRCode" > -->
-      <vue-qr :logoSrc="imageUrl" :text="QRtext" :size="320"></vue-qr>
-      <span slot="footer" class="dialog-footer">
+      <!-- <img :src="QRCode" > :logoSrc="imageUrl" -->
+      <vue-qr  :text="QRtext" :size="320" :logoSrc="imageUrl" :correctLevel="0"></vue-qr>
+      <span slot="footer"  class="dialog-footer">
         <el-button @click="getQRcode" icon="el-icon-refresh">刷新</el-button>
       </span>
     </el-dialog>
@@ -103,7 +103,7 @@ export default {
       DialogVisible: false,
       QRCode: '',
       QRtext: '', //二维码内容
-      imageUrl: require('../assets/logo.png'), //二维码logo
+      imageUrl: require('../assets/cheat.png'), //二维码logo
       sum: 0,
 
       loginForm: {
@@ -141,10 +141,11 @@ export default {
           this.Sumiting = true
           //console.log(this.loginForm)
           this.Api.postRequest('/auth/login', this.loginForm).then(result => {
-            let data = result.data
-            if (data.success == true) {
+           
+            if ( result != null && result.data.success == true) {
               localStorage.setItem("remember", this.loginForm.rememberMe)
-              this.$store.commit('DATA_INIT',data.data)
+              this.$store.commit('DATA_INIT',result.data.data)
+        
               // this.$store.dispatch('initMessage',data.data)
               this.$message({
                 message: '登录成功!',
@@ -170,7 +171,7 @@ export default {
     Register() {
       this.$router.push({ path: '/Register' })
     },
-
+ 
 
   }
 }

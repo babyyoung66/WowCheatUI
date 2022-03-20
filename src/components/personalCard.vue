@@ -57,6 +57,15 @@
     </div>
     <!-- 分割线 -->
     <div class="splice"></div>
+    <!-- 备注 -->
+
+    <div
+      v-if="userinfo.friendsInfo !=null && userinfo.friendsInfo.remarks !=null && userinfo.uuid != currentUserUUid"
+      class="remarks"
+    >
+      <div class="remarksLabel">备　注</div>
+      <div class="remarks_Name"><p style="margin: 0">{{ userinfo.friendsInfo.remarks }}</p></div>
+    </div>
     <!-- 地址信息 -->
     <div class="address">
       <div class="addrTi">地　区</div>
@@ -105,6 +114,9 @@ export default {
       var imags = []
       imags.push(this.userinfo.photourl)
       return imags
+    },
+    currentUserUUid(){
+      return sessionStorage.getItem('uuid')
     }
   }
 
@@ -193,25 +205,36 @@ p {
   border-top: solid rgb(217, 217, 217) 0.1mm;
   margin: 22px 40px 0 40px;
 }
+
+.remarks {
+  width: auto;
+  height: auto;
+  padding: 20px 32px 0 32px;
+}
+.remarksLabel {
+  height: auto !important;
+}
+
 .address {
   width: auto;
   max-height: 60px;
   overflow: hidden;
-  padding: 22px 32px 0 32px;
+  margin: 8px 0 0 0 ;
+  padding: 0 32px 0 32px;
 }
-.addrTi {
-  padding: 0 10px 0 0;
+.addrTi,
+.remarksLabel {
   width: auto;
   height: 60px;
   font-size: 14px;
   color: rgb(171, 172, 173);
   float: left;
 }
-.addrdetail {
+.addrdetail,.remarks_Name {
   width: auto;
   height: auto;
-  padding: 0 0 0 20px;
-  font-size: 18px;
+  padding: 0 0 0 12px;
+  font-size: 14px;
   color: black;
   overflow: hidden;
   display: -webkit-box;

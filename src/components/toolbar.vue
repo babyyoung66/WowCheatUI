@@ -17,6 +17,18 @@
     <!-- 菜单区域 -->
     <div id="barBtn">
       <div class="toopBtnBar">
+        <!-- 公告 -->
+        <el-tooltip
+          popper-class="btnitem"
+          effect="dark"
+          content="公告"
+          placement="right"
+        > 
+          <el-button @click="changeList('notice')"
+            ><i class="bi bi-megaphone"></i> </el-button
+          >
+        </el-tooltip>
+
         <!-- 消息 -->
         <el-tooltip
           popper-class="btnitem"
@@ -60,6 +72,8 @@
 
       <!-- 底部菜单 -->
       <div class="bottomBtnBar">
+
+
         <!-- 个人中心 -->
         <el-tooltip
           popper-class="btnitem"
@@ -68,7 +82,7 @@
           placement="right"
         >
           <!-- @click="changeList('personCenter')"  -->
-          <el-button @click="test"
+          <el-button @click="changeList('personCenter')"
             ><i class="bi bi-person-circle"></i
           ></el-button>
         </el-tooltip>
@@ -128,22 +142,21 @@ export default {
 
   methods: {
     logout() {
-      this.Api.logoutRequest("/auth/logout")
+      this.Api.logoutRequest("/auth/logout")    
       this.$router.push({ path: '/login' })
+      
     },
     changeList(type) {
-      this.$store.commit('list/setListType', type)
+      this.$store.commit('common/setListType', type)
     },
     test() {
-      let  wowId ={
-        "name": "哈哈",
-        "password":"123456",
-        "oldPassword":"qwe11s011"
-}
-      // this.Api.postByXWForm('/user/editName',wowId ).then(res => {
-      //   console.log(res.data)
-      // })
-      this.$store.commit('list/INIT')
+      let user = { "wowId": 'asdadad' }
+        this.Api.postRequest("/register/isIdHasRegister", user).then(res => {
+          
+          if (res.data.success !== true) {
+            callback(new Error(res.data.message));
+          }
+        })
     }
 
   },
@@ -156,7 +169,7 @@ export default {
 
     },
     ListType() {
-      return this.$store.state['list'].ListType
+      return this.$store.state['common'].ListType
     }
 
   },
@@ -228,7 +241,6 @@ export default {
   padding: 0px;
   background-color: rgba(37, 49, 57, 0.7);
   height: 100%;
-  
 }
 #moreList li {
   padding: 10px 15px 10px 15px;

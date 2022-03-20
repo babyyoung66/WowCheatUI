@@ -41,17 +41,24 @@ axios.interceptors.response.use(success => {
   //请求成功且服务器处理无错误
   if (success.data.success) {
     let token = success.headers['newtoken']
-    if (token !== null) {
-      store.state['common'].token = token
+    let usr = JSON.parse(localStorage.getItem("currentUser")) 
+   
+    if (token !== null && token !== undefined && usr != null) {  
+      usr.token = token
+      localStorage.setItem("currentUser", JSON.stringify(usr))
     }
     return success;
   }
 
 }, error => {
-  if (error.response == null) {
-    Message.error({ message: "页面请求错误！" + error })
-    console.log(error)
-    return
+  if (error.response == null) { 
+    if(error.message == 'Network Error'){
+      Message.error({ message:  '服务器无响应！' })
+    }else{
+      Message.error({ message:  error.message })
+    }
+    
+    return 
   }
 
   if (error.response.status == 504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
@@ -109,9 +116,10 @@ const Api = {
       url: `${base}${url}`,
     })
       .then(res => {
-
+        
       }).finally(() => {
         store.commit('removeState')
+        store.commit('saveState')
       })
   },
 
