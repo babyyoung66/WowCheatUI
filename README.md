@@ -10,8 +10,8 @@ npm i element-ui -S
 npm install axios
 
 # 安装vuex
-npm install vuex@3 --save 
-npm install es6-promise --save
+## npm install vuex@3 --save 
+## npm install es6-promise --save
 
 # 安装bootstrap图标库
 npm install bootstrap-icons -g
