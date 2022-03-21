@@ -6,7 +6,7 @@ npm install vue-qr --save
 #安装element-ui
 npm i element-ui -S  
 
-##安装axios
+#安装axios
 npm install axios
 
 #安装vuex
@@ -18,6 +18,7 @@ npm install bootstrap-icons -g
 npm install vuex@3 --save 
 
 npm install es6-promise --save
+
 #JSON - form转换工具
 npm install qs --save 
 
