@@ -24,7 +24,7 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     //消息框类型(personal/group)
     messageFormType: "",
     //默认发送消息格式
-    defaultMess:{"from":'',"to":'',"content":'',"msgType":''},
+    defaultMess:{"from":'',"to":'',"content":'',"msgType":'',"time":''},
     //文件消息详细
     fileDetail:{"fileUrl":'',"fileName":'',"fileType":''}
 
