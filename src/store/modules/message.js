@@ -58,13 +58,11 @@ const mutations = {
     },
     //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "uuid": "", "message": "" }
     pushOneMessageByUUID(state, messageData) {
-        let oldmess = state.messageMap[messageData.uuid]
-        if (oldmess != null) {
+        
+        if (state.messageMap[messageData.uuid] != null) {
             //存在则追加到底部
-            let messArry = []
-            messArry = oldmess
-            messArry.push(messageData.message)
-            state.messageMap[messageData.from] = messArry
+            state.messageMap[messageData.uuid].push(messageData.message)
+           
         }else{
             let messArry = []
             messArry.push(messageData.message)
