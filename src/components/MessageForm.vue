@@ -15,8 +15,9 @@
         :ref="'msg' + index"
       >
         <!-- 时间线，十分钟内不显示，一天内显示时分，超过两天显示昨天/前天 + 时分，三天以上显示年月日时分... -->
-        <span class="time">{{ message.time }}</span>
-
+        <span v-show="message.showtime != null && message.showtime != false " class="time">{{formatTime(message.time)  }}</span>
+        <!-- 用于计算未包含showtime属性的消息 -->
+        <span v-if="message.showtime == null && showTheTime(index)" style="dispaly:none"></span>
         <!-- 消息主体 -->
         <div
           class="messageli"
@@ -75,6 +76,7 @@
 <script>
 
 import PersonalCard from '@/components/personalCard.vue'
+import TimeUtils from '@/utils/TimeUtils'
 export default {
   name: 'MessageForm',
   components: {
@@ -87,6 +89,9 @@ export default {
       ScrollclientHeight: 0,
       //保证只开启了一个定时器
       scrollTimeIsOpen: false,
+      NeedScrool:false,
+      //上一个显示的时间
+      lastShowTime:''
     }
   },
   methods: {
@@ -123,6 +128,53 @@ export default {
       })
     },
 
+    formatTime(time){
+        return TimeUtils.formatForDetial(time)
+    },
+    //是否显示时间，与上个显示的时间差大于等于5分钟则显示
+    showTheTime(index){
+      let isShow = this.messageData[index].showtime
+      //已标记则直接返回
+      if(isShow != null && isShow != 'undefined'){
+        //记录当前显示时间
+        if(this.messageData[index].showtime){
+          this.lastShowTime = this.messageData[index].time
+        }
+        return this.messageData[index].showtime
+      }
+
+      if(index == 0){
+        this.lastShowTime = this.messageData[0].time
+        //设置显示时间标识
+        this.$set(this.messageData[0],"showtime",true)  
+        return true
+      }   
+      //防止刷新后 lastShowTime 消失
+      if(this.lastShowTime == '' || this.lastShowTime == null){
+        //倒序遍历消息列表,取出倒数第一个设置为显示的时间
+        let len = this.messageData.length
+        for(let i= len - 1;i >= 0;i--){
+          if(this.messageData[i].showtime){
+            this.lastShowTime = this.messageData[i].time
+            break
+          }
+          
+        }
+      } 
+      let suffix = this.messageData[index]
+      let diff = TimeUtils.ComputeDiffMinutes(this.lastShowTime,suffix.time)
+      if(diff >= 5){
+        this.lastShowTime = this.messageData[index].time
+        this.$set(this.messageData[index],"showtime",true)  
+        return true
+      }else{
+        //与上一显示时间差不足5分钟则不显示
+        this.$set(this.messageData[index],"showtime",false)  
+        return false
+      }
+      
+    },
+
     //是否为NULL
     isNull(value) {
       if (value == null || typeof (value) == 'undefined' || value == undefined) {
@@ -153,7 +205,7 @@ export default {
       let isNeedScrool = this.isNeedToScroll()
       if (!this.scrollTimeIsOpen && isNeedScrool) {
         this.scrollTimeIsOpen = true
-        // console.log("打开定时器")
+        //console.log("打开定时器")
         var scrollTimer = setInterval(() => {
           let isNeed = this.isNeedToScroll()
           if (isNeed) {
@@ -182,15 +234,21 @@ export default {
       if(clientHeight == height){
         return false
       }
-      if (count >= height ) {
+      if (count >= height - 5 ) {
+        this.NeedScrool = true
         return true
       }  
+      this.NeedScrool = false
       return false
     }
 
   },
   computed: {
     messageData() {
+      //数据变动时，判断是否需要滚动
+      if(this.NeedScrool){
+        this.scrollToBottom()
+      }
       return this.$store.getters['message/getMessagesByuuid'](this.$store.state['common'].currentCheatObj.uuid)
     },
     currentUserUUid() {
@@ -204,10 +262,6 @@ export default {
 
   },
   created() {
-   
-    // this.$store.commit('list/setObj')
-    //console.log(this.$store.state['list'].messageList)
-    //  this.ScrollElement = this.$refs['MessageContainer']
 
   },
   watch: {
@@ -218,10 +272,9 @@ export default {
     this.scrollToBottom()
     //添加滚动事件
     window.addEventListener('scroll', this.handleScroll, true);
-    this.$on('MessageFormScrollToBottom',()=>{
-      console.log(333)
-      this.scrollToBottom()
-    })
+    // this.$on('MessageFormScrollToBottom',()=>{
+    //   this.scrollToBottom()
+    // })
   },
   destroyed() {
     //离开页面时移除事件
