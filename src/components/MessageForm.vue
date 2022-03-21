@@ -1,10 +1,16 @@
 <template>
   <div class="messageForm">
-    <!-- 无显示意义，仅用于触发compute属性从而触发方法 -->
-    <span style="display: none">{{ currentTalkUUid }}</span>
+    <!-- 为了触发compute属性切换用户，无显示意义 -->
+    <span style="display: none">{{ currentTalkObj }}</span>
 
-    <ul ref="MessageContainer" @scroll="'MessageScroll'">
-      <li v-show="currentScrollTop <= 1 || this.currentScrollheight == this.ScrollclientHeight" class="showmore">
+    <ul ref="MessageContainer" @scroll="&quot;MessageScroll&quot;;">
+      <li
+        v-show="
+          currentScrollTop <= 1 ||
+          this.currentScrollheight == this.ScrollclientHeight
+        "
+        class="showmore"
+      >
         <el-button @click="showMoreMessage" type="text"
           >查看更多消息...</el-button
         >
@@ -15,14 +21,24 @@
         :ref="'msg' + index"
       >
         <!-- 时间线，十分钟内不显示，一天内显示时分，超过两天显示昨天/前天 + 时分，三天以上显示年月日时分... -->
-        <span v-show="message.showtime != null && message.showtime != false " class="time">{{formatTime(message.time)  }}</span>
+        <div style="text-align: center;">
+          <span
+            v-show="message.showtime != null && message.showtime != false"
+            class="time"
+            >{{ formatTime(message.time) }}</span
+          >
+        </div>
+
         <!-- 用于计算未包含showtime属性的消息 -->
-        <span v-if="message.showtime == null && showTheTime(index)" style="dispaly:none"></span>
+        <span
+          v-if="message.showtime == null && showTheTime(index)"
+          style="dispaly: none"
+        ></span>
         <!-- 消息主体 -->
         <div
           class="messageli"
           :class="{
-            messageli_self: message.from == currentUserUUid,
+            messageli_self: message.from == currentUser.uuid,
           }"
         >
           <!-- 头像 -->
@@ -48,24 +64,52 @@
           <div class="message">
             <!-- 群聊时才显示名称,以及自身名称不显示 -->
             <p
-              v-show="($store.state['common'].messageFormType == 'group' && message.from != currentUserUUid) || message.from != currentUserUUid"
+              v-show="
+                ($store.state['common'].messageFormType == 'group' &&
+                  message.from != currentUser.uuid) ||
+                message.from != currentUser.uuid
+              "
               class="name"
               :class="{
-                name_self: message.from == currentUserUUid,
+                name_self: message.from == currentUser.uuid,
               }"
             >
-              <span v-show="getUserInfo(message.from).friendsInfo ==null || getUserInfo(message.from).friendsInfo.remarks ==null">{{ getUserInfo(message.from).name }}</span>
-              <span v-if="getUserInfo(message.from).friendsInfo !=null && getUserInfo(message.from).friendsInfo.remarks !=null">{{ getUserInfo(message.from).friendsInfo.remarks }}</span>
+              <span
+                v-show="
+                  getUserInfo(message.from).concatInfo == null ||
+                  getUserInfo(message.from).concatInfo.remarks == null
+                "
+                >{{ getUserInfo(message.from).name }}</span
+              >
+              <span
+                v-if="
+                  getUserInfo(message.from).concatInfo != null &&
+                  getUserInfo(message.from).concatInfo.remarks != null
+                "
+                >{{ getUserInfo(message.from).concatInfo.remarks }}</span
+              >
             </p>
+
             <div
               class="contentBox"
               :class="{
-                contentBox_self: message.from == currentUserUUid,
+                contentBox_self: message.from == currentUser.uuid,
               }"
             >
+              <!-- 消息 -->
               <p class="content">
                 {{ message.content }}
               </p>
+
+              <!-- 侧边小箭头 -->
+              <div
+                :class="{
+                  container__arrow_rt: message.from == currentUser.uuid,
+                  shelfColor: message.from == currentUser.uuid,
+                  container__arrow_lt: message.from != currentUser.uuid,
+                }"
+                class="container__arrow"
+              ></div>
             </div>
           </div>
         </div>
@@ -89,9 +133,9 @@ export default {
       ScrollclientHeight: 0,
       //保证只开启了一个定时器
       scrollTimeIsOpen: false,
-      NeedScrool:false,
+      NeedScrool: false,
       //上一个显示的时间
-      lastShowTime:''
+      lastShowTime: ''
     }
   },
   methods: {
@@ -107,12 +151,12 @@ export default {
         firstmess = this.messageData[0]
       }
       //防止为空时好友id不存在
-      this.$set(firstmess, "to", this.currentTalkUUid)
+      this.$set(firstmess, "to", this.currentTalkObj.uuid)
       this.Api.postRequest('/message/getByPage', firstmess).then(res => {
         if (res.data.success) {
           let mess = res.data.data
           if (mess != null && mess.length > 0) {
-            let msgData = { "uuid": this.currentTalkUUid, "message": mess }
+            let msgData = { "user": this.currentTalkObj, "message": mess }
             this.$store.commit('message/pushMessageArryByUUIDOnTop', msgData)
             // this.scrollToTop()
           } else {
@@ -128,51 +172,51 @@ export default {
       })
     },
 
-    formatTime(time){
-        return TimeUtils.formatForDetial(time)
+    formatTime(time) {
+      return TimeUtils.formatForDetial(time)
     },
     //是否显示时间，与上个显示的时间差大于等于5分钟则显示
-    showTheTime(index){
+    showTheTime(index) {
       let isShow = this.messageData[index].showtime
       //已标记则直接返回
-      if(isShow != null && isShow != 'undefined'){
+      if (isShow != null && isShow != 'undefined') {
         //记录当前显示时间
-        if(this.messageData[index].showtime){
+        if (this.messageData[index].showtime) {
           this.lastShowTime = this.messageData[index].time
         }
         return this.messageData[index].showtime
       }
 
-      if(index == 0){
+      if (index == 0) {
         this.lastShowTime = this.messageData[0].time
         //设置显示时间标识
-        this.$set(this.messageData[0],"showtime",true)  
+        this.$set(this.messageData[0], "showtime", true)
         return true
-      }   
+      }
       //防止刷新后 lastShowTime 消失
-      if(this.lastShowTime == '' || this.lastShowTime == null){
+      if (this.lastShowTime == '' || this.lastShowTime == null) {
         //倒序遍历消息列表,取出倒数第一个设置为显示的时间
         let len = this.messageData.length
-        for(let i= len - 1;i >= 0;i--){
-          if(this.messageData[i].showtime){
+        for (let i = len - 1; i >= 0; i--) {
+          if (this.messageData[i].showtime) {
             this.lastShowTime = this.messageData[i].time
             break
           }
-          
+
         }
-      } 
+      }
       let suffix = this.messageData[index]
-      let diff = TimeUtils.ComputeDiffMinutes(this.lastShowTime,suffix.time)
-      if(diff >= 5){
+      let diff = TimeUtils.ComputeDiffMinutes(this.lastShowTime, suffix.time)
+      if (diff >= 5) {
         this.lastShowTime = this.messageData[index].time
-        this.$set(this.messageData[index],"showtime",true)  
+        this.$set(this.messageData[index], "showtime", true)
         return true
-      }else{
+      } else {
         //与上一显示时间差不足5分钟则不显示
-        this.$set(this.messageData[index],"showtime",false)  
+        this.$set(this.messageData[index], "showtime", false)
         return false
       }
-      
+
     },
 
     //是否为NULL
@@ -210,7 +254,7 @@ export default {
           let isNeed = this.isNeedToScroll()
           if (isNeed) {
             this.scrollToBottom()
-          }else {
+          } else {
             //不在底部时，关闭定时器
             clearInterval(scrollTimer)
             this.scrollTimeIsOpen = false
@@ -231,13 +275,13 @@ export default {
       this.currentScrollTop = top
       this.currentScrollheight = height
       this.ScrollclientHeight = clientHeight
-      if(clientHeight == height){
+      if (clientHeight == height) {
         return false
       }
-      if (count >= height - 5 ) {
+      if (count >= height - 5) {
         this.NeedScrool = true
         return true
-      }  
+      }
       this.NeedScrool = false
       return false
     }
@@ -246,18 +290,18 @@ export default {
   computed: {
     messageData() {
       //数据变动时，判断是否需要滚动
-      if(this.NeedScrool){
+      if (this.NeedScrool) {
         this.scrollToBottom()
       }
       return this.$store.getters['message/getMessagesByuuid'](this.$store.state['common'].currentCheatObj.uuid)
     },
-    currentUserUUid() {
-      return sessionStorage.getItem('uuid')
+    currentUser() {
+      return this.$store.state['common'].currentUser
     },
-    currentTalkUUid() {
+    currentTalkObj() {
       //切换聊天对象时，将滑块置底
       this.scrollToBottom()
-      return this.$store.state['common'].currentCheatObj.uuid
+      return this.$store.state['common'].currentCheatObj
     },
 
   },
@@ -292,6 +336,7 @@ ul,
 li {
   padding: 0;
   margin: 0;
+  
 }
 .messageForm {
   width: 100%;
@@ -305,11 +350,12 @@ li {
 .messageForm li {
   /* border: solid black 1px; */
   margin: 0 28px 0 28px;
-  padding: 10px 0 10px 0;
+  padding: 5px 0 5px 0;
   list-style: none;
   display: flex;
   flex-direction: column;
 }
+/* 查询更多聊天记录 */
 .showmore {
   padding: 5px 0 0 0 !important;
 }
@@ -318,9 +364,13 @@ li {
   padding: 0;
   margin: 0;
 }
+/* 时间 */
 .time {
   color: rgb(129, 129, 129);
   font-size: 12px;
+  background: rgb(218,218,218);
+  padding: 1px 4px 1px 4px;
+  border-radius: 2px;
 }
 .messageli {
   display: flex;
@@ -355,7 +405,7 @@ li {
   text-align: right;
 }
 .contentBox {
-  margin: 8px 6px 0 6px;
+  margin: 4px 6px 0 6px;
   background-color: rgb(255, 255, 255);
   border-radius: 6px;
   border: solid 0.01px rgb(230, 225, 225);
@@ -369,6 +419,41 @@ li {
   padding: 8px 6px 8px 8px;
   font-weight: 450;
   text-align: justify;
+}
+/* 设置小箭头 */
+.contentBox {
+  position: relative;
+}
+.container__arrow {
+  /* Size */
+  height: 6px;
+  width: 6px;
+  background-color: rgb(255, 255, 255);
+  position: absolute;
+}
+.shelfColor {
+  background-color: rgb(158, 234, 106) !important;
+}
+/* 右小箭头 */
+.container__arrow_rt {
+  /* Position at the right top corner */
+  right: 0;
+  top: 8px;
+  /* Border */
+  border-right: solid 0.01px rgb(230, 225, 225);
+  border-top: solid 0.01px rgb(230, 225, 225);
+  transform: translate(50%, 50%) rotate(45deg);
+}
+
+/* 左小箭头 */
+.container__arrow_lt {
+  /* Position at the right top corner */
+  left: 0;
+  top: 2px;
+  /* Border */
+  border-left: solid 0.01px rgb(230, 225, 225);
+  border-bottom: solid 0.01px rgb(230, 225, 225);
+  transform: translate(-50%, 50%) rotate(45deg);
 }
 
 /* 将滚动调设置成悬停出现 */
