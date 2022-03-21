@@ -10,14 +10,11 @@ npm i element-ui -S
 npm install axios
 
 # 安装vuex
-npm install vuex -g
+npm install vuex@3 --save 
+npm install es6-promise --save
 
 # 安装bootstrap图标库
 npm install bootstrap-icons -g
-
-npm install vuex@3 --save 
-
-npm install es6-promise --save
 
 # JSON - form转换工具
 npm install qs --save 
