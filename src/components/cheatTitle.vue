@@ -5,7 +5,7 @@
     </p>
     <!-- 有备注则展示备注 -->
     <p class="name" v-if="cheatObj != null && remarks != null">
-      {{ cheatObj.friendsInfo.remarks }}
+      {{ cheatObj.concatInfo.remarks }}
     </p>
     <el-popover
       popper-class="photoPopover"
@@ -44,7 +44,7 @@ export default {
     },
     //获取备注
     remarks() {
-      return this.cheatObj == null ? null : (this.cheatObj.friendsInfo == null ? null : this.cheatObj.friendsInfo.remarks)
+      return this.cheatObj == null ? null : (this.cheatObj.concatInfo == null ? null : this.cheatObj.concatInfo.remarks)
     }
   }
 }
