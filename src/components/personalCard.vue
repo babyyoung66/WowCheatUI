@@ -60,11 +60,11 @@
     <!-- 备注 -->
 
     <div
-      v-if="userinfo.friendsInfo !=null && userinfo.friendsInfo.remarks !=null && userinfo.uuid != currentUserUUid"
+      v-if="userinfo.concatInfo !=null && userinfo.concatInfo.remarks !=null && userinfo.uuid != currentUserUUid"
       class="remarks"
     >
       <div class="remarksLabel">备　注</div>
-      <div class="remarks_Name"><p style="margin: 0">{{ userinfo.friendsInfo.remarks }}</p></div>
+      <div class="remarks_Name"><p style="margin: 0">{{ userinfo.concatInfo.remarks }}</p></div>
     </div>
     <!-- 地址信息 -->
     <div class="address">
@@ -116,7 +116,7 @@ export default {
       return imags
     },
     currentUserUUid(){
-      return sessionStorage.getItem('uuid')
+      return this.$store.state['common'].currentUser.uuid
     }
   }
 

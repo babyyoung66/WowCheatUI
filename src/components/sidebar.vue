@@ -32,7 +32,7 @@
         >
           <span v-if="setClikIndex(it, index)" style="display: none"></span>
           <!-- 消息红点 -->
-          <el-badge :is-dot="it.uncheck" class="item">
+          <el-badge :is-dot="it.concatInfo != null && it.concatInfo.unReadTotal != null && it.concatInfo.unReadTotal != 0" class="dotitem">
             <!-- 头像 -->
             <el-image fit="cover" :src="it.photourl" lazy> </el-image>
           </el-badge>
@@ -41,17 +41,17 @@
             <div class="namewithTime">
               <!-- 名称 -->
               <span
-                v-if="it.friendsInfo == null || it.friendsInfo.remarks == null"
+                v-if="it.concatInfo == null || it.concatInfo.remarks == null"
                 class="name"
                 style="font-size: 18px"
                 >{{ it.name }}</span
               >
               <!-- 有备注则显示备注 -->
               <span
-                v-if="it.friendsInfo != null && it.friendsInfo.remarks != null"
+                v-if="it.concatInfo != null && it.concatInfo.remarks != null"
                 class="name"
                 style="font-size: 18px"
-                >{{ it.friendsInfo.remarks }}</span
+                >{{ it.concatInfo.remarks }}</span
               >
 
               <!-- 时间，取最近一条记录的时间，判断与当前时间间隔，分别显示昨天、前天、七天内显示星期、七天以上显示具体年月日 -->
@@ -60,8 +60,10 @@
               }}</span>
             </div>
             <div class="recMessage">
-              <p class="mess" v-show="getLastMess(it.uuid) != null">
-                <!-- this is a recently message6666666666666666666666 -->
+              <p class="unReadTotal" v-if="it.concatInfo != null && it.concatInfo.unReadTotal != null && it.concatInfo.unReadTotal != 0">
+                [{{ it.concatInfo.unReadTotal }}条]
+              </p>
+              <p class="mess" v-if="getLastMess(it.uuid) != null">
                 {{ getLastMess(it.uuid)["content"] }}
               </p>
             </div>
@@ -89,7 +91,7 @@
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
           <span
-            v-if="it.friendsInfo == null || it.friendsInfo.remarks == null"
+            v-if="it.concatInfo == null || it.concatInfo.remarks == null"
             class="name"
             style="font-size: 18px; padding: 0 30px 0 15px"
           >
@@ -97,11 +99,11 @@
           </span>
           <!-- 备注 -->
           <span
-            v-if="it.friendsInfo != null && it.friendsInfo.remarks != null"
+            v-if="it.concatInfo != null && it.concatInfo.remarks != null"
             class="name"
             style="font-size: 18px; padding: 0 30px 0 15px"
           >
-            {{ it.friendsInfo.remarks }}
+            {{ it.concatInfo.remarks }}
           </span>
         </li>
       </ul>
@@ -155,7 +157,7 @@ export default {
     // 模糊查询
     fuzzyFilter(queryString) {
       return (restaurant) => {
-        let remarksInfo = restaurant.friendsInfo != null && restaurant.friendsInfo.remarks != null ? restaurant.friendsInfo.remarks : null
+        let remarksInfo = restaurant.concatInfo != null && restaurant.concatInfo.remarks != null ? restaurant.concatInfo.remarks : null
         //跟据name或id匹配查询结果 indexOf >= 0则模糊匹配，indexOf == 0则精确匹配
         return (remarksInfo != null && remarksInfo.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
       };
@@ -220,35 +222,27 @@ export default {
     //将搜索内容放到li首位
     moveToTop(item) {
       this.$store.commit('common/setUserOnTopOfTalkList', item)
-      // let i = 0
-      // if (this.list != null) {
-      //   this.list.forEach(element => {
-      //     if (element.uuid === item.uuid) {
-      //       this.list.splice(i, 1)
-      //       return
-      //     }
-      //     i++
-      //   });
-      // }
-      // this.list.unshift(item)
-      //console.log(this.ListData)
     },
 
     // 选择列表内容时
     SelectList(item, index) {
+
+      //切换聊天框类型
+      this.changeMessageFormType(item)
       if (this.ListType == '' || this.ListType == null) {
         this.$store.commit('common/setListType', 'talkList')
       }
-      if (this.ListType == 'talkList') {
+      if (this.ListType == 'talkList' && this.TalkSelectIndex != index) {
         this.TalkSelectIndex = index
         this.list[index].uncheck = false
         this.$store.commit('common/setCurrentCheatObj', item)
+        //设置好友联系时间
+        this.$store.commit('common/upDateConcatTime')
       }
-      if (this.ListType == 'friend') {
+      if (this.ListType == 'friend' && this.FriendSelectIndex != index) {
         this.FriendSelectIndex = index
       }
-      //切换聊天框类型
-      this.changeMessageFormType(item)
+
     },
     //根据当前聊天对象设置已选
     setClikIndex(item, index) {
@@ -278,8 +272,8 @@ export default {
     },
 
     //在选择列表对象，或者搜索到的对象时，根据对象type更改当前聊天框类型
-    changeMessageFormType(item){
-        this.$store.commit('common/setmessageFormType',item.type)
+    changeMessageFormType(item) {
+      this.$store.commit('common/setmessageFormType', item.type)
     },
 
     MyscrollTo(num) {
@@ -403,7 +397,7 @@ ul {
   border-radius: 0;
 }
 .listbox .el-badge {
-  padding: 5px 0 0 10px;
+  margin: 5px 0 0 10px;
   align-items: center;
 }
 .namewithTime {
@@ -423,7 +417,7 @@ ul {
   padding: 0 0 0 14px;
 }
 .peopleinfo .time,
-.mess {
+.mess,.unReadTotal{
   color: rgb(129, 129, 129);
   font-size: 12px;
 }
@@ -431,6 +425,7 @@ ul {
   width: auto;
   padding: 0 16px 0 0;
 }
+
 /* 超宽的名字和消息使用省略号 */
 .name,
 .recMessage .mess {
@@ -441,6 +436,16 @@ ul {
   text-overflow: ellipsis;
   text-align: left;
   padding: 0 25px 0 0;
+}
+.recMessage{
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row;
+}
+.unReadTotal{
+  width: auto;
+  white-space: nowrap;
+  padding: 0 4px 0 0;
 }
 </style>
 

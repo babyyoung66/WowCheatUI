@@ -143,13 +143,34 @@ const mutations = {
             state.talkList.forEach(element => {
                 //列表已存在该用户时，则先删除
                 if (element.uuid === user.uuid) {
-                    state.talkList.splice(i, 1)
+                    state.talkList.splice(i, 1)     
                     return
                 }
                 i++
             });
         }
         state.talkList.unshift(user)
+        
+    },
+    //更新好友或群聊联系时间
+    upDateConcatTime(state){
+        if(state.currentCheatObj.uuid == '' || state.currentCheatObj.uuid == null || state.currentCheatObj.uuid == undefined){
+            return
+        }
+        if(state.currentCheatObj.concatInfo.unReadTotal <= 0){
+            //未读已清0，不重复请求
+            return
+        }
+        if(state.messageFormType == 'personal'){
+            //个人
+            state.currentCheatObj.concatInfo.unReadTotal = 0  //未读清0
+            Api.postByXWForm('/friend/UpdateConcatTime',{"uuid":state.currentCheatObj.uuid})
+
+        }else if(state.messageFormType == 'group'){
+            //群聊
+            state.currentCheatObj.concatInfo.unReadTotal = 0  //未读清0
+            Api.postByXWForm('/group/UpdateConcatTime',{"uuid":state.currentCheatObj.uuid})
+        }
     }
 
 

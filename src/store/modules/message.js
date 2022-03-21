@@ -42,9 +42,9 @@ const mutations = {
         var key = 'message_' + uuid
         sessionStorage.setItem(key, JSON.stringify(state))
     },
-    //获取聊天记录（未被初始化时），请求格式 { "uuid": "", "message": "" }
+    //获取聊天记录（未被初始化时），请求格式 { "user": "", "message": "" }
     setMessageMapByUUID(state, messageData) {
-        let oldmess = state.messageMap[messageData.uuid]
+        let oldmess = state.messageMap[messageData.user.uuid]
         //判断是否已存在旧数据
         if (oldmess != null) {
             //存在说明已经初始化，不操作
@@ -52,30 +52,31 @@ const mutations = {
             // let cout = newmess.concat(oldmess)
             // Vue.set(state.messageMap, messageData.uuid, cout)
         } else {
-            Vue.set(state.messageMap, messageData.uuid, messageData.message)
+            Vue.set(state.messageMap, messageData.user.uuid, messageData.message)
         }
 
     },
-    //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "uuid": "", "message": "" }
+    //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "user": "", "message": "" }
     pushOneMessageByUUID(state, messageData) {
-        
-        if (state.messageMap[messageData.uuid] != null) {
+        //置顶用户
+        this.commit('common/setUserOnTopOfTalkList',messageData.user)
+        if (state.messageMap[messageData.user.uuid] != null) {
             //存在则追加到底部
-            state.messageMap[messageData.uuid].push(messageData.message)
+            state.messageMap[messageData.user.uuid].push(messageData.message)
            
         }else{
             let messArry = []
             messArry.push(messageData.message)
-            Vue.set(state.messageMap, messageData.uuid, messArry)
+            Vue.set(state.messageMap, messageData.user.uuid, messArry)
         }
         
     },
-    // 查询或追加历史聊天记录,请求格式 { "uuid": "", "message": "" }
+    // 查询或追加历史聊天记录,请求格式 { "user": "", "message": "" }
     pushMessageArryByUUIDOnTop(state, messageData) {
         if(messageData ==null || messageData.length == 0){
             return
         }   
-        let uid = messageData.uuid
+        let uid = messageData.user.uuid
         let oldmess = state.messageMap[uid]
         if(oldmess !== null){
             //存在则追加到底部
