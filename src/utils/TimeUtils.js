@@ -35,7 +35,7 @@ const TimeUtils = {
         let day = new Date(time)
         let between = now.getDate() - day.getDate()
         if (1 > between && between >= 0) {
-            return day.getHours() + ':' + day.getMinutes()
+           return  this.dateForMat("hh:mm",day)
         }
         if (2 > between && between >= 1) {
             return '昨天'
@@ -69,7 +69,7 @@ const TimeUtils = {
         let day = new Date(time)
         let between = now.getDate() - day.getDate()
         if (1 > between && between >= 0) {
-            return day.getHours() + ':' + day.getMinutes()
+            return  this.dateForMat("hh:mm",day)
         }
         if (2 > between && between >= 1) {
             return '昨天'
@@ -82,11 +82,11 @@ const TimeUtils = {
             if (now.getDay() == 0 || weekdif > 0) {
                 return week[day.getDay()]
             } else {
-                return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + day.getHours() + ':' + day.getMinutes()
+                return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + this.dateForMat("hh:mm",day)
             }
         }
         if (between >= 7) {
-            return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + day.getHours() + ':' + day.getMinutes()
+            return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + this.dateForMat("hh:mm",day)
         }
     },
 
