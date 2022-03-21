@@ -70,23 +70,29 @@
         :label-width="this.formLabelWidth"
         prop="code"
       >
-        <el-input
-          :disabled="!this.EmailisOk"
-          type="text"
-          placeholder="请输入邮箱验证码"
-          v-model="registerForm.code"
-          maxlength="6"
-          show-word-limit
-          clearable
-        >
-        </el-input>
-        <el-button
-          @click="getEmailCode()"
-          :disabled="!this.EmailisOk || this.Btntimer !== '获取验证码'"
-          style="margin-left: 10px; padding: 12px 12px 12px 12px; width: 100px"
-          type="primary"
-          >{{ Btntimer }}</el-button
-        >
+        <div style="display: flex; justify-content: space-between">
+          <el-input
+            :disabled="!this.EmailisOk"
+            type="text"
+            placeholder="请输入邮箱验证码"
+            v-model="registerForm.code"
+            maxlength="6"
+            show-word-limit
+            clearable
+          >
+          </el-input>
+          <el-button
+            @click="getEmailCode()"
+            :disabled="!this.EmailisOk || this.Btntimer !== '获取验证码'"
+            style="
+              margin-left: 10px;
+              padding: 12px 12px 12px 12px;
+              width: 100px;
+            "
+            type="primary"
+            >{{ Btntimer }}</el-button
+          >
+        </div>
       </el-form-item>
     </el-form>
     <div>
@@ -179,7 +185,7 @@ export default {
         }
         let user = { "wowId": value }
         this.Api.postRequest("/register/isIdHasRegister", user).then(res => {
-          
+
           if (res.data.success !== true) {
             callback(new Error(res.data.message));
           }
@@ -224,7 +230,7 @@ export default {
         code: ''
       },
 
-      
+
       registerRules: {
         name: [
           { required: true, message: '请输入名称!', trigger: 'blur' },
@@ -354,12 +360,8 @@ export default {
   background-clip: padding-box;
   padding: 25px 35px 25px 35px;
 }
-.RegisterContainer .el-form-item__content {
-  display: flex;
-  justify-content: space-between;
-}
+
 .RegisterContainer .el-form {
   margin-right: 15px;
 }
-
 </style>
