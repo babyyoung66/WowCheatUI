@@ -19,3 +19,9 @@ npm install qs --save
 
 #表情库，可以不用引入，直接拷贝js对象（https://www.npmjs.com/package/node-emojis）
 npm install --save node-emoji
+
+## socketjs
+# npm install sockjs-client --save
+
+## stompjs
+# npm install stompjs --save
