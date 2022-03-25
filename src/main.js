@@ -38,31 +38,41 @@ new Vue({
 
   },
   created() {
-   
+    //测试服务是否可用
+    this.Api.postRequest('/ping',{})
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
+    let isInit = JSON.parse(sessionStorage.getItem("isInit"))
     if (currentUser != null) {
-      this.Api.postRequest('/ping', {}).then(res => {
-
-        if (res != null && res.data.success) {
-          this.$store.commit('DATA_INIT', currentUser)
-          if (this.$route.name != '' && this.$route.name != 'cheat') {
-            this.$router.replace("/cheat");
-            ElementUI.Message.success({ message: '已自动登录，如需取消请重新登录，并取消记住登录选项！' });
-          }
-        } else if (res == null) {
-          ElementUI.Message.error({ message: '服务器无响应！'});
-          this.$store.commit('removeState')
+      if (isInit != null && isInit == true) {
+        if (this.$route.name != '' && this.$route.name != 'cheat') {
+          this.$router.replace("/cheat");
+          ElementUI.Message.success({
+            message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
+            duration: 4500
+          });
         }
+        return
+      }
+      this.$store.commit('DATA_INIT', currentUser)
+      if (this.$route.name != '' && this.$route.name != 'cheat') {
+        this.$router.replace("/cheat");
+      }
+      ElementUI.Message.success({
+        message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
+        duration: 6500
+      });
 
-
-      })
-    } else {
+    } 
+    if(currentUser == null && !isInit) {
       if (this.$route.name != 'login') {
         ElementUI.Message.error({ message: '尚未登录，请登录!' });
         this.$router.replace("/login");//跳转到登陆页
       }
     }
 
+  },
+  mounted() {
+    // let Ping = setInterval({},10000)
   },
   template: '<App/>',
 
