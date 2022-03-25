@@ -14,11 +14,11 @@ axios.defaults.timeout = 5000
 //axios.defaults.withCredentials = true
 
 /* 请求服务地址 */
-const base = 'http://127.0.0.1:8080';
+const base = 'http://127.0.0.1:9999';
 
 //给全局请求添加Token
 axios.interceptors.request.use(config => {
-  const local = JSON.parse(localStorage.getItem("currentUser"))
+  let local = JSON.parse(sessionStorage.getItem("currentUser"))      
   if (local != null) {
     const token = local.token
     if (token != null && token != "") {
@@ -41,11 +41,17 @@ axios.interceptors.response.use(success => {
   //请求成功且服务器处理无错误
   if (success.data.success) {
     let token = success.headers['newtoken']
-    let usr = JSON.parse(localStorage.getItem("currentUser")) 
-   
-    if (token !== null && token !== undefined && usr != null) {  
-      usr.token = token
-      localStorage.setItem("currentUser", JSON.stringify(usr))
+    
+    if (token !== null && token !== undefined ) {    
+      let localusr = JSON.parse(localStorage.getItem("currentUser")) 
+      if(localusr != null){
+        localusr.token = token
+        localStorage.setItem("currentUser", JSON.stringify(localusr))
+      }
+      let sessionusr = JSON.parse(sessionStorage.getItem("currentUser")) 
+      sessionusr.token = token
+      sessionStorage.setItem("currentUser", JSON.stringify(sessionusr))
+      
     }
     return success;
   }

@@ -145,14 +145,15 @@ export default {
             if ( result != null && result.data.success == true) {
               localStorage.setItem("remember", this.loginForm.rememberMe)
               this.$store.commit('DATA_INIT',result.data.data)
-        
-              // this.$store.dispatch('initMessage',data.data)
+              //是否记住用户
+              if(this.loginForm.rememberMe){
+                  localStorage.setItem("currentUser", JSON.stringify(result.data.data))
+              }
               this.$message({
                 message: '登录成功!',
                 type: 'success'
               });
               this.$router.push({ path: '/cheat' })
-
             }
 
           })

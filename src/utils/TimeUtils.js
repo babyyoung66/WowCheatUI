@@ -1,5 +1,16 @@
 // 计算时间
 const TimeUtils = {
+    //获取时间戳
+    getMillis(time){
+        if (time == null || time == '' || time == null || time == '' || typeof(time) == 'object') {
+            return new Date().getTime()
+        }
+
+        if (time.indexOf("-") != -1) {
+            time = time.replace(/-/g, '/')
+        }
+        return new Date(time).getTime()
+    },
     // 计算时差（单位：分）
     ComputeDiffMinutes(before, after) {
         if (before == null || before == '' || after == null || after == '') {
@@ -72,15 +83,15 @@ const TimeUtils = {
             return  this.dateForMat("hh:mm",day)
         }
         if (2 > between && between >= 1) {
-            return '昨天'
+            return '昨天　' + this.dateForMat("hh:mm",day)
         }
         if (3 > between && between >= 2) {
-            return '前天'
+            return '前天　' + this.dateForMat("hh:mm",day)
         }
         if (7 > between && between >= 3) {
             let weekdif = now.getDay() - day.getDay()
             if (now.getDay() == 0 || weekdif > 0) {
-                return week[day.getDay()]
+                return week[day.getDay()] + '　' + this.dateForMat("hh:mm",day)
             } else {
                 return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + this.dateForMat("hh:mm",day)
             }
@@ -89,7 +100,12 @@ const TimeUtils = {
             return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日　' + this.dateForMat("hh:mm",day)
         }
     },
+    dateForMatDefault(date){
+        let fmt = "yyyy-MM-dd hh:mm:ss.S"
+        return this.dateForMat(fmt, date)
+    },
 
+    // mess.time = TimeUtils.dateForMat("yyyy-MM-dd hh:mm:ss.S",new Date())
     dateForMat(fmt, date) { 
         var o = {
             "M+": date.getMonth() + 1,                 //月份   

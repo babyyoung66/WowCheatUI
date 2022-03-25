@@ -1,7 +1,7 @@
 <template>
   <div
     id="app"
-    v-loading="isInit != 0 && isInit != null"
+    v-loading="isInit == null || !isInit"
     element-loading-text="正在初始化数据..."
   >
     <!-- 头像信息 -->
@@ -14,12 +14,18 @@
     </div>
     <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
-      <div class="title" v-show="listType == 'talkList' || listType == 'notice'  " >
-          <cheatTitle></cheatTitle>
-        </div>
+      <div
+        class="title"
+        v-show="listType == 'talkList' || listType == 'notice'"
+      >
+        <cheatTitle></cheatTitle>
+      </div>
       <div
         class="cheatMain"
-        v-show="listType == 'talkList' && this.$store.state['common'].currentCheatObj.uuid != null"
+        v-show="
+          listType == 'talkList' &&
+          this.$store.state['common'].currentCheatObj.uuid != null
+        "
       >
         <!-- 消息栏 -->
         <div class="message">
@@ -34,15 +40,18 @@
       <!-- 通讯录 -->
       <div
         class="friendsMain"
-        v-show="listType == 'friend' && this.$store.state['common'].checkDetial !== null"
+        v-show="
+          listType == 'friend' &&
+          this.$store.state['common'].checkDetial !== null
+        "
       >
         <h1>资料显示组件待开发</h1>
-        <br>
-        <h2>{{this.$store.state['common'].checkDetial}}</h2>
+        <br />
+        <h2>{{ this.$store.state["common"].checkDetial }}</h2>
       </div>
       <!-- notice -->
-      <div class="notice" v-show="listType =='notice'  ||  listType ==''  ">
-          <h1>Notice</h1>
+      <div class="notice" v-show="listType == 'notice' || listType == ''">
+        <h1>Notice</h1>
       </div>
     </div>
   </div>
@@ -64,24 +73,35 @@ export default {
   },
   computed: {
     currentuser() {
-      return JSON.parse(localStorage.getItem("currentUser"))
+      return this.$store.state['common'].currentUser
     },
     isInit() {
       //0完成初始化，1则未完成
       return this.$store.getters['getInitStatus']
     },
-    listType(){
+    listType() {
       return this.$store.state['common'].ListType
     }
   },
 
   created() {
+
+    //刷新后重连socket
+    if (this.isInit != null && this.isInit) { 
+      this.$store.dispatch('stompSocket/connect');
+    }
     //在页面刷新时将vuex里的信息保存到localStorage里
     window.addEventListener("beforeunload", () => {
       // console.log("cheat" + this.$store.state['common'])
       this.$store.commit('saveState')
     });
 
+  },
+  beforeDestroy() {
+    //离开前关闭socket
+    if (this.$store.state['stompSocket'].stomp != null) {
+      this.$store.state['stompSocket'].stomp.disconnect()
+    }
   },
   // 导入组件，并扫描
   components: {
@@ -95,7 +115,7 @@ export default {
 
 </script>
 <style scoped>
-div{
+div {
   padding: 0;
   margin: 0;
 }
@@ -126,16 +146,14 @@ div{
   /* overflow: hidden; */
   height: 100%;
   border-right: solid 0.1px rgb(217, 217, 217);
-  
 }
 .main {
   position: relative;
   overflow: hidden;
   background-color: #eee;
   height: 100%;
-
 }
-.cheatMain{
+.cheatMain {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -158,15 +176,18 @@ div{
   background: rgb(255, 255, 255);
   /* border-bottom: solid 1px rgb(217,217,217); */
 }
-
 </style>
 <style>
-/* 将头像，i标签的鼠标样式改为小手 */
-.el-image__inner,i{
+/* 鼠标样式改为小手 */
+.el-image__inner,
+i,
+button {
   cursor: pointer;
 }
 /* 去掉bootstrap图标的底部占位 */
-.bi::before, [class^="bi-"]::before, [class*=" bi-"]::before{
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
   vertical-align: 0 !important;
 }
 </style>
