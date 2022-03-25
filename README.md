@@ -1,29 +1,32 @@
 # 安装vue-cli
 
 # 安装vue-qr
-npm install vue-qr --save
+* npm install vue-qr --save
 
 # 安装element-ui
-npm i element-ui -S  
+* npm i element-ui -S  
 
 # 安装axios
-npm install axios
+* npm install axios
 
 # 安装vuex
-## npm install vuex@3 --save 
-## npm install es6-promise --save
+* npm install vuex@3 --save 
+* npm install es6-promise --save
 
 # 安装bootstrap图标库
-npm install bootstrap-icons -g
+* npm install bootstrap-icons -g
 
 # JSON - form转换工具
-npm install qs --save 
+* npm install qs --save 
 
 # 表情库，可以不用引入，直接拷贝js对象（https://www.npmjs.com/package/node-emojis）
-npm install --save node-emoji
+* npm install --save node-emoji
 
-## socketjs
-# npm install sockjs-client --save
+# socketjs
+* npm install sockjs-client --save
 
-## stompjs
-# npm install stompjs --save
+# stompjs
+* npm install stompjs --save
+
+# lodash集合操作类
+* npm i --save lodash
