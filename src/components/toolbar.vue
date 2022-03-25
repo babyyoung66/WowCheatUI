@@ -1,7 +1,7 @@
 <template>
   <div id="toolBar">
     <!-- 头像及名称区域 -->
-    <div id="uinfo">
+    <div v-if="userinfo != null"  id="uinfo">
       <el-popover
         popper-class="photoPopover"
         placement="right-start"
@@ -11,7 +11,7 @@
         <!-- 个人信息卡片 -->
         <personal-card :userinfo="userinfo"></personal-card>
 
-        <el-image :src="userinfo.photourl" slot="reference"> </el-image>
+        <el-image  :src="userinfo.photourl" slot="reference"> </el-image>
       </el-popover>
     </div>
     <!-- 菜单区域 -->
@@ -162,10 +162,7 @@ export default {
   },
   computed: {
     userinfo() {
-      let data = JSON.parse(localStorage.getItem("currentUser"))
-      if (data != null) {
-        return data.user
-      }
+     return this.$store.state['common'].currentUser.user
 
     },
     ListType() {

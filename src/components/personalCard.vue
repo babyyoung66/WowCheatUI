@@ -44,7 +44,7 @@
       </div>
       <!-- 头像 -->
       <div class="photo">
-        <el-image :src="userinfo.photourl" :preview-src-list="previewSrcList">
+        <el-image fit="cover" :src="userinfo.photourl" :preview-src-list="previewSrcList">
         </el-image>
         <!-- <el-avatar
           shape="square"
@@ -116,7 +116,7 @@ export default {
       return imags
     },
     currentUserUUid(){
-      return this.$store.state['common'].currentUser.uuid
+      return this.$store.state['common'].currentUser.user.uuid
     }
   }
 

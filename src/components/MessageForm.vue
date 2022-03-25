@@ -3,7 +3,7 @@
     <!-- 为了触发compute属性切换用户，无显示意义 -->
     <span style="display: none">{{ currentTalkObj }}</span>
 
-    <ul ref="MessageContainer" @scroll="&quot;MessageScroll&quot;;">
+    <ul ref="MessageContainer" @scroll="handleScroll">
       <li
         v-show="
           currentScrollTop <= 1 ||
@@ -121,6 +121,7 @@
 
 import PersonalCard from '@/components/personalCard.vue'
 import TimeUtils from '@/utils/TimeUtils'
+
 export default {
   name: 'MessageForm',
   components: {
@@ -264,12 +265,17 @@ export default {
       }
     },
     isNeedToScroll() {
+      let MessageContainer = this.$refs['MessageContainer']
+      //防止页面未加载，找不到属性
+      if(MessageContainer == null || MessageContainer == undefined){
+        return
+      }
       //整个可滑动高度
-      let height = this.$refs['MessageContainer'].scrollHeight
+      let height = MessageContainer.scrollHeight
       // 滑块顶部
-      let top = this.$refs['MessageContainer'].scrollTop
+      let top = MessageContainer.scrollTop
       //可视化区域
-      let clientHeight = this.$refs['MessageContainer'].clientHeight
+      let clientHeight = MessageContainer.clientHeight
       let count = top + clientHeight
       //暂存当前位置
       this.currentScrollTop = top
@@ -296,7 +302,7 @@ export default {
       return this.$store.getters['message/getMessagesByuuid'](this.$store.state['common'].currentCheatObj.uuid)
     },
     currentUser() {
-      return this.$store.state['common'].currentUser
+      return this.$store.state['common'].currentUser.user
     },
     currentTalkObj() {
       //切换聊天对象时，将滑块置底
@@ -314,15 +320,15 @@ export default {
   },
   mounted() {
     this.scrollToBottom()
-    //添加滚动事件
-    window.addEventListener('scroll', this.handleScroll, true);
+    //添加滚动事件 已使用@scroll="handleScroll"在ul标签设置
+   // window.addEventListener('scroll', this.handleScroll, true);
     // this.$on('MessageFormScrollToBottom',()=>{
     //   this.scrollToBottom()
     // })
   },
   destroyed() {
     //离开页面时移除事件
-    window.removeEventListener('scroll', this.handleScroll, true);
+   // window.removeEventListener('scroll', this.handleScroll, true);
 
   },
 }
@@ -407,7 +413,7 @@ li {
 .contentBox {
   margin: 4px 6px 0 6px;
   background-color: rgb(255, 255, 255);
-  border-radius: 6px;
+  border-radius: 4px;
   border: solid 0.01px rgb(230, 225, 225);
 }
 /* 自身发言 */

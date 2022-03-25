@@ -44,6 +44,7 @@
         maxlength="150"
         :show-word-limit="content.length > 0"
         resize="none"
+        @keyup.ctrl.18.native="sendTextMessage"
       >
       </el-input>
     </div>
@@ -60,7 +61,7 @@ import faceEmojis from '../utils/emoji/faceEmojis'
 import peopleEmoji from '../utils/emoji/PeopleEmojis'
 import animalEmoji from '../utils/emoji/animalEmojis'
 import foodEmoji from '../utils/emoji/foodEmojis'
-
+import TimeUtils from '@/utils/TimeUtils'
 export default {
   name: 'sendForm',
   data() {
@@ -121,14 +122,17 @@ export default {
     },
 
     sendTextMessage(){
-      let currentCheat = this.currentCheatObj
-      
-      let mess = this.myutils.deepClone(this.$store.state['common'].defaultMess)
-      mess.content = this.content
+      if(this.content.trim() == ''){
+        return
+      }
+      let currentCheat = this.currentCheatObj   
+      let mess = this.myutils.deepClone(this.$store.state['message'].defaultMess)
+      mess.content = this.content.trim()
       mess.to = currentCheat.uuid
-      mess.from = this.$store.state['common'].currentUser.uuid
+      mess.from = this.currentUserUUid
       mess.msgType = 'personal'
-      let msgData = { "uuid": currentCheat.uuid, "message": mess }
+     // mess.time = TimeUtils.dateForMat("yyyy-MM-dd hh:mm:ss.S",new Date())
+      let msgData = { "user": currentCheat, "message": mess }
       // this.Api.postRequest('').then(res => {
       //   if(res.data.success){
       //     //发送成功，更新本地信息
@@ -136,11 +140,13 @@ export default {
       //   }
       // });
 
+      this.$store.state['stompSocket'].stomp.send("/socket/sendMessage",{},JSON.stringify(mess))
       //测试方法
-      this.$store.commit('message/pushOneMessageByUUID',msgData)
+     // this.$store.commit('message/pushOneMessageByUUID',msgData)
       this.content = ''
-      this.$emit('MessageFormScrollToBottom');
-    }
+
+    },
+    
 
   },
   computed: {
@@ -148,7 +154,7 @@ export default {
        return this.$store.state['common'].currentCheatObj
     },
     currentUserUUid() {
-      return sessionStorage.getItem('uuid')
+      return this.$store.state['common'].currentUser.user.uuid
     },
     messageForm(){
       return {"uuid": this.currentCheatObj().uuid, 
