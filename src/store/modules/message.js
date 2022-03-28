@@ -1,5 +1,7 @@
 import Vue from 'vue'
 import Api from "@/utils/Api"
+var _ = require('lodash');
+
 let usr = JSON.parse(sessionStorage.getItem("currentUser"))
 if (usr != null) {
     var uuid = usr.user.uuid
@@ -8,15 +10,15 @@ var key = 'message_' + uuid
 const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.getItem(key)) : {
     isInit: false,
     messageMap: {},
-    defaultMessage: { "content": "近6个月内没有互动...", "time": "" },
+    defaultMessage: { "content": "近6个月内没有互动...", "time": "", 'contentType': 'text' },
     //默认发送消息格式
-    defaultMess: { "from": '', "to": '', "content": '', "msgType": 'personal', "time": '', "contentType": "text" },
+    defaultMess: { "from": '', "to": '', "content": '', "msgType": 'personal', "contentType": "text" },
     //文件消息详细
     fileDetail: { "fileUrl": '', "fileName": '', "fileType": '' }
 }
 
 const mutations = {
-    INIT_Message(state, data) {
+    INIT(state, data) {
         if (!state.isInit) {
             console.log("初始化消息中...")
             // 获取list的消息列表
@@ -29,14 +31,18 @@ const mutations = {
             console.log("初始化消息完毕...")
         }
     },
-   
+
     removeState(state) {
         state.messageMap = {}
         state.isInit = false
     },
 
     saveState(state) {
-        var uuid = JSON.parse(sessionStorage.getItem("currentUser")).user.uuid
+        var cur = JSON.parse(sessionStorage.getItem("currentUser"))
+        if (cur == null || cur == undefined) {
+            return
+        }
+        var uuid = cur.user.uuid
         var key = 'message_' + uuid
         sessionStorage.setItem(key, JSON.stringify(state))
     },
@@ -55,8 +61,12 @@ const mutations = {
                             Vue.set(state.messageMap, id, mss)
                             //标记最后消息时间
                             let lastmess = mss[mss.length - 1]
-                            this.commit('common/setLastMessTime', lastmess)
+                            this.dispatch('common/setLastMessTime', lastmess)
 
+                        } else {
+                            //没有消息时设置默认时间
+                            let mess = { "from": id, "to": id, "time": '1990-01-01 01:40:43.796', 'msgType': '' }
+                            this.dispatch('common/setLastMessTime', mess)
                         }
                     }
                 })
@@ -160,14 +170,36 @@ const getters = {
         }
 
     },
-    getMessagesByuuid: (state) => (uid) => {
-        //格式化、合并时间段
-        return state.messageMap[uid] != null ? state.messageMap[uid] : null
+    getMessagesByuuid: (state) => (uid, length) => {
+        //每次根据刷新的数量递增的方式获取
+        let message = state.messageMap[uid]
+        if (message == null || message == undefined) {
+            return null
+        }
+        //默认返回20条数据
+        if (length == 0 && message.length > 20) {   
+            return _.slice(message, message.length - 20)
+        }
+        //到达顶部或者数据小于20条直接返回
+        if (length >= message.length || message.length <= 20) {
+            return message
+        }
+
+        
+        let mess = _.slice(message, message.length - length)
+
+        return mess
     }
 
 }
 
 const actions = {
+    //异步初始方法，返回promise
+    INIT(context, data) {
+        //message组件依赖数据，所以得保证common初始化完成后再初始化message
+        this.commit('message/INIT', data)
+    },
+
     //获取聊天记录（未被初始化时），请求格式 { "user": "", "message": "" }
     setMessageMapByUUID(context, messageData) {
         let oldmess = context.state.messageMap[messageData.user.uuid]
@@ -182,6 +214,7 @@ const actions = {
         }
 
     },
+
 
 }
 
