@@ -15,7 +15,7 @@ const store = new Vuex.Store({
     modules: {
         common,
         message,
-        stompSocket      
+        stompSocket
     },
 
     //更新state对象数据的方法
@@ -24,9 +24,13 @@ const store = new Vuex.Store({
         DATA_INIT(state, data) {
             sessionStorage.setItem("uuid", data.user.uuid)
             sessionStorage.setItem("currentUser", JSON.stringify(data))
-            this.commit('common/INIT', data)
-            this.dispatch('stompSocket/connect');
-            sessionStorage.setItem("isInit", "true")
+            //使用action初始化common数据后再初始化其他模块
+            this.dispatch('common/INIT', data).then(() => {
+                this.dispatch('message/INIT', data)
+                this.dispatch('stompSocket/connect');
+                sessionStorage.setItem("isInit", "true")
+            })
+
         },
         saveState(state) {
             this.commit('common/saveState')
@@ -40,18 +44,18 @@ const store = new Vuex.Store({
             this.commit('stompSocket/removeState', {}, { root: true })
             localStorage.removeItem("currentUser")
             sessionStorage.clear()
-            
+
         }
 
     },
     getters: {
         getInitStatus(state) {
             //取异或值，等于0则全部初始化，等于1则未初始化完成
-            return (state['common'].isInit ^ state['message'].isInit ) == 1?false:true
+            return (state['common'].isInit ^ state['message'].isInit) == 1 ? false : true
         }
     },
     actions: {
-       
+
 
     }
 
