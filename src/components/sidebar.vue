@@ -77,8 +77,18 @@
               >
                 [{{ getUserInfo(it.uuid).concatInfo.unReadTotal }}条]
               </p>
-              <p class="mess" v-if="getLastMess(it.uuid) != null">
+              <!-- 最后一条消息记录 -->
+              <p class="mess" v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'text'">
                 {{ getLastMess(it.uuid)["content"] }}
+              </p>
+              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'image'" class="mess" >
+                [图片]{{getLastMess(it.uuid)['fileDetail'].fileName}}
+              </p>
+              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'video'" class="mess" >
+                [视频]{{getLastMess(it.uuid)['fileDetail'].fileName}}
+              </p>
+              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'file'" class="mess" >
+                [文件]{{getLastMess(it.uuid)['fileDetail'].fileName}}
               </p>
             </div>
           </div>
@@ -436,6 +446,9 @@ ul {
 .unReadTotal {
   color: rgb(129, 129, 129);
   font-size: 12px;
+}
+.mess{
+   line-height: 19px;
 }
 .peopleinfo .time {
   width: auto;
