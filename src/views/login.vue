@@ -124,7 +124,7 @@ export default {
   methods: {
     getQRcode() {
 
-      this.QRtext = '暂未开放！'
+      this.QRtext = '敬请期待！'
       // this.CreateQRCode('/getCodeImage').then((result) => {
       //    /* 使用URL.createObjectURL方法获取blob对象的url地址 */
       //    this.QRCode = URL.createObjectURL(result.data)
