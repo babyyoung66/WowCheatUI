@@ -82,7 +82,6 @@ const actions = {
 
         let Subscribe = () => {
             context.state.stomp.subscribe('/user/' + local.user.uuid + '/personal', (response) => {
-                console.log(JSON.parse(response.body));
                 context.dispatch("MessageCover",response)
             });
             context.state.stomp.subscribe('/topic', (response) => {
