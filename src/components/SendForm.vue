@@ -1,7 +1,7 @@
 <template>
   <div class="sendForm">
     <!-- 工具栏 -->
-    <div class="toolBar">
+    <div @click.stop class="toolBar">
       <span>
         <el-popover
           placement="top"
@@ -22,17 +22,101 @@
           </div>
 
           <div class="emojiType">
-            <i @click="changeEmojiType('face')" :class="{ onSelect: emojiType == 'face' }">😀</i>
-            <i @click="changeEmojiType('people')" :class="{ onSelect: emojiType == 'people' }">👩</i>
-            <i @click="changeEmojiType('foods')" :class="{ onSelect: emojiType == 'foods' }">🍔</i>
-            <i @click="changeEmojiType('animal')" :class="{ onSelect: emojiType == 'animal' }">🐜</i>
+            <i
+              @click="changeEmojiType('face')"
+              :class="{ onSelect: emojiType == 'face' }"
+              >😀</i
+            >
+            <i
+              @click="changeEmojiType('people')"
+              :class="{ onSelect: emojiType == 'people' }"
+              >👩</i
+            >
+            <i
+              @click="changeEmojiType('foods')"
+              :class="{ onSelect: emojiType == 'foods' }"
+              >🍔</i
+            >
+            <i
+              @click="changeEmojiType('animal')"
+              :class="{ onSelect: emojiType == 'animal' }"
+              >🐜</i
+            >
           </div>
 
           <i slot="reference" class="bi bi-emoji-laughing"></i>
         </el-popover>
       </span>
       <span><i class="bi bi-folder2"></i></span>
-      <span><i class="bi bi-image"></i></span>
+      <!-- 图片 -->
+      <!--  -->
+      <el-popover
+        placement="top-start"
+        width="auto"
+        trigger="manual"
+        v-model="ImagePopVisiable"
+      >
+        <span @click="openImagePop" slot="reference"
+          ><i class="bi bi-image"></i
+        ></span>
+        <!-- 发送图片 -->
+        <el-upload
+          ref="uploadImage"
+          action="#"
+          list-type="picture-card"
+          :auto-upload="false"
+          :on-change="fileChange"
+          :limit="1"
+          :class="{ hide: FileList.length >= uploadLimit }"
+          :accept="imageType"
+          :before-upload="checkImageFile"
+        >
+          <i slot="default" class="el-icon-plus"></i>
+          <div slot="file" slot-scope="{ file }">
+            <img
+              class="el-upload-list__item-thumbnail"
+              :src="file.url"
+              alt=""
+            />
+            <span class="el-upload-list__item-actions">
+              <span
+                class="el-upload-list__item-preview"
+                @click="handlePictureCardPreview(file)"
+              >
+                <i class="el-icon-zoom-in"></i>
+              </span>
+              <span
+                v-if="!disabled"
+                class="el-upload-list__item-delete"
+                @click="handleRemove(file)"
+              >
+                <i class="el-icon-delete"></i>
+              </span>
+            </span>
+          </div>
+        </el-upload>
+        <div style="margin: 10px 0 0 0">
+          <el-button
+            style="margin-left: 10px"
+            size="small"
+            type="success"
+            @click="submitImage"
+            >发送</el-button
+          >
+          <el-button
+            @click="closeImagePop"
+            slot="trigger"
+            size="small"
+            type="primary"
+            >取消</el-button
+          >
+        </div>
+      </el-popover>
+    </div>
+    <div @click.stop>
+      <el-dialog :visible.sync="ImagedialogVisible">
+        <img width="100%" :src="dialogImageUrl" alt="" />
+      </el-dialog>
     </div>
 
     <!-- 输入框 -->
@@ -52,7 +136,9 @@
     <!-- 底部工具 -->
     <div class="footBar">
       <span class="sendTip">按 Ctrl + Alt 发送 </span>
-      <button @click="sendTextMessage" class="sendBtn" type="button">发送(S)</button>
+      <button @click="sendTextMessage" class="sendBtn" type="button">
+        发送(S)
+      </button>
     </div>
   </div>
 </template>
@@ -68,32 +154,41 @@ export default {
     return {
       content: '',
       Emojis: faceEmojis,
-      emojiType: 'face'
+      emojiType: 'face',
+      dialogImageUrl: '',
+      ImagedialogVisible: false,
+      disabled: false,
+      ImagePopVisiable: false,
+      hideUploadEdit: false,
+      uploadLimit: 1,
+      FileList: [],
+      imageType: ".jpg,.jpeg,.png,.jfif,.tif,.gif,.svg,.bmp,.webp",
+      FileisTrue: true,
 
     }
   },
   methods: {
     changeEmojiType(type) {
       switch (type) {
-        case 'face': 
-          this.Emojis = faceEmojis   
-          this.emojiType = 'face'       
-          break;
-        case 'people': 
-          this.Emojis = peopleEmoji
-          this.emojiType = 'people' 
-          break;  
-        case 'animal': 
-          this.Emojis = animalEmoji
-          this.emojiType = 'animal' 
-          break;
-        case 'foods': 
-          this.Emojis = foodEmoji
-          this.emojiType = 'foods' 
-          break;  
-        default: 
+        case 'face':
           this.Emojis = faceEmojis
-          this.emojiType = 'face' 
+          this.emojiType = 'face'
+          break;
+        case 'people':
+          this.Emojis = peopleEmoji
+          this.emojiType = 'people'
+          break;
+        case 'animal':
+          this.Emojis = animalEmoji
+          this.emojiType = 'animal'
+          break;
+        case 'foods':
+          this.Emojis = foodEmoji
+          this.emojiType = 'foods'
+          break;
+        default:
+          this.Emojis = faceEmojis
+          this.emojiType = 'face'
           break;
       }
     },
@@ -121,51 +216,156 @@ export default {
       return;
     },
 
-    sendTextMessage(){
-      if(this.content.trim() == ''){
+    scrollMessageForm() {
+      //触发消息框置底
+      this.$store.state['common'].MessageFormScroll = this.$store.state['common'].MessageFormScroll + 1
+    },
+    sendTextMessage() {
+      if (this.content.trim() == '') {
         return
       }
-      let currentCheat = this.currentCheatObj   
+      let stompClient = this.$store.state['stompSocket'].stomp
+      if (stompClient == null || !stompClient.connected) {
+        this.$message.error('聊天服务器连接失败，请尝试重新登录~');
+        return
+      }
+
+      let currentCheat = this.currentCheatObj
       let mess = this.myutils.deepClone(this.$store.state['message'].defaultMess)
       mess.content = this.content.trim()
       mess.to = currentCheat.uuid
       mess.from = this.currentUserUUid
-      mess.msgType = 'personal'
-     // mess.time = TimeUtils.dateForMat("yyyy-MM-dd hh:mm:ss.S",new Date())
-      let msgData = { "user": currentCheat, "message": mess }
-      // this.Api.postRequest('').then(res => {
-      //   if(res.data.success){
-      //     //发送成功，更新本地信息
-
-      //   }
-      // });
-
-      this.$store.state['stompSocket'].stomp.send("/socket/sendMessage",{},JSON.stringify(mess))
-      //测试方法
-     // this.$store.commit('message/pushOneMessageByUUID',msgData)
+      mess.msgType = this.$store.state['common'].messageFormType
+      // mess.time = TimeUtils.dateForMat("yyyy-MM-dd hh:mm:ss.S",new Date())
+      stompClient.send("/socket/sendMessage", {}, JSON.stringify(mess))
       this.content = ''
-
+      this.scrollMessageForm()
     },
-    
+    openImagePop() {
+      this.ImagePopVisiable = true
+    },
+    closeImagePop() {
+      this.ImagePopVisiable = false
+      this.FileList = []
+    },
+    //移除已选内容
+    handleRemove(file) {
+      for (let index = 0; index < this.FileList.length; index++) {
+        const element = this.FileList[index];
+        if (file.name == element.name) {
+          this.FileList.splice(index, 1)
+          break
+        }
+      }
+    },
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.ImagedialogVisible = true;
+    },
+    fileChange(file, fileList) {
+      //console.log(this.$refs.uploadImage)
+      this.checkImageFile(file)
+      this.FileList = fileList
+      this.fileNums = fileList.length
+    },
+    checkImageFile(file) {
+      let Regex = this.imageType
+      let suffix = file.name.slice(file.name.lastIndexOf('.'))
+      let isTrue = Regex.indexOf(suffix.toLowerCase())
+      if (isTrue === -1) {
+        this.$message.error('该类型文件不支持哦！');
+        this.FileisTrue = false
+        return false
+      }
+      if (file.size / 1024 / 1024 > 5) {
+        this.$message.error('图片不能超过5M哦！');
+        this.FileisTrue = false
+        return false
+      }
+      if (file.name.length > 150) {
+        this.$message.error('文件名不能超过150字符哦！');
+        this.FileisTrue = false
+        return false
+      }
+      return true
+    },
+    // uplaodImage() {
+    //   if (this.FileisTrue) {
+    //     this.$refs.uploadImage.submit()
+    //     //this.closeImagePop()
+    //   } else {
+    //     this.checkImageFile(this.FileList[0])
+    //   }
+    // }
+    // ,
+    submitImage() {
+      let stompClient = this.$store.state['stompSocket'].stomp
+      if (stompClient == null || !stompClient.connected) {
+        this.$message.error('聊天服务器连接失败，请尝试重新登录~');
+        return
+      }
+      let formData = new FormData();
+      let FileInfo = this.FileList[0]
+      //单个文件使用set，多个使用addend，真实文件为element返回文件信息的raw属性
+      formData.set("file", FileInfo.raw)
+      if (this.FileisTrue) {
+        for (const key in this.uploaadMessage) {
+          const value = this.uploaadMessage[key];
+          formData.set(key, value)
+        }
+        //console.log(formData.get())
+        this.Api.postByFormData('/message/sendImage', formData).then(res => {
+          if (res.data.success) {
+            this.closeImagePop()
+            //清除文件信息（elementui的钩子函数）
+            this.$refs.uploadImage.clearFiles()
+            this.scrollMessageForm()
+          }
+        })
+      } else {
+        this.checkImageFile(FileInfo)
+      }
+    },
+
 
   },
   computed: {
-    currentCheatObj(){
-       return this.$store.state['common'].currentCheatObj
+    currentCheatObj() {
+      return this.$store.state['common'].currentCheatObj
     },
     currentUserUUid() {
       return this.$store.state['common'].currentUser.user.uuid
     },
-    messageForm(){
-      return {"uuid": this.currentCheatObj().uuid, 
-                      "message": {"from":this.currentUserUUid(), "to": this.currentCheatObj().uuid,}
-                      }
-
+    ListType() {
+      return this.$store.state['common'].ListType
+    },
+    uploaadMessage() {
+      let message = this.myutils.deepClone(this.$store.state['message'].defaultMess)
+      message.to = this.currentCheatObj.uuid
+      message.from = this.currentUserUUid
+      message.contentType = 'file'
+      message.msgType = this.$store.state['common'].messageFormType
+      return message
+    },
+    uploadImageUrl() {
+      return this.$store.state['common'].urlBase + '/message/sendImage'
+    },
+    uploadHeaders() {
+      let headers = { "token": this.$store.state['common'].currentUser.token }
+      return headers
     }
   },
   created() {
-   
+
   },
+  watch: {
+    ListType: function () {
+      this.closeImagePop()
+    },
+    currentCheatObj: function () {
+      this.closeImagePop()
+    }
+  }
 }
 </script>
 
@@ -337,5 +537,9 @@ a {
 /*滚动条里面轨道*/
 .emojiList::-webkit-scrollbar-track {
   display: none;
+}
+
+.hide .el-upload--picture-card {
+  display: none !important;
 }
 </style>
