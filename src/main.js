@@ -38,8 +38,7 @@ new Vue({
 
   },
   created() {
-    //测试服务是否可用
-    this.Api.postRequest('/ping',{})
+  
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
     let isInit = JSON.parse(sessionStorage.getItem("isInit"))
     if (currentUser != null) {
