@@ -44,7 +44,7 @@
       </div>
       <!-- 头像 -->
       <div class="photo">
-        <el-image fit="cover" :src="userinfo.photourl" :preview-src-list="previewSrcList">
+        <el-image fit="cover" :src="userinfo.photourl" :preview-src-list="[userinfo.photourl]">
         </el-image>
         <!-- <el-avatar
           shape="square"
