@@ -117,15 +117,17 @@ axios.interceptors.response.use(success => {
 const Api = {
 
   logoutRequest(url) {
+    let currentCheatObj= store.state['common'].currentCheatObj
+    //更新当前聊天对象的对话时间
+    store.dispatch('common/upDateConcatTimeForLogout',currentCheatObj)
     axios({
       method: 'post',
       url: `${base}${url}`,
     })
       .then(res => {
-        
+    
       }).finally(() => {
         store.commit('removeState')
-        store.commit('saveState')
       })
   },
 
