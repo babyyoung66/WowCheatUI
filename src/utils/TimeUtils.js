@@ -101,6 +101,9 @@ const TimeUtils = {
         }
     },
     dateForMatDefault(date){
+        if(date == null || date == ''){
+            date = new Date()
+        }
         let fmt = "yyyy-MM-dd hh:mm:ss.S"
         return this.dateForMat(fmt, date)
     },
