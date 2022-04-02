@@ -47,25 +47,28 @@
           <i slot="reference" class="bi bi-emoji-laughing"></i>
         </el-popover>
       </span>
-      <span><i class="bi bi-folder2"></i></span>
+      <!-- 文件 -->
+      <span><i @click="submitFile" class="bi bi-folder2"></i></span>
+
       <!-- 图片 -->
-      <!--  -->
       <el-popover
         placement="top-start"
         width="auto"
         trigger="manual"
         v-model="ImagePopVisiable"
       >
+        <!-- 图片图标 -->
         <span @click="openImagePop" slot="reference"
           ><i class="bi bi-image"></i
         ></span>
+
         <!-- 发送图片 -->
         <el-upload
           ref="uploadImage"
           action="#"
           list-type="picture-card"
           :auto-upload="false"
-          :on-change="fileChange"
+          :on-change="imageChange"
           :limit="1"
           :class="{ hide: FileList.length >= uploadLimit }"
           :accept="imageType"
@@ -86,7 +89,6 @@
                 <i class="el-icon-zoom-in"></i>
               </span>
               <span
-                v-if="!disabled"
                 class="el-upload-list__item-delete"
                 @click="handleRemove(file)"
               >
@@ -147,7 +149,6 @@ import faceEmojis from '../utils/emoji/faceEmojis'
 import peopleEmoji from '../utils/emoji/PeopleEmojis'
 import animalEmoji from '../utils/emoji/animalEmojis'
 import foodEmoji from '../utils/emoji/foodEmojis'
-import TimeUtils from '@/utils/TimeUtils'
 export default {
   name: 'sendForm',
   data() {
@@ -262,7 +263,7 @@ export default {
       this.dialogImageUrl = file.url;
       this.ImagedialogVisible = true;
     },
-    fileChange(file, fileList) {
+    imageChange(file, fileList) {
       //console.log(this.$refs.uploadImage)
       this.checkImageFile(file)
       this.FileList = fileList
@@ -326,6 +327,9 @@ export default {
         this.checkImageFile(FileInfo)
       }
     },
+    submitFile(){
+      this.$message.warning('发送文件暂未开放！');
+    }
 
 
   },

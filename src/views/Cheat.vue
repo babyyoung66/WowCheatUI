@@ -39,16 +39,18 @@
 
       <!-- 通讯录 -->
       <div
-        class="friendsMain"
+        class="infoCard"
         v-show="
           listType == 'friend' &&
           this.$store.state['common'].checkDetial !== null
         "
       >
-        <h1>资料显示组件待开发</h1>
+        <user-info-card :userinfo="$store.state['common'].checkDetial "></user-info-card>
+        <!-- <h1>资料显示组件待开发</h1>
         <br />
-        <h2>{{ this.$store.state["common"].checkDetial }}</h2>
+        <h2>{{ this.$store.state["common"].checkDetial }}</h2> -->
       </div>
+
       <!-- notice -->
       <div class="notice" v-show="listType == 'notice' || listType == ''">
         <h1>Notice</h1>
@@ -62,6 +64,7 @@ import sidebar from '@/components/sidebar.vue'
 import cheatTitle from '@/components/cheatTitle.vue'
 import messageform from '@/components/MessageForm.vue'
 import sendForm from '@/components/SendForm.vue'
+import UserInfoCard from '../components/userInfoCard.vue'
 
 
 export default {
@@ -109,7 +112,8 @@ export default {
     sidebar,
     cheatTitle,
     messageform,
-    sendForm
+    sendForm,
+    UserInfoCard
   }
 }
 
@@ -129,7 +133,8 @@ div {
 }
 #app .sidebar,
 .main,
-.toolbar {
+.toolbar,
+.infoCard {
   height: 100%;
 }
 .toolbar {
@@ -189,5 +194,9 @@ button {
 [class^="bi-"]::before,
 [class*=" bi-"]::before {
   vertical-align: 0 !important;
+}
+.el-popover .el-popover,
+.el-popper {
+  text-align: center !important;
 }
 </style>

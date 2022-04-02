@@ -2,7 +2,7 @@
   <div
     class="infocard"
     v-loading="userinfo == null || !userinfo"
-    v-if="userinfo != null"
+    v-if="userinfo != null "
   >
     <!-- 姓名、头像、id -->
     <div class="maininfo">
@@ -38,13 +38,17 @@
             :content="userinfo.wowId"
             placement="bottom"
           >
-            <p>Wow号: {{ userinfo.wowId }}</p>
+            <p>wowId: {{ userinfo.wowId }}</p>
           </el-tooltip>
         </div>
       </div>
       <!-- 头像 -->
       <div class="photo">
-        <el-image fit="cover" :src="userinfo.photourl" :preview-src-list="[userinfo.photourl]">
+        <el-image
+          fit="cover"
+          :src="userinfo.photourl"
+          :preview-src-list="[userinfo.photourl]"
+        >
         </el-image>
         <!-- <el-avatar
           shape="square"
@@ -59,12 +63,20 @@
     <div class="splice"></div>
     <!-- 备注 -->
 
-    <div
-      v-if="userinfo.concatInfo !=null && userinfo.concatInfo.remarks !=null && userinfo.uuid != currentUserUUid"
-      class="remarks"
-    >
+    <div v-show="userinfo.uuid != currentUserUUid" class="remarks">
       <div class="remarksLabel">备　注</div>
-      <div class="remarks_Name"><p style="margin: 0">{{ userinfo.concatInfo.remarks }}</p></div>
+      <div class="remarks_Name">
+        <p
+          v-if="
+            userinfo.concatInfo != null &&
+            userinfo.concatInfo.remarks != null &&
+            userinfo.concatInfo.remarks != ''
+          "
+          style="margin: 0"
+        >
+          {{ userinfo.concatInfo.remarks }}
+        </p>
+      </div>
     </div>
     <!-- 地址信息 -->
     <div class="address">
@@ -85,7 +97,7 @@
     <div class="menue">
       <i class="bi bi-reply"></i>
 
-      <i class="bi bi-chat"></i>
+      <i @click="sendMessage" class="bi bi-chat"></i>
     </div>
   </div>
 </template>
@@ -99,14 +111,17 @@ export default {
   },
   data() {
     return {
-      // 图片预览url
-      //previewSrcList: ['http://127.0.0.1:8080/WowCheat/files/1.png'],
-      sexIcons: ["../static/icon_woman.png", "../static/icon_man.png"],
+      sexIcons: ["../static/icon_women.gif", "../static/icon_man.gif"],
       //userinfo: {} //改由父组件传入数据
     }
   },
   methods: {
-
+      sendMessage(){
+        this.$store.state['common'].currentCheatObj = this.userinfo
+        this.$store.commit('common/setUserOnTopOfTalkList',this.userinfo)
+        this.$store.state['common'].ListType = 'talkList'
+        this.$store.state['common'].messageFormType = this.userinfo.type
+      }
   },
   computed: {
     // 设置图片预览
@@ -115,7 +130,7 @@ export default {
       imags.push(this.userinfo.photourl)
       return imags
     },
-    currentUserUUid(){
+    currentUserUUid() {
       return this.$store.state['common'].currentUser.user.uuid
     }
   }
@@ -130,21 +145,21 @@ p {
   padding: 0;
   margin: 0;
 }
-.el-image {
+.maininfo .el-image {
   padding: 24px 32px 0 18px !important;
   width: 62px !important;
   height: 62px !important;
   border-radius: 0;
 }
 .infocard {
-  width: 100%;
+  /* width: 100%; */
   height: 100%;
   display: flex;
   flex-direction: column;
   align-content: space-around;
 }
 .maininfo {
-  overflow: hidden;
+  /* overflow: hidden; */
   display: flex;
   width: 100%;
   height: auto;
@@ -184,7 +199,7 @@ p {
 .sexicon {
   object-fit: cover;
   width: 16px;
-  height: 20px;
+  height: 18px;
   padding: 0 3px 0 3px;
   /* padding-top: 42px; */
 }
@@ -219,7 +234,7 @@ p {
   width: auto;
   max-height: 60px;
   overflow: hidden;
-  margin: 8px 0 0 0 ;
+  margin: 8px 0 0 0;
   padding: 0 32px 0 32px;
 }
 .addrTi,
@@ -230,7 +245,8 @@ p {
   color: rgb(171, 172, 173);
   float: left;
 }
-.addrdetail,.remarks_Name {
+.addrdetail,
+.remarks_Name {
   width: auto;
   height: auto;
   padding: 0 0 0 12px;
@@ -241,6 +257,7 @@ p {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  text-align: left;
 }
 .menue {
   height: 68px;
@@ -258,6 +275,9 @@ p {
 .menue .bi-reply::before {
   transform: rotateY(180deg);
   font-size: 28px;
+}
+.menue .bi.bi-chat:hover{
+  color: rgb(216, 212, 212);
 }
 </style>
 

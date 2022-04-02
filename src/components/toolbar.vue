@@ -268,6 +268,7 @@ export default {
   /* 设置透明，使用ul背景 */
   background-color: transparent;
   border: none;
+  text-align: left !important;
 }
 
 /* topic字体大小 */

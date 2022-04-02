@@ -123,10 +123,13 @@
                 class="ImageContent"
               >
                 <el-image
+                  :ref="'image' + message._id"
                   :src="message.fileDetail.fileUrl"
                   fit="scale-down"
                   :preview-src-list="[message.fileDetail.fileUrl]"
                   lazy
+                  @error="ImageloadError($event,'image' + message._id)"
+                  @load="ImageloadSuccess($event,'image' + message._id)"
                 ></el-image>
               </div>
             </div>
@@ -160,7 +163,9 @@ export default {
       //动态追加消息，
       messageListSize: 0,
       //每次追加消息的数量
-      messageLimit:20
+      messageLimit: 20,
+      //已尝试获取的图片url
+      restImageList: []
     }
   },
   methods: {
@@ -171,7 +176,7 @@ export default {
     showMoreMessage() {
       //暂存当前ul总高度
       let scrollHeigh = this.currentScrollheight
-      let firstmess = {}
+      let firstmess = {"to":''}
       if (this.messageData != null) {
         firstmess = this.messageData[0]
       }
@@ -262,7 +267,7 @@ export default {
       let ele = this.$refs['MessageContainer']
       let top = ele.scrollTop
       let height = ele.scrollHeight
-      if(this.isNull(ele) || top == height){
+      if (this.isNull(ele) || top == height) {
         return
       }
       if (!this.scrollTimeIsOpen) {
@@ -349,6 +354,41 @@ export default {
       this.scrollTimeIsOpen = false
       this.changeTalk = true
       this.messageListSize = 0
+    },
+    //图加载失败时,尝试重新获取几次
+    ImageloadError(e,imgid) {
+      //console.log(this.$refs[imgid])   
+      if(this.imagIstryed(imgid)){
+        return
+      }
+      let target = e.currentTarget
+      let targetId = imgid
+      this.restImageList.push(imgid)
+      let times = 0
+      let tryImage = setInterval(() => {
+        //尝试5秒,通过refs时候或img标签的error状态
+        if (times >= 10 || this.$refs[targetId][0].error == false) {
+          clearInterval(tryImage)
+          //清空控制台错误内容
+          console.clear()
+          return
+        }
+        target.src = target.src
+        times++
+      }, 500)
+    },
+    imagIstryed(imgid) {
+      let res = false
+      this.restImageList.forEach(element => {
+          if(element == imgid){
+            res = true
+            return
+          }
+      });
+      return res
+    },
+    ImageloadSuccess(e,imgid) {
+      //console.log(this.$refs[imgid])
     }
 
   },
@@ -379,10 +419,6 @@ export default {
     }
 
   },
-  created() {
-
-
-  },
   watch: {
     //变化时消息框置底
     NeedScroll: function () {
@@ -403,12 +439,7 @@ export default {
     // this.$on('MessageFormScrollToBottom',()=>{
     //   this.scrollToBottom()
     // })
-  },
-  destroyed() {
-    //离开页面时移除事件
-    // window.removeEventListener('scroll', this.handleScroll, true);
-
-  },
+  }
 }
 </script>
 

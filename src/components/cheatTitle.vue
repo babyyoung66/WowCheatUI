@@ -1,12 +1,44 @@
 <template>
   <div class="title">
-    <p class="name" v-show="cheatObj != null && remarks == null">
-      {{ cheatObj.name }}
-    </p>
-    <!-- 有备注则展示备注 -->
-    <p class="name" v-if="cheatObj != null && remarks != null">
-      {{ cheatObj.concatInfo.remarks }}
-    </p>
+    <el-popover
+      :disabled="cheatObj.type == null"
+      v-show="(cheatObj != null && remarks == null) || remarks == ''"
+      popper-class="photoPopover"
+      placement="bottom"
+      width="200"
+      trigger="click"
+    >
+      <!-- 个人信息卡片 -->
+      <personal-card :userinfo="cheatObj"></personal-card>
+      <p
+        slot="reference"
+        class="name"
+        v-show="(cheatObj != null && remarks == null) || remarks == ''"
+      >
+        {{ cheatObj.name }}
+      </p>
+    </el-popover>
+
+    <el-popover
+      :disabled="cheatObj.type == null"
+      v-if="cheatObj != null && remarks != null && remarks != ''"
+      popper-class="photoPopover"
+      placement="bottom"
+      width="200"
+      trigger="click"
+    >
+      <!-- 个人信息卡片 -->
+      <personal-card :userinfo="cheatObj"></personal-card>
+      <!-- 有备注则展示备注 -->
+      <p
+        slot="reference"
+        class="name"
+        v-if="cheatObj != null && remarks != null && remarks != ''"
+      >
+        {{ cheatObj.concatInfo.remarks }}
+      </p>
+    </el-popover>
+
     <el-popover
       popper-class="photoPopover"
       placement="right-start"
@@ -18,7 +50,10 @@
       <i
         class="bi bi-three-dots cardIcon"
         slot="reference"
-        v-show="this.$store.state['common'].ListType == 'talkList' && cheatObj.uuid != null"
+        v-show="
+          this.$store.state['common'].ListType == 'talkList' &&
+          cheatObj.uuid != null
+        "
       ></i>
     </el-popover>
   </div>
@@ -36,7 +71,7 @@ export default {
     PersonalCard
   },
   methods: {
-   
+
   },
   computed: {
     cheatObj() {
@@ -45,6 +80,9 @@ export default {
     //获取备注
     remarks() {
       return this.cheatObj == null ? null : (this.cheatObj.concatInfo == null ? null : this.cheatObj.concatInfo.remarks)
+    },
+    listType() {
+      return this.$store.state['common'].ListType
     }
   }
 }
@@ -71,6 +109,7 @@ p {
   text-align: left;
   font-size: 24px;
   color: black;
+  cursor: pointer;
 }
 .cardIcon {
   padding: 25px 10px 0 20px;

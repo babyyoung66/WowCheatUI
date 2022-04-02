@@ -18,8 +18,10 @@
 
     <!-- 列表区域 -->
     <div class="listbox">
+      <!-- 消息列表 -->
       <ul v-if="list != null && ListType == 'talkList'">
         <li
+        style="padding:10px 0 6px 0"
           v-for="(it, index) in list"
           :key="index"
           @click="SelectList(it, index)"
@@ -34,9 +36,9 @@
           <!-- 消息红点 -->
           <el-badge
             :is-dot="
-              getUserInfo(it.uuid).concatInfo != null &&
-              getUserInfo(it.uuid).concatInfo.unReadTotal != null &&
-              getUserInfo(it.uuid).concatInfo.unReadTotal != 0
+              it.concatInfo != null &&
+              it.concatInfo.unReadTotal != null &&
+              it.concatInfo.unReadTotal != 0
             "
             class="dotitem"
           >
@@ -48,21 +50,21 @@
             <div class="namewithTime">
               <!-- 名称 -->
               <span
-                v-if="getUserInfo(it.uuid).concatInfo == null || getUserInfo(it.uuid).concatInfo.remarks == null"
+                v-if="it.concatInfo == null || it.concatInfo.remarks == null || it.concatInfo.remarks == ''"
                 class="name"
-                style="font-size: 18px"
-                >{{ getUserInfo(it.uuid).name }}</span
+                style="font-size: 16px"
+                >{{ it.name }}</span
               >
               <!-- 有备注则显示备注 -->
               <span
-                v-if="getUserInfo(it.uuid).concatInfo != null && getUserInfo(it.uuid).concatInfo.remarks != null"
+                v-if="it.concatInfo != null && it.concatInfo.remarks != null && it.concatInfo.remarks != ''"
                 class="name"
-                style="font-size: 18px"
-                >{{ getUserInfo(it.uuid).concatInfo.remarks }}</span
+                style="font-size: 16px"
+                >{{ it.concatInfo.remarks }}</span
               >
 
               <!-- 时间，取最近一条记录的时间，判断与当前时间间隔，分别显示昨天、前天、七天内显示星期、七天以上显示具体年月日 -->
-              <span class="time" v-show="getLastMess(it.uuid) != null">{{
+              <span class="time" v-if="getLastMess(it.uuid) != null">{{
                 switchTime(getLastMess(it.uuid)["time"])
               }}</span>
             </div>
@@ -70,12 +72,12 @@
               <p
                 class="unReadTotal"
                 v-if="
-                  getUserInfo(it.uuid).concatInfo != null &&
-                  getUserInfo(it.uuid).concatInfo.unReadTotal != null &&
-                  getUserInfo(it.uuid).concatInfo.unReadTotal != 0
+                  it.concatInfo != null &&
+                  it.concatInfo.unReadTotal != null &&
+                  it.concatInfo.unReadTotal != 0
                 "
               >
-                [{{ getUserInfo(it.uuid).concatInfo.unReadTotal }}条]
+                [{{ it.concatInfo.unReadTotal }}条]
               </p>
               <!-- 最后一条消息记录 -->
               <p class="mess" v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'text'">
@@ -108,6 +110,7 @@
           }"
           :ref="index"
           style="justify-content: start"
+          v-show="it.uuid != currentUser.uuid"
         >
           <!-- @contextmenu="rightClik(index, it, $event)" -->
           <span v-if="setClikIndex(it, index)" style="display: none"></span>
@@ -115,22 +118,24 @@
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
           <span
-            v-if="it.concatInfo == null || it.concatInfo.remarks == null"
+            v-if="it.concatInfo == null || it.concatInfo.remarks == null || it.concatInfo.remarks == ''"
             class="name"
-            style="font-size: 18px; padding: 0 30px 0 15px"
+            style=" font-size: 16px; padding: 0 30px 0 15px;"
           >
             {{ it.name }}
           </span>
           <!-- 备注 -->
           <span
-            v-if="it.concatInfo != null && it.concatInfo.remarks != null"
+            v-if="it.concatInfo != null && it.concatInfo.remarks != null && it.concatInfo.remarks != ''"
             class="name"
-            style="font-size: 18px; padding: 0 30px 0 15px"
+            style=" font-size: 16px; padding: 0 30px 0 15px;"
           >
             {{ it.concatInfo.remarks }}
           </span>
         </li>
       </ul>
+
+      <!-- notice公告 -->
     </div>
 
     <!-- 右键弹出框 -->
@@ -254,14 +259,20 @@ export default {
       }
       if (this.ListType == 'talkList') {
         this.TalkSelectIndex = index
-        this.$store.state['common'].currentCheatObj = item
+        this.$store.commit('common/setCurrentCheatObj',item) 
         //更新好友联系时间
         this.$store.dispatch('common/upDateConcatTime', item)
+        return
       }
       if (this.ListType == 'friend') {
         this.FriendSelectIndex = index
+        return
       }
 
+    },
+    //在选择列表对象，或者搜索到的对象时，根据对象type更改当前聊天框类型
+    changeMessageFormType(item) {
+      this.$store.commit('common/setmessageFormType', item.type)
     },
     //根据当前聊天对象设置已选
     setClikIndex(item, index) {
@@ -295,10 +306,6 @@ export default {
       return TimeUtils.formatForSimpleView(t)
     },
 
-    //在选择列表对象，或者搜索到的对象时，根据对象type更改当前聊天框类型
-    changeMessageFormType(item) {
-      this.$store.commit('common/setmessageFormType', item.type)
-    },
 
     MyscrollTo(num) {
       this.$nextTick(() => {
@@ -340,9 +347,8 @@ export default {
     //删除聊天
     delfromList() {
       if (this.rightClikIndex != -1) {
-        this.list.splice(this.rightClikIndex, 1)
-        this.$store.commit('common/setCurrentCheatObj', {})
-        this.rightClikIndex = -1
+        let usr = this.list[this.rightClikIndex]
+        this.$store.commit('common/removeFromTalkList',usr)
       }
     },
 
@@ -357,12 +363,24 @@ export default {
       return this.$store.getters['common/getListType']
     },
     list() {
-      return this.$store.getters['common/getListByType'](this.ListType)
+      let data = this.$store.getters['common/getListByType'](this.ListType)
+      //过滤已被拉黑的用户
+      return data.filter((usr)=>{
+        if(usr.uuid == this.currentUser.uuid){
+          return usr
+        }
+        if(usr.concatInfo.status != 3){
+          return usr
+        }
+      })
     },
 
     queryData() {
       return this.$store.getters['common/getQueryData']
     },
+    currentUser(){
+      return this.$store.state['common'].currentUser.user
+    }
 
 
   },
@@ -415,16 +433,17 @@ ul {
   background-color: rgb(202, 200, 198);
 }
 /* 头像 */
-.el-image {
+.listbox .el-image {
   /* margin-top: 16px !important; */
-  width: 35px !important;
-  height: 35px !important;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 0;
+  padding: 0 0 0 10px;
 }
-.listbox .el-badge {
+/* .listbox .el-badge {
   margin: 5px 0 0 10px;
   align-items: center;
-}
+} */
 .namewithTime {
   /* padding: 5px 0 0 0; */
   display: flex;
@@ -466,6 +485,7 @@ ul {
   text-align: left;
   padding: 0 25px 0 0;
 }
+
 .recMessage {
   display: flex;
   justify-content: flex-start;
@@ -475,6 +495,55 @@ ul {
   width: auto;
   white-space: nowrap;
   padding: 0 4px 0 0;
+}
+
+.listbox ul {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 开启滚动条 */
+  /* overlay 将滚动条浮动在元素上，不另外占用宽度（只兼容Chrome内核） */
+  /* overflow:overlay ; */
+}
+/* li样式 */
+.listbox ul li {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  height: auto;
+  padding: 10px 0 10px 0;
+  align-items: center;
+  width: 100%;
+}
+
+/* li高亮设置 */
+.listbox ul li:hover {
+  background-color: rgb(214, 211, 209);
+}
+/* 将滚动调设置成悬停出现 */
+.listbox ul:hover {
+  overflow: overlay;
+}
+/* ul列表滚动条样式 */
+.listbox ul::-webkit-scrollbar {
+  /*滚动条整体样式*/
+  width: 7px; /*高宽分别对应横竖滚动条的尺寸*/
+  height: 1px;
+  /* display: none; */
+}
+.listbox ul::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
+  border-radius: 10px;
+  background-color: rgba(185, 183, 180, 0.6);
+}
+/*滚动条里面轨道*/
+.listbox ul::-webkit-scrollbar-track {
+  /* box-shadow: inset 0 0 5px rgb(255, 255, 255);
+  background: #ededed;
+  border-radius: 10px; */
+  display: none;
 }
 </style>
 
@@ -530,54 +599,7 @@ input:-moz-input-placeholder {
 input:-ms-input-placeholder {
   color: rgb(129, 129, 129) !important;
 }
-.listbox ul {
-  padding: 0;
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  /* 开启滚动条 */
-  /* overlay 将滚动条浮动在元素上，不另外占用宽度（只兼容Chrome内核） */
-  /* overflow:overlay ; */
-}
-/* 将滚动调设置成悬停出现 */
-.listbox ul:hover {
-  overflow: overlay;
-}
-/* ul列表滚动条样式 */
-.listbox ul::-webkit-scrollbar {
-  /*滚动条整体样式*/
-  width: 7px; /*高宽分别对应横竖滚动条的尺寸*/
-  height: 1px;
-  /* display: none; */
-}
-.listbox ul::-webkit-scrollbar-thumb {
-  /*滚动条里面小方块*/
-  border-radius: 10px;
-  background-color: rgba(185, 183, 180, 0.6);
-}
-/*滚动条里面轨道*/
-.listbox ul::-webkit-scrollbar-track {
-  /* box-shadow: inset 0 0 5px rgb(255, 255, 255);
-  background: #ededed;
-  border-radius: 10px; */
-  display: none;
-}
 
-/* li样式 */
-.listbox ul li {
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  height: 55px;
-  align-items: center;
-  width: 100%;
-}
-
-/* li高亮设置 */
-.listbox ul li:hover {
-  background-color: rgb(214, 211, 209);
-}
 </style>
 
 <style >
