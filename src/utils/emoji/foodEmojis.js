@@ -32,7 +32,6 @@ const foodEmojis = {
   pear: '🍐',
   peach: '🍑',
   cherries: '🍒',
-  hamburger: '🍔',
   pizza: '🍕',
   meat_on_bone: '🍖',
   poultry_leg: '🍗',
