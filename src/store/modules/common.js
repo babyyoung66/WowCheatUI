@@ -1,3 +1,11 @@
+/***
+ * 所有用户信息更新只更新FriendsMap
+ * 所有群组信息更新只更新GroupsMap
+ * talkList不进行信息更新，实时从上述两个map获取
+ * talkList在退出时会保存相关uuid数组在本地，下次登录时用于初始化消息列表
+ */
+
+
 import Vue from 'vue'
 import Api from "@/utils/Api"
 var _ = require('lodash');
@@ -11,7 +19,7 @@ var key = 'common_' + uuid
 const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.getItem(key)) : {
     isInit: false,
     currentUser: {},
-    //当前打开的列表 "talkList" || "friend" 后续可以维护成全局静态参数
+    //当前打开的列表 "talkList" || "friend" || notice
     ListType: "",
     //当前打开的对话对象
     currentCheatObj: { "name": "系统公告" },
@@ -21,9 +29,11 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     talkList: [],
     //好友列表
     FriendsMap: {},
+    //公告
+    noticeList: [],
     //群聊列表
     GroupsMap: {},
-    //消息框类型(personal/group)
+    //消息框类型(personal、group、notice)
     messageFormType: "",
     //数字变化时消息框滑动到底部
     MessageFormScroll: 0,
@@ -78,8 +88,11 @@ const mutations = {
                     });
 
                 }
+                this.dispatch('message/INIT', data)
+                this.dispatch('stompSocket/connect');
+                state.isInit = true
             });
-            state.isInit = true
+            
         }
 
     },
@@ -120,16 +133,30 @@ const mutations = {
     setListType(state, type) {
         state.ListType = type
     },
-
+    //更新当前聊天对象
     setCurrentCheatObj(state, user) {
-        state.currentCheatObj = user
+        if ('personal' == user.type) {
+            state.currentCheatObj = state.FriendsMap[user.uuid]
+            return
+        }
+        if ('group' == user.type) {
+            state.currentCheatObj = state.GroupsMap[user.uuid]
+            return
+        }
     },
 
     setmessageFormType(state, type) {
         state.messageFormType = type
     },
-    setCheckDetial(state, object) {
-        state.checkDetial = object
+    setCheckDetial(state, user) {
+        if ('personal' == user.type) {
+            state.checkDetial = state.FriendsMap[user.uuid]
+            return
+        }
+        if ('group' == user.type) {
+            state.checkDetial = state.GroupsMap[user.uuid]
+            return
+        }
     },
     //将用户置顶到聊天列表(设置消息时间戳，已在getters中按时间戳降序排列)
     setUserOnTopOfTalkList(state, user) {
@@ -147,8 +174,10 @@ const mutations = {
         }
         //使用现有的commit(模拟message类型格式)
         let msg = { "from": user.uuid, "to": user.uuid, "msgType": user.type, "time": '' }
-        this.dispatch('common/setLastMessTime', msg)
-        this.commit('common/saveState')
+        this.dispatch('common/setLastMessTime', msg).then(() => {
+            this.commit('common/saveState')
+        })
+
     },
     //user={"uuid":,"type":"personal(group)"}
     upDateUnreadTotal(state, user) {
@@ -156,24 +185,23 @@ const mutations = {
         if (user.uuid == state.currentCheatObj.uuid) {
             return
         }
-        console.log(state.FriendsMap[user.uuid])
         if (user.type === 'personal') {
             let usr = state.FriendsMap[user.uuid]
             if (usr != null && usr != undefined) {
                 let total = state.FriendsMap[user.uuid].concatInfo.unReadTotal
                 state.FriendsMap[user.uuid].concatInfo.unReadTotal = total + 1
-                console.log(state.FriendsMap[user.uuid])
             }
+            return
         }
 
         if (user.type === 'group') {
             let usr = state.GroupsMap[user.uuid]
             if (usr != null && usr != undefined) {
                 let total = state.GroupsMap[user.uuid].concatInfo.unReadTotal
-                context.GroupsMap[user.uuid].concatInfo.unReadTotal = total + 1
+                state.GroupsMap[user.uuid].concatInfo.unReadTotal = total + 1
             }
+            return
         }
-
 
     },
     setLastMessTime(state, message) {
@@ -182,8 +210,9 @@ const mutations = {
         if (from == state.currentUser.user.uuid) {
             from = message.to
         }
+
         let newtarget;
-        if(state.FriendsMap[from] != null){
+        if (state.FriendsMap[from] != null) {
             Vue.set(state.FriendsMap[from], 'lastMessTime', time)
             newtarget = state.FriendsMap[from]
         }
@@ -191,28 +220,40 @@ const mutations = {
             Vue.set(state.GroupsMap[message.to], 'lastMessTime', time)
             newtarget = state.GroupsMap[message.to]
         }
-        if(newtarget == null){
+
+        if (newtarget == null) {
             return
         }
-        //更新talkList
+        // //更新talkList
+        // for (let index = 0; index < state.talkList.length; index++) {
+        //     const element = state.talkList[index];
+        //     if (element.uuid == from) {
+        //         state.talkList.splice(index, 1)
+        //         state.talkList.unshift(newtarget)
+        //         return
+        //     }
+        // }
+    },
+    removeFromTalkList(state, user) {
+        if (user.uuid == state.currentCheatObj.uuid) {
+            state.currentCheatObj = {}
+        }
         for (let index = 0; index < state.talkList.length; index++) {
             const element = state.talkList[index];
-            if (element.uuid == from) {
+            if (element.uuid = user.uuid) {
                 state.talkList.splice(index, 1)
-                state.talkList.unshift(newtarget)
-                return
+                break
             }
         }
-    },
-
+    }
 
 }
 
 //提交的是 mutation,即将mutations的方法异步执行
 const actions = {
     //异步初始化
-    INIT(context, data){
-        context.commit('INIT',data)
+    INIT(context, data) {
+        context.commit('INIT', data)
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {
@@ -262,27 +303,7 @@ const actions = {
     },
     //user={"uuid":,"type":"personal(group)"}
     upDateUnreadTotal(context, user) {
-        //是当前聊天对象则不更新
-        if (user.uuid == context.state.currentCheatObj.uuid) {
-            return
-        }
-        if (user.type == 'personal') {
-            let usr = context.state.FriendsMap[user.uuid]
-            if (usr != null && usr != undefined) {
-                let total = context.state.FriendsMap[user.uuid].concatInfo.unReadTotal
-                context.state.FriendsMap[user.uuid].concatInfo.unReadTotal = total + 1
-            }
-
-        }
-
-        if (user.type == 'group') {
-            let usr = context.state.GroupsMap[user.uuid]
-            if (usr != null && usr != undefined) {
-                let total = context.state.GroupsMap[user.uuid].concatInfo.unReadTotal
-                context.state.GroupsMap[user.uuid].concatInfo.unReadTotal = total + 1
-            }
-        }
-
+        context.commit('upDateUnreadTotal', user)
 
     },
     //message类,标记最后消息时间,只用于初始化时排序
@@ -300,11 +321,21 @@ const getters = {
     getListByType: (state) => (type) => {
 
         if (type == 'talkList') {
-            state.talkList = _.orderBy(state.talkList, 'lastMessTime', 'desc')
+            let data = []
+            state.talkList.forEach(element => {
+                let usr = state.FriendsMap[element.uuid]
+                if (usr != null) {
+                    data.push(usr)
+                }
+
+            });
+            state.talkList = _.orderBy(data, 'lastMessTime', 'desc')
+
             return state.talkList
             //返回降序内容，按最后一条消息排
             //return _.orderBy(state.talkList,'lastMessTime','desc')
-        } else if (type == 'friend') {
+        }
+        if (type == 'friend') {
             if (state.FriendsMap != null) {
                 let data = []
                 let object = state.FriendsMap
@@ -312,8 +343,23 @@ const getters = {
                     data.push(object[key])
                 }
                 //按名字升序排
-                return _.orderBy(data, 'name')
+                let first = _.orderBy(data, 'name')
+                //按备注升序排
+                let second = first.sort((a, b) => {
+                    if (a.uuid == state.currentUser.user.uuid || b.uuid == state.currentUser.user.uuid) {
+                        return
+                    }
+                    if (a.concatInfo == null || b.concatInfo == null) {
+                        return
+                    }
+                    return a.concatInfo.remarks.localeCompare(b.concatInfo.remarks, 'zh')
+                })
+                return second
             }
+        }
+        if (type == 'notice') {
+            //返回降序内容，根据时间和置顶级别
+            return _.orderBy(state.noticeList, ['createTime', 'top'], 'desc')
         }
     },
     //整合搜索需要的数据

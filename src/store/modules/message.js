@@ -61,8 +61,7 @@ const mutations = {
                             Vue.set(state.messageMap, id, mss)
                             //标记最后消息时间
                             let lastmess = mss[mss.length - 1]
-                            this.dispatch('common/setLastMessTime', lastmess)
-
+                            this.commit('common/setLastMessTime', lastmess)
                         } else {
                             //没有消息时设置默认时间
                             let mess = { "from": id, "to": id, "time": '1990-01-01 01:40:43.796', 'msgType': '' }
@@ -173,22 +172,19 @@ const getters = {
     getMessagesByuuid: (state) => (uid, length) => {
         //每次根据刷新的数量递增的方式获取
         let message = state.messageMap[uid]
-        if (message == null || message == undefined) {
+        if (message == null || message == undefined || message.length == 0) {
             return null
         }
         //默认返回20条数据
-        if (length == 0 && message.length > 20) {   
+        if (length == 0 && message.length > 20) {
             return _.slice(message, message.length - 20)
         }
         //到达顶部或者数据小于20条直接返回
         if (length >= message.length || message.length <= 20) {
             return message
         }
-
-        
         let mess = _.slice(message, message.length - length)
-
-        return mess
+        return mess.length > 0 ? mess : null
     }
 
 }

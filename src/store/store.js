@@ -26,8 +26,8 @@ const store = new Vuex.Store({
             sessionStorage.setItem("currentUser", JSON.stringify(data))
             //使用action初始化common数据后再初始化其他模块
             this.dispatch('common/INIT', data).then(() => {
-                this.dispatch('message/INIT', data)
-                this.dispatch('stompSocket/connect');
+                // this.dispatch('message/INIT', data)
+                // this.dispatch('stompSocket/connect');
                 sessionStorage.setItem("isInit", "true")
             })
 
