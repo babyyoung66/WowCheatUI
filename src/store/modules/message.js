@@ -49,22 +49,22 @@ const mutations = {
 
     Init_Local(state, data) {
         //初始化本地消息列表相关好友的记录
-        let idkey = 'talkId_' + data.user.uuid
-        let talk = localStorage.getItem(idkey) != null ? JSON.parse(localStorage.getItem(idkey)) : null
-        if (talk != null) {
+
+        let talk = this.state['common'].talkList
+        if (talk != null && talk.length > 0) {
             for (let index = 0; index < talk.length; index++) {
-                const id = talk[index];
-                Api.postRequest('/message/getByPage', { "to": id }).then(res => {
+                const user = talk[index];
+                Api.postRequest('/message/getByPage', { "to": user.uuid, "msgType": user.type }).then(res => {
                     if (res.data.success) {
                         let mss = res.data.data
                         if (mss != null) {
-                            Vue.set(state.messageMap, id, mss)
+                            Vue.set(state.messageMap, user.uuid, mss)
                             //标记最后消息时间
                             let lastmess = mss[mss.length - 1]
                             this.commit('common/setLastMessTime', lastmess)
                         } else {
                             //没有消息时设置默认时间
-                            let mess = { "from": id, "to": id, "time": '1990-01-01 01:40:43.796', 'msgType': '' }
+                            let mess = { "from": user.uuid, "to": user.uuid, "time": '1990-01-01 01:40:43.796', 'msgType': '' }
                             this.dispatch('common/setLastMessTime', mess)
                         }
                     }
@@ -73,6 +73,7 @@ const mutations = {
             }
         }
     },
+    //初始化存在未读记录的用户，并放到talkList
     Init_Friend(state) {
         let friendsMap = this.state['common'].FriendsMap
         if (friendsMap != null) {
@@ -125,8 +126,6 @@ const mutations = {
 
     //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "user": "", "message": "" }
     pushOneMessageByUUID(state, messageData) {
-        //更新未读计数
-        this.dispatch('common/upDateUnreadTotal', messageData.user)
         if (state.messageMap[messageData.user.uuid] != null) {
             //存在则追加到底部
             state.messageMap[messageData.user.uuid].push(messageData.message)
@@ -136,8 +135,6 @@ const mutations = {
             messArry.push(messageData.message)
             Vue.set(state.messageMap, messageData.user.uuid, messArry)
         }
-        //置顶用户
-        this.commit('common/setUserOnTopOfTalkList', messageData.user)
     },
     // 查询或追加历史聊天记录,请求格式 { "user": "", "message": "" }
     pushMessageArryByUUIDOnTop(state, messageData) {
@@ -155,7 +152,32 @@ const mutations = {
             Vue.set(state.messageMap, uid, messageData.message)
         }
     },
+    //初始化用户消息{"to":'',"msgType":'',"time":''},time为空时则默认查询，to及msgType必填
+    InitUserMessage(state, user) {
+        //是否在talkList中，存在则已初始化
+        //如果不在消息列表中则初始化消息
+        let talkList = this.state['common'].talkList
+        let notIn = true
+        talkList.forEach(element => {
+            if (element.uuid == user.uuid) {
+                notIn = false
+                return
+            }
+        });
+        //本地是否已初始化过
+        let oldmess = state.messageMap[user.uuid]
+        if (notIn && oldmess == null) {
+            let message = { "to": user.uuid, "msgType": user.type }
+            Api.postRequest('/message/getByPage', message).then(res => {
+                if (res.data.success) {
+                    let messDta = { "user": user, "message": res.data.data }
+                    // 初始化时直接赋值，如果已初始化则使用新增
+                    this.dispatch('message/setMessageMapByUUID', messDta)
+                }
+            })
+        }
 
+    }
 
 }
 
@@ -200,12 +222,7 @@ const actions = {
     setMessageMapByUUID(context, messageData) {
         let oldmess = context.state.messageMap[messageData.user.uuid]
         //判断是否已存在旧数据
-        if (oldmess != null) {
-            //存在说明已经初始化，不操作
-            // let newmess = messageData.message
-            // let cout = newmess.concat(oldmess)
-            // Vue.set(state.messageMap, messageData.uuid, cout)
-        } else {
+        if (oldmess == null) {
             Vue.set(context.state.messageMap, messageData.user.uuid, messageData.message)
         }
 

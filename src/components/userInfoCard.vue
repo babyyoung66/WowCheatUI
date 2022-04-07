@@ -2,7 +2,7 @@
   <div
     class="infocard"
     v-loading="userinfo == null || !userinfo"
-    v-if="userinfo != null"
+    v-if="userinfo != null && userinfo.uuid != null"
   >
     <!-- 右三点图标 -->
     <div class="header">
@@ -209,6 +209,7 @@ export default {
   },
   methods: {
     sendMessage() {
+      this.$store.commit('message/InitUserMessage', this.userinfo)
       this.$store.state['common'].currentCheatObj = this.userinfo
       this.$store.commit('common/setUserOnTopOfTalkList', this.userinfo)
       this.$store.state['common'].ListType = 'talkList'
@@ -247,8 +248,17 @@ export default {
       this.edit.remarks = ''
     },
     deleteFriend() {
+      let uuid = this.userinfo.uuid
+      let friend = { "fUuid": uuid }
       this.Api.postRequest('/friend/delete', friend).then(res => {
-
+        if (res.data.success) {
+          //删除本地信息
+          this.$store.commit('common/deleteUser',this.userinfo)
+          this.$message({
+            message: res.data.message,
+            type: 'success'
+          });
+        }
       })
     },
     changeFriendStatus(status) {

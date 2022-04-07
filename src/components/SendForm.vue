@@ -248,6 +248,8 @@ export default {
     closeImagePop() {
       this.ImagePopVisiable = false
       this.FileList = []
+      //清除文件信息（elementui的钩子函数）
+      this.$refs.uploadImage.clearFiles()
     },
     //移除已选内容
     handleRemove(file) {

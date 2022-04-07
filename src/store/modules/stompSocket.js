@@ -14,26 +14,35 @@ const state = {
     //重连间隔
     reconnectDelay: 5000,
     reConnec: false,
-    connecting: false
+    connecting: false,
+    //是否需有重连，退出登录时为false，登录时为true，默认为true
+    needreConnec: true
 }
 
 
 const mutations = {
     INIT_SOCKET(state) {
-
+        state.needreConnec = true
+        this.dispatch('stompSocket/connect')
     }
     ,
     removeState(state) {
-        state.stomp = null
+        if (state.stomp != null) {
+            console.log("stomp已断开...")
+            state.stomp.disconnect()
+        }
+        //state.stomp = null
         state.reConnec = false
-        state.reConnectTimes == 0
+        state.reConnectTimes = 0
+        state.needreConnec = false
     }
 
 }
 
 const actions = {
     connect(context) {
-        if (context.state.connecting) {
+        //正在连接或已连接
+        if (context.state.connecting || context.state.stomp != null && context.state.stomp.connected) {
             return
         }
         context.state.connecting = true
@@ -74,17 +83,17 @@ const actions = {
             if (context.state.reConnectTimes == 0) {
                 context.state.reConnec = true
             }
-            if (context.state.reConnec && !context.state.stomp.connected) {
+            if (context.state.reConnec && context.state.needreConnec && !context.state.stomp.connected) {
                 context.dispatch('ReConnect', error)
             }
         })
     },
     //订阅
-     Subscribe(context) {
+    Subscribe(context) {
         const local = JSON.parse(sessionStorage.getItem("currentUser"))
         // 个人id订阅
         context.state.stomp.subscribe('/user/' + local.user.uuid + '/personal', (response) => {
-            context.dispatch("MessageCover", response)
+            context.dispatch("messageAdapter", response)
         });
 
         // topic订阅
@@ -144,7 +153,7 @@ const actions = {
             }
         }, context.state.reconnectDelay)
     },
-    
+
     MessageCover(context, response) {
         let result = JSON.parse(response.body)
         if (!result.success) {
@@ -171,8 +180,87 @@ const actions = {
 
         }
 
-    }
+    },
+    /* 消息适配器 */
+    messageAdapter(context, response) {
+        let result = JSON.parse(response.body)
+        if (!result.success) {
+            Notification.warning({
+                title: '系统消息',
+                message: result.errorMessage,
+                position: "top-right",
+                duration: 5000
+            });
+            return
+        }
+        if (result.success) {
+            let message = result.message
+            let type = result.type
+            //普通消息
+            if ('cheat' == type) {
+                context.dispatch("updateCheatMessage", message)
+                return
+            }
+            //好友请求
+            if ('friendRequest' == type) {
+                context.dispatch("updateFriendRequest", message) 
+                return
+            }
+            //更新好友列表
+            if ('updateFriend' == type) {
+                context.dispatch("updateFriendMap", message) 
+                return
+            }
+            //更新群聊列表
+            if ('updateGroup' == type) {
+                context.dispatch("updateGroupMap", message) 
+                return
+            }
+            //topic通知
+            if ('notice' == type) {
+                //context.dispatch("messageAdapter", message) 
+                return
+            }
 
+        }
+    },
+
+    updateCheatMessage(context, message) {
+        let fromid = message.from
+        //如果发送者为自己，则将消息存入好友id
+        if (fromid === this.state['common'].currentUser.user.uuid) {
+            fromid = message.to
+        }
+        let msgType = message.msgType
+        //群消息时，to固定为群uuid
+        if (msgType == 'group') {
+            fromid = message.to
+        }
+        let user = { "uuid": fromid, "type": msgType }
+        let msgData = { "user": user, "message": message }
+        //追加消息
+        this.commit('message/pushOneMessageByUUID', msgData)
+        this.commit('common/setLastMessTime', message)
+        //更新未读计数
+        this.dispatch('common/upDateUnreadTotal', user)
+        //置顶用户
+        this.commit('common/setUserOnTopOfTalkList', user)
+    },
+    updateFriendRequest(context, request) {
+        this.commit('common/addFriendRequest',request)
+    },
+    updateFriendMap(context, friend) {
+        this.commit('common/addUser',friend)
+        Notification.success({
+            title: '系统消息',
+            message: '已成功添加【' + friend.name + '】为好友！',
+            position: "top-right",
+            duration: 5000
+        });
+    },
+    updateGroupMap(context, group) {
+        this.commit('common/addGroup',group)
+    },
 
 }
 const getters = {

@@ -2,7 +2,7 @@
   <div
     class="infocard"
     v-loading="userinfo == null || !userinfo"
-    v-if="userinfo != null "
+    v-if="userinfo != null"
   >
     <!-- 姓名、头像、id -->
     <div class="maininfo">
@@ -64,7 +64,16 @@
     <!-- 备注 -->
 
     <div v-show="userinfo.uuid != currentUserUUid" class="remarks">
-      <div class="remarksLabel">备　注</div>
+      <div
+        v-if="
+          userinfo.concatInfo != null &&
+          userinfo.concatInfo.remarks != null &&
+          userinfo.concatInfo.remarks != ''
+        "
+        class="remarksLabel"
+      >
+        备　注
+      </div>
       <div class="remarks_Name">
         <p
           v-if="
@@ -94,7 +103,7 @@
       </div>
     </div>
     <!-- 菜单按钮 -->
-    <div class="menue">
+    <div class="menue" v-show="showFooter">
       <i class="bi bi-reply"></i>
 
       <i @click="sendMessage" class="bi bi-chat"></i>
@@ -107,7 +116,13 @@ export default {
   name: "personalCart",
   //由父组件在标签使用:userinfo="xxx"传入具体展示信息
   props: {
-    userinfo: {}
+    userinfo: {
+      required: true
+    },
+    //是否显示底部图标按钮,默认显示
+    showFooter: {
+      default: true
+    },
   },
   data() {
     return {
@@ -116,12 +131,28 @@ export default {
     }
   },
   methods: {
-      sendMessage(){
-        this.$store.state['common'].currentCheatObj = this.userinfo
-        this.$store.commit('common/setUserOnTopOfTalkList',this.userinfo)
-        this.$store.state['common'].ListType = 'talkList'
-        this.$store.state['common'].messageFormType = this.userinfo.type
+    sendMessage() {
+      if(this.userinfo == null){
+        return
       }
+      
+      //如果不在消息列表中则初始化消息
+      // let notIn = true
+      // this.talkList.forEach(element => {
+      //     if(element.uuid == this.userinfo.uuid){
+      //       notIn = false
+      //       return
+      //     }
+      // });
+      // if(notIn){
+      //   this.$store.commit('message/InitUserMessage', { "to": this.userinfo.uuid ,"msgType":this.userinfo.type})
+      // }
+      this.$store.commit('message/InitUserMessage', this.userinfo) 
+      this.$store.state['common'].currentCheatObj = this.userinfo
+      this.$store.commit('common/setUserOnTopOfTalkList', this.userinfo)
+      this.$store.state['common'].ListType = 'talkList'
+      this.$store.state['common'].messageFormType = this.userinfo.type
+    }
   },
   computed: {
     // 设置图片预览
@@ -132,6 +163,9 @@ export default {
     },
     currentUserUUid() {
       return this.$store.state['common'].currentUser.user.uuid
+    },
+    talkList(){
+      return this.$store.state['common'].talkList
     }
   }
 
@@ -276,7 +310,7 @@ p {
   transform: rotateY(180deg);
   font-size: 28px;
 }
-.menue .bi.bi-chat:hover{
+.menue .bi.bi-chat:hover {
   color: rgb(216, 212, 212);
 }
 </style>

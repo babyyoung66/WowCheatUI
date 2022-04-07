@@ -24,7 +24,7 @@
         <!-- 时间线，十分钟内不显示，一天内显示时分，超过两天显示昨天/前天 + 时分，三天以上显示年月日时分... -->
         <div style="text-align: center">
           <span
-            v-show="message.showtime != null && message.showtime != false"
+            v-if="message.showtime != null && message.showtime != false"
             class="time"
             >{{ formatTime(message.time) }}</span
           >
@@ -65,7 +65,7 @@
           <div class="message">
             <!-- 群聊时才显示名称,以及自身名称不显示 -->
             <p
-              v-show="
+              v-if="
                 ($store.state['common'].messageFormType == 'group' &&
                   message.from != currentUser.uuid) ||
                 message.from != currentUser.uuid
@@ -76,7 +76,7 @@
               }"
             >
               <span
-                v-show="
+                v-if="
                   getUserInfo(message.from).concatInfo == null ||
                   getUserInfo(message.from).concatInfo.remarks == null
                 "
@@ -128,8 +128,8 @@
                   fit="scale-down"
                   :preview-src-list="[message.fileDetail.fileUrl]"
                   lazy
-                  @error="ImageloadError($event,'image' + message._id)"
-                  @load="ImageloadSuccess($event,'image' + message._id)"
+                  @error="ImageloadError($event, 'image' + message._id)"
+                  @load="ImageloadSuccess($event, 'image' + message._id)"
                 ></el-image>
               </div>
             </div>
@@ -176,7 +176,7 @@ export default {
     showMoreMessage() {
       //暂存当前ul总高度
       let scrollHeigh = this.currentScrollheight
-      let firstmess = {"to":''}
+      let firstmess = { "to": '' }
       if (this.messageData != null) {
         firstmess = this.messageData[0]
       }
@@ -212,7 +212,6 @@ export default {
     },
     //是否显示时间，与上个显示的时间差大于等于5分钟则显示
     showTheTime(index) {
-
       let isShow = this.messageData[index].showtime
       //已标记则直接返回
       if (isShow != null && isShow != 'undefined') {
@@ -342,7 +341,7 @@ export default {
       if (clientHeight == height) {
         return false
       }
-      if (count >= height - 40) {
+      if (count >= height - 15) {
         this.NeedScrool = true
         return true
       }
@@ -356,9 +355,9 @@ export default {
       this.messageListSize = 0
     },
     //图加载失败时,尝试重新获取几次
-    ImageloadError(e,imgid) {
+    ImageloadError(e, imgid) {
       //console.log(this.$refs[imgid])   
-      if(this.imagIstryed(imgid)){
+      if (this.imagIstryed(imgid)) {
         return
       }
       let target = e.currentTarget
@@ -380,14 +379,14 @@ export default {
     imagIstryed(imgid) {
       let res = false
       this.restImageList.forEach(element => {
-          if(element == imgid){
-            res = true
-            return
-          }
+        if (element == imgid) {
+          res = true
+          return
+        }
       });
       return res
     },
-    ImageloadSuccess(e,imgid) {
+    ImageloadSuccess(e, imgid) {
       //console.log(this.$refs[imgid])
     }
 

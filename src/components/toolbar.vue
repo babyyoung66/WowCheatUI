@@ -82,7 +82,7 @@
           placement="right"
         >
           <!-- @click="changeList('personCenter')"  -->
-          <el-button @click="changeList('personCenter')"
+          <el-button
             ><i class="bi bi-person-circle"></i
           ></el-button>
         </el-tooltip>
@@ -106,7 +106,7 @@
               <li>清空聊天记录</li>
             </ul>
 
-            <el-button @click="changeList('more')" slot="reference"
+            <el-button  slot="reference"
               ><i class="bi bi-list-ul"></i
             ></el-button>
           </el-popover>

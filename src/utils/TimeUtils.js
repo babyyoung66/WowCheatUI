@@ -15,19 +15,19 @@ const TimeUtils = {
         return day.getTime()
     },
     // 计算时差（单位：分）
-    ComputeDiffMinutes(before, after) {
-        if (before == null || before == '' || after == null || after == '') {
+    ComputeDiffMinutes(startTime, endTime) {
+        if (startTime == null || startTime == '' || endTime == null || endTime == '') {
             return 0
         }
 
-        if (after.indexOf("-") != -1) {
-            after = after.replace(/-/g, '/')
+        if (endTime.indexOf("-") != -1) {
+            endTime = endTime.replace(/-/g, '/')
         }
-        if (before.indexOf("-") != -1) {
-            before = before.replace(/-/g, '/')
+        if (startTime.indexOf("-") != -1) {
+            startTime = startTime.replace(/-/g, '/')
         }
-        let day1 = new Date(after)
-        let day2 = new Date(before)
+        let day1 = new Date(endTime)
+        let day2 = new Date(startTime)
         let diff = (day1.getTime() - day2.getTime()) / (60 * 1000)
         //向下取整
         return Math.ceil(diff)
@@ -52,7 +52,9 @@ const TimeUtils = {
         today.setMilliseconds(0);
         let day = new Date(time)
         let between = (today.getTime() - day.getTime()) / 24 / 60 / 60 / 1000
-        if ( between < 0) {
+        let nowYear = today.getFullYear()
+        let dayYear = day.getFullYear()
+        if (between < 0) {
             return this.dateForMat("hh:mm", day)
         }
         if (1 >= between && between > 0) {
@@ -66,11 +68,16 @@ const TimeUtils = {
             if (today.getDay() == 0 || weekdif > 0) {
                 return week[day.getDay()]
             } else {
-                return day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate()
+                return (day.getMonth() + 1) + '/' + day.getDate()
             }
         }
         if (between >= 7) {
-            return day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate()
+            if (nowYear == dayYear) {
+                return (day.getMonth() + 1) + '/' + day.getDate()
+            } else {
+                return day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate()
+            }
+
         }
     },
 
@@ -90,7 +97,9 @@ const TimeUtils = {
         today.setMilliseconds(0);
         let day = new Date(time)
         let between = (today.getTime() - day.getTime()) / 24 / 60 / 60 / 1000
-        if ( between < 0) {
+        let nowYear = today.getFullYear()
+        let dayYear = day.getFullYear()
+        if (between < 0) {
             return this.dateForMat("hh:mm", day)
         }
         if (1 >= between && between > 0) {
@@ -104,11 +113,15 @@ const TimeUtils = {
             if (today.getDay() == 0 || weekdif > 0) {
                 return week[day.getDay()] + '   ' + this.dateForMat("hh:mm", day)
             } else {
-                return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
+                return (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
             }
         }
         if (between >= 7) {
-            return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
+            if (nowYear == dayYear) {
+                return (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
+            } else {
+                return day.getFullYear() + '年' + (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
+            }
         }
     },
     dateForMatDefault(date) {

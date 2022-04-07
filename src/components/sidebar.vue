@@ -13,26 +13,38 @@
         @clear="afterClear"
       ></el-autocomplete>
 
-      <el-button icon="el-icon-plus"></el-button>
+      <el-button @click="plusDialogVisible = true" icon="el-icon-plus"></el-button>  
     </div>
+    <el-dialog
+       :visible.sync="plusDialogVisible"
+        width="240px"
+        center
+        :modal="false"
+        :close-on-click-modal="false"
+        custom-class="plusDialog"
+      >
+        <!-- 加号菜单组件 -->
+        <plus-menue></plus-menue>
+        <span slot="footer" class="dialog-footer">
+          <el-button plain type="primary" size="mini" @click="plusDialogVisible = false">取 消</el-button>
+        </span>
+      </el-dialog>
 
     <!-- 列表区域 -->
     <div class="listbox">
       <!-- 消息列表 -->
-      <ul v-if="list != null && ListType == 'talkList'">
+      <ul v-if="TalkList != null && ListType == 'talkList'">
         <li
-        style="padding:10px 0 6px 0"
-          v-for="(it, index) in list"
-          :key="index"
+          class="userli"
+          style="padding: 10px 0 6px 0"
+          v-for="(it, index) in TalkList"
+          :key="'message' + index"
           @click="SelectList(it, index)"
           :class="{
-            onSelect:
-              TalkSelectIndex == index ||
-              it.uuid == $store.state['common'].currentCheatObj.uuid,
+            onSelect: it.uuid == $store.state['common'].currentCheatObj.uuid,
           }"
           @contextmenu="rightClik(index, it, $event)"
         >
-          <span v-if="setClikIndex(it, index)" style="display: none"></span>
           <!-- 消息红点 -->
           <el-badge
             :is-dot="
@@ -50,14 +62,22 @@
             <div class="namewithTime">
               <!-- 名称 -->
               <span
-                v-if="it.concatInfo == null || it.concatInfo.remarks == null || it.concatInfo.remarks == ''"
+                v-if="
+                  it.concatInfo == null ||
+                  it.concatInfo.remarks == null ||
+                  it.concatInfo.remarks == ''
+                "
                 class="name"
                 style="font-size: 16px"
                 >{{ it.name }}</span
               >
               <!-- 有备注则显示备注 -->
               <span
-                v-if="it.concatInfo != null && it.concatInfo.remarks != null && it.concatInfo.remarks != ''"
+                v-if="
+                  it.concatInfo != null &&
+                  it.concatInfo.remarks != null &&
+                  it.concatInfo.remarks != ''
+                "
                 class="name"
                 style="font-size: 16px"
                 >{{ it.concatInfo.remarks }}</span
@@ -80,55 +100,175 @@
                 [{{ it.concatInfo.unReadTotal }}条]
               </p>
               <!-- 最后一条消息记录 -->
-              <p class="mess" v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'text'">
+              <p
+                class="mess"
+                v-if="
+                  getLastMess(it.uuid) != null &&
+                  getLastMess(it.uuid)['contentType'] == 'text'
+                "
+              >
                 {{ getLastMess(it.uuid)["content"] }}
               </p>
-              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'image'" class="mess" >
-                [图片]{{getLastMess(it.uuid)['fileDetail'].fileName}}
+              <p
+                v-if="
+                  getLastMess(it.uuid) != null &&
+                  getLastMess(it.uuid)['contentType'] == 'file' &&
+                  getLastMess(it.uuid)['fileDetail'].fileType == 'image'
+                "
+                class="mess"
+              >
+                [图片]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
               </p>
-              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'video'" class="mess" >
-                [视频]{{getLastMess(it.uuid)['fileDetail'].fileName}}
+              <p
+                v-if="
+                  getLastMess(it.uuid) != null &&
+                  getLastMess(it.uuid)['contentType'] == 'file' &&
+                  getLastMess(it.uuid)['fileDetail'].fileType == 'video'
+                "
+                class="mess"
+              >
+                [视频]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
               </p>
-              <p v-if="getLastMess(it.uuid) != null && getLastMess(it.uuid)['contentType'] == 'file' && getLastMess(it.uuid)['fileDetail'].fileType == 'file'" class="mess" >
-                [文件]{{getLastMess(it.uuid)['fileDetail'].fileName}}
+              <p
+                v-if="
+                  getLastMess(it.uuid) != null &&
+                  getLastMess(it.uuid)['contentType'] == 'file' &&
+                  getLastMess(it.uuid)['fileDetail'].fileType == 'file'
+                "
+                class="mess"
+              >
+                [文件]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
               </p>
             </div>
           </div>
         </li>
       </ul>
       <!-- 通讯录 -->
+
       <ul v-show="ListType == 'friend'">
+        <li class="typeLabel">#新的朋友</li>
+        <!-- 好友请求列表 -->
         <li
-          v-for="(it, index) in list"
-          :key="index"
-          @click="checkDetial(it, index)"
+          @click="checkFriendRequest"
+          class="userli"
+          style="justify-content: start"
           :class="{
             onSelect:
-              FriendSelectIndex == index ||
-              ($store.state['common'].checkDetial != null &&
-                it.uuid == $store.state['common'].checkDetial.uuid),
+              $store.state['common'].checkDetial != null &&
+              $store.state['common'].checkDetial.type == 'friendsRequest',
           }"
-          :ref="index"
+        >
+          <!-- 头像 -->
+          <el-image
+            fit="cover"
+            style="padding: 0 0 0 10px"
+            src="../static/newFriendPic.png"
+          >
+          </el-image>
+          <span class="name" style="font-size: 16px; padding: 0 30px 0 15px">
+            新的朋友
+          </span>
+        </li>
+
+        <li
+          class="typeLabel"
+          style="border-top: 0.1px solid rgb(197, 195, 194)"
+        >
+          #群聊
+        </li>
+        <div
+          style="height: 40px"
+          v-if="GroupsList == null || GroupsList.length == 0"
+        ></div>
+        <!-- 群聊 -->
+        <li
+          class="userli"
+          v-for="(it, index) in GroupsList"
+          :key="'group' + index"
+          @click="SelectList(it, index)"
+          :class="{
+            onSelect:
+              $store.state['common'].checkDetial != null &&
+              it.uuid == $store.state['common'].checkDetial.uuid,
+          }"
+          :ref="it.uuid"
           style="justify-content: start"
           v-show="it.uuid != currentUser.uuid"
         >
           <!-- @contextmenu="rightClik(index, it, $event)" -->
-          <span v-if="setClikIndex(it, index)" style="display: none"></span>
           <!-- 头像 -->
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
           <span
-            v-if="it.concatInfo == null || it.concatInfo.remarks == null || it.concatInfo.remarks == ''"
+            v-if="
+              it.concatInfo == null ||
+              it.concatInfo.remarks == null ||
+              it.concatInfo.remarks == ''
+            "
             class="name"
-            style=" font-size: 16px; padding: 0 30px 0 15px;"
+            style="font-size: 16px; padding: 0 30px 0 15px"
           >
             {{ it.name }}
           </span>
           <!-- 备注 -->
           <span
-            v-if="it.concatInfo != null && it.concatInfo.remarks != null && it.concatInfo.remarks != ''"
+            v-if="
+              it.concatInfo != null &&
+              it.concatInfo.remarks != null &&
+              it.concatInfo.remarks != ''
+            "
             class="name"
-            style=" font-size: 16px; padding: 0 30px 0 15px;"
+            style="font-size: 16px; padding: 0 30px 0 15px"
+          >
+            {{ it.concatInfo.remarks }}
+          </span>
+        </li>
+
+        <li
+          class="typeLabel"
+          style="border-top: 0.1px solid rgb(197, 195, 194)"
+        >
+          #好友
+        </li>
+        <!-- 好友 -->
+        <li
+          class="userli"
+          v-for="(it, index) in FriendsList"
+          :key="'personal' + index"
+          @click="SelectList(it, index)"
+          :class="{
+            onSelect:
+              $store.state['common'].checkDetial != null &&
+              it.uuid == $store.state['common'].checkDetial.uuid,
+          }"
+          :ref="it.uuid"
+          style="justify-content: start"
+          v-show="it.uuid != currentUser.uuid"
+        >
+          <!-- @contextmenu="rightClik(index, it, $event)" -->
+          <!-- 头像 -->
+          <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
+          </el-image>
+          <span
+            v-if="
+              it.concatInfo == null ||
+              it.concatInfo.remarks == null ||
+              it.concatInfo.remarks == ''
+            "
+            class="name"
+            style="font-size: 16px; padding: 0 30px 0 15px"
+          >
+            {{ it.name }}
+          </span>
+          <!-- 备注 -->
+          <span
+            v-if="
+              it.concatInfo != null &&
+              it.concatInfo.remarks != null &&
+              it.concatInfo.remarks != ''
+            "
+            class="name"
+            style="font-size: 16px; padding: 0 30px 0 15px"
           >
             {{ it.concatInfo.remarks }}
           </span>
@@ -158,20 +298,20 @@
   </div>
 </template>
 
-<script scope="this api replaced by slot-scope in 2.5.0+">
+<script scoped>
 import TimeUtils from '@/utils/TimeUtils'
+import plusMenue from './plusMenue.vue';
 export default {
+  components: { plusMenue },
   name: "sidebar",
   data() {
     return {
-      rightClikIndex: -1,
+      plusDialogVisible:false,
+      //右键选中的用户
+      rightClikObj: null,
       contextMenuVisible: false,
       left: 0,
       top: 0,
-
-      //记录当前已选li的index，用于改变样式
-      TalkSelectIndex: -1,
-      FriendSelectIndex: -1,
       state: '',
     }
   },
@@ -211,14 +351,8 @@ export default {
     //聊天列表时的方法
     TalkSelect(item) {
       // 查询聊天记录
-      this.Api.postRequest('/message/getByPage', { "to": item.uuid }).then(res => {
-        if (res.data.success) {
-          let messDta = { "user": item, "message": res.data.data }
-          // console.log(messDta)
-          this.$store.dispatch('message/setMessageMapByUUID', messDta)
-        }
-      })
-
+      this.$store.commit('message/InitUserMessage', item)
+     
       //设置为选中
       this.SelectList(item, 0)
       this.moveToTop(item)
@@ -230,12 +364,10 @@ export default {
 
     FriendSelect(item) {
 
-      //获取元素在list中的位置
-      let index = this.list.findIndex(it => it.uuid == item.uuid)
       //设置为选中
       this.SelectList(item, index)
       //根据设置refs获取对应的元素
-      let target = this.$refs[index]['0']
+      let target = this.$refs[item.uuid]['0']
       let targetOffset = target.offsetTop
 
       // console.log(document.querySelector(".onSelect"))
@@ -258,14 +390,13 @@ export default {
         this.$store.commit('common/setListType', 'talkList')
       }
       if (this.ListType == 'talkList') {
-        this.TalkSelectIndex = index
-        this.$store.commit('common/setCurrentCheatObj',item) 
+        this.$store.commit('common/setCurrentCheatObj', item)
         //更新好友联系时间
         this.$store.dispatch('common/upDateConcatTime', item)
         return
       }
       if (this.ListType == 'friend') {
-        this.FriendSelectIndex = index
+        this.$store.commit('common/setCheckDetial', item)
         return
       }
 
@@ -274,27 +405,13 @@ export default {
     changeMessageFormType(item) {
       this.$store.commit('common/setmessageFormType', item.type)
     },
-    //根据当前聊天对象设置已选
-    setClikIndex(item, index) {
-      if (item.uuid == this.$store.state['common'].currentCheatObj.uuid) {
-        this.TalkSelectIndex = index
-      }
-      if (this.$store.state['common'].checkDetial != null && item.uuid == this.$store.state['common'].checkDetial.uuid) {
-        this.FriendSelectIndex = index
-      }
-      return
-
-    },
+  
     //根据id读取列表(talkList是复制的一份，后续数据是更新FriendMap，所有得从FriendMap读取)
     getUserInfo(uuid) {
       return this.$store.getters['common/getUserByuuid'](uuid)
     },
 
-    //获取当前选择查看的对象index及更新到store
-    checkDetial(item, index) {
-      this.SelectList(item, index)
-      this.$store.commit('common/setCheckDetial', item)
-    },
+  
     // 获取最新的一条记录
     getLastMess(uuid) {
       if (this.$store.state['message'].messageMap != null) {
@@ -338,47 +455,48 @@ export default {
       this.contextMenuVisible = true;
       this.left = clickEvent.clientX;
       this.top = clickEvent.clientY + 5;
-      this.rightClikIndex = index
+      this.rightClikObj = data
     },
     closeMenu() {
       this.contextMenuVisible = false;
-      this.rightClikIndex = -1
+      this.rightClikObj = null
     },
     //删除聊天
     delfromList() {
-      if (this.rightClikIndex != -1) {
-        let usr = this.list[this.rightClikIndex]
-        this.$store.commit('common/removeFromTalkList',usr)
+      if (this.rightClikObj != null) {
+        let usr = this.rightClikObj
+        this.$store.commit('common/removeFromTalkList', usr)
       }
     },
-
-
+    //查看好友请求列表
+    checkFriendRequest() {
+      let item = { "name": '新的朋友', "type": 'friendsRequest' }
+      this.$store.commit('common/setCheckDetial', item)
+    }
 
   },
   //绑定vuex数据
   computed: {
-    //根据对话对象计算已选择位置
-
     ListType() {
       return this.$store.getters['common/getListType']
     },
-    list() {
-      let data = this.$store.getters['common/getListByType'](this.ListType)
-      //过滤已被拉黑的用户
-      return data.filter((usr)=>{
-        if(usr.uuid == this.currentUser.uuid){
-          return usr
-        }
-        if(usr.concatInfo.status != 3){
-          return usr
-        }
-      })
+    GroupsList() {
+      return this.$store.getters['common/getGroupsList']
+    },
+    FriendsList() {
+      return this.$store.getters['common/getFriendsList']
+    },
+    TalkList() {
+      return this.$store.getters['common/getTalkList']
+    },
+    NoticeList() {
+      return this.$store.getters['common/getNoticeList']
     },
 
     queryData() {
       return this.$store.getters['common/getQueryData']
     },
-    currentUser(){
+    currentUser() {
       return this.$store.state['common'].currentUser.user
     }
 
@@ -401,9 +519,6 @@ export default {
 
 </script>
 <style scoped>
-li {
-  cursor: pointer;
-}
 div,
 p,
 li,
@@ -435,8 +550,8 @@ ul {
 /* 头像 */
 .listbox .el-image {
   /* margin-top: 16px !important; */
-  width: 40px !important;
-  height: 40px !important;
+  width: 34px !important;
+  height: 34px !important;
   border-radius: 0;
   padding: 0 0 0 10px;
 }
@@ -466,8 +581,8 @@ ul {
   color: rgb(129, 129, 129);
   font-size: 12px;
 }
-.mess{
-   line-height: 19px;
+.mess {
+  line-height: 19px;
 }
 .peopleinfo .time {
   width: auto;
@@ -508,7 +623,7 @@ ul {
   /* overflow:overlay ; */
 }
 /* li样式 */
-.listbox ul li {
+.listbox .userli {
   list-style: none;
   display: flex;
   justify-content: space-between;
@@ -516,10 +631,11 @@ ul {
   padding: 10px 0 10px 0;
   align-items: center;
   width: 100%;
+  cursor: pointer;
 }
 
 /* li高亮设置 */
-.listbox ul li:hover {
+.listbox .userli:hover {
   background-color: rgb(214, 211, 209);
 }
 /* 将滚动调设置成悬停出现 */
@@ -544,6 +660,12 @@ ul {
   background: #ededed;
   border-radius: 10px; */
   display: none;
+}
+.listbox .typeLabel {
+  text-align: left;
+  font-size: 13px;
+  padding: 15px 0 2px 10px;
+  color: rgb(148, 145, 145);
 }
 </style>
 
@@ -600,9 +722,6 @@ input:-ms-input-placeholder {
   color: rgb(129, 129, 129) !important;
 }
 
-</style>
-
-<style >
 .contextmenu {
   width: 100px;
   margin: 0;
@@ -627,5 +746,22 @@ input:-ms-input-placeholder {
 }
 .contextmenu li button {
   color: #2c3e50;
+}
+.plusDialog .el-dialog__header{
+  padding: 5px 10px 10px 0 !important;
+}
+/* .plusDialog .el-dialog__title{
+  display: none !important;
+} */
+.plusDialog .el-dialog__headerbtn{
+  top: 6px !important;
+  right: 6px !important ;
+}
+.plusDialog .el-dialog__body{
+  padding: 25px 25px 15px 25px !important ;
+}
+.plusDialog .el-dialog__footer{
+  text-align: right !important;
+  padding: 10px 25px 20px 25px !important;
 }
 </style>

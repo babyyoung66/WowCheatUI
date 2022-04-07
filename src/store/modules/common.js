@@ -22,7 +22,7 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     //当前打开的列表 "talkList" || "friend" || notice
     ListType: "",
     //当前打开的对话对象
-    currentCheatObj: { "name": "系统公告" },
+    currentCheatObj: { "name": "系统公告", "type": 'notice' },
     //当前查看的好友信息
     checkDetial: null,
     //消息列表
@@ -33,6 +33,8 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     noticeList: [],
     //群聊列表
     GroupsMap: {},
+    //好友请求列表
+    FriendRequestList: [],
     //消息框类型(personal、group、notice)
     messageFormType: "",
     //数字变化时消息框滑动到底部
@@ -64,37 +66,53 @@ const mutations = {
 
                 //获取群聊列表 待添加
                 /*  Api.postRequest('/group/getList').then(res => {
-                     if (res.data.success) {
-                         let list = res.data.data
-                         list.forEach(element => {
-                             Vue.set(element, 'type', 'group')
-                             Vue.set(state.GroupsMap, element.uuid, element)
-                         });
-                     }
-                     //添加后将消息初始化放至该位置
+                    if (res.data.success) {
+                        let list = res.data.data
+                        list.forEach(element => {
+                            Vue.set(element, 'type', 'group')
+                            Vue.set(state.GroupsMap, element.uuid, element)
+                        });
+                    }
+                    //添加后将消息初始化放至该位置
  
-                 })
-  */
+                })
+                */
 
-                //初始化消息列表
-                let idkey = 'talkId_' + data.user.uuid
-                let talk = localStorage.getItem(idkey) != null ? JSON.parse(localStorage.getItem(idkey)) : null
-                if (talk != null) {
-                    talk.forEach(id => {
-                        let usr = state.FriendsMap[id] //浅拷贝，影响原数据
-                        if (usr != null) {
-                            state.talkList.push(usr)
-                        }
-                    });
+                this.commit('common/InitTalkList', data)
 
-                }
                 this.dispatch('message/INIT', data)
                 this.dispatch('stompSocket/connect');
+                this.commit('common/InitFriendRequet')
                 state.isInit = true
             });
-            
+
         }
 
+    },
+    InitTalkList(state, data) {
+        //初始化消息列表
+        let idkey = 'talkId_' + data.user.uuid
+        let talk = localStorage.getItem(idkey) != null ? JSON.parse(localStorage.getItem(idkey)) : null
+        if (talk != null) {
+            talk.forEach(id => {
+                let usr = state.FriendsMap[id] //浅拷贝，影响原数据
+                if (usr != null) {
+                    state.talkList.push(usr)
+                }
+            });
+        }
+    },
+    InitFriendRequet(state) {
+        //获取好友请求列表
+        Api.postRequest('/friend/getRequestList', {}).then(res => {
+            if (res.data.success && res.data.data != null) {
+                let list = res.data.data
+                list.forEach(element => {
+                    element.userInfo.type = 'personal'
+                });
+                state.FriendRequestList = list
+            }
+        })
     },
 
     //state默认参数
@@ -103,6 +121,10 @@ const mutations = {
         let uuid = sessionStorage.getItem("uuid")
         let key = 'common_' + uuid
         sessionStorage.setItem(key, JSON.stringify(state))
+        this.commit('common/saveTalkId',{})
+    },
+    saveTalkId(state){
+        let uuid = sessionStorage.getItem("uuid")
         //保存消息列表的好友uuid
         var talkId = []
         state.talkList.forEach(element => {
@@ -118,11 +140,13 @@ const mutations = {
         state.FriendsMap = {}
         state.ListType = ""
         state.talkList = []
-        state.cache = "",
-            state.messageFormType = ""
+        state.messageFormType = ""
         state.currentUser = {}
         state.GroupsMap = {}
+        state.FriendRequestList = []
+        state.noticeList = []
     },
+    
     // 存成key-value格式，uuid为key
     setFriendsMap(state, list) {
         list.forEach(element => {
@@ -135,11 +159,11 @@ const mutations = {
     },
     //更新当前聊天对象
     setCurrentCheatObj(state, user) {
-        if ('personal' == user.type) {
+        if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
             state.currentCheatObj = state.FriendsMap[user.uuid]
             return
         }
-        if ('group' == user.type) {
+        if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
             state.currentCheatObj = state.GroupsMap[user.uuid]
             return
         }
@@ -149,14 +173,15 @@ const mutations = {
         state.messageFormType = type
     },
     setCheckDetial(state, user) {
-        if ('personal' == user.type) {
+        if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
             state.checkDetial = state.FriendsMap[user.uuid]
             return
         }
-        if ('group' == user.type) {
+        if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
             state.checkDetial = state.GroupsMap[user.uuid]
             return
         }
+        state.checkDetial = user
     },
     //将用户置顶到聊天列表(设置消息时间戳，已在getters中按时间戳降序排列)
     setUserOnTopOfTalkList(state, user) {
@@ -170,14 +195,20 @@ const mutations = {
             }
         }
         if (NotIn) {
-            state.talkList.unshift(user)
+            if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
+                let info = state.FriendsMap[user.uuid]
+                state.talkList.unshift(info)
+                return
+            }
+            if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
+                let info = state.GroupsMap[user.uuid]
+                state.talkList.unshift(info)
+                return
+            }
         }
         //使用现有的commit(模拟message类型格式)
         let msg = { "from": user.uuid, "to": user.uuid, "msgType": user.type, "time": '' }
-        this.dispatch('common/setLastMessTime', msg).then(() => {
-            this.commit('common/saveState')
-        })
-
+        this.dispatch('common/setLastMessTime', msg)
     },
     //user={"uuid":,"type":"personal(group)"}
     upDateUnreadTotal(state, user) {
@@ -211,28 +242,15 @@ const mutations = {
             from = message.to
         }
 
-        let newtarget;
-        if (state.FriendsMap[from] != null) {
+        if (state.FriendsMap[from] != null && message.msgType == 'personal') {
             Vue.set(state.FriendsMap[from], 'lastMessTime', time)
-            newtarget = state.FriendsMap[from]
-        }
-        if (state.GroupsMap[message.to] != null) {
-            Vue.set(state.GroupsMap[message.to], 'lastMessTime', time)
-            newtarget = state.GroupsMap[message.to]
-        }
-
-        if (newtarget == null) {
             return
         }
-        // //更新talkList
-        // for (let index = 0; index < state.talkList.length; index++) {
-        //     const element = state.talkList[index];
-        //     if (element.uuid == from) {
-        //         state.talkList.splice(index, 1)
-        //         state.talkList.unshift(newtarget)
-        //         return
-        //     }
-        // }
+        if (state.GroupsMap[message.to] != null && message.msgType == 'group') {
+            Vue.set(state.GroupsMap[message.to], 'lastMessTime', time)
+            return
+        }
+
     },
     removeFromTalkList(state, user) {
         if (user.uuid == state.currentCheatObj.uuid) {
@@ -245,8 +263,45 @@ const mutations = {
                 break
             }
         }
+    },
+    deleteUser(state, user) {
+        this.commit('common/removeFromTalkList', user)
+        if (user.uuid == state.checkDetial.uuid) {
+            state.checkDetial = null
+        }
+        if (user.type == 'personal' && state.FriendsMap[user.uuid] != null) {
+            Vue.delete(state.FriendsMap, user.uuid)
+            return
+        }
+        if (user.type == 'group' && state.GroupsMap[user.uuid] != null) {
+            Vue.delete(state.GroupsMap, user.uuid)
+            return
+        }
+    },
+    addUser(state, user) {
+        if (user == null || user.uuid == null) {
+            return
+        }
+        Vue.set(user, 'type', 'personal')
+        Vue.set(state.FriendsMap, user.uuid, user)
+    },
+    addGroup(state, group) {
+        if (group == null || group.uuid == null) {
+            return
+        }
+        Vue.set(group, 'type', 'group')
+        Vue.set(state.GroupsMap, group.uuid, group)
+    },
+    addFriendRequest(state, request) {
+        for (let index = 0; index < state.FriendRequestList.length; index++) {
+            const element = state.FriendRequestList[index]
+            if (element.autoId == request.autoId) {
+                state.FriendRequestList.splice(index, 1)
+                break
+            }
+        }
+        state.FriendRequestList.unshift(request)
     }
-
 }
 
 //提交的是 mutation,即将mutations的方法异步执行
@@ -362,6 +417,81 @@ const getters = {
             return _.orderBy(state.noticeList, ['createTime', 'top'], 'desc')
         }
     },
+    getTalkList: (state) => {
+        if (state.talkList != null && state.talkList.length > 0) {
+            let data = []
+            state.talkList.forEach(element => {
+                let usr = state.FriendsMap[element.uuid]
+                if (usr != null) {
+                    data.push(usr)
+                }
+
+            });
+            state.talkList = _.orderBy(data, 'lastMessTime', 'desc')
+            return state.talkList
+        }
+        return null
+    },
+    getFriendsList: (state) => {
+        if (state.FriendsMap != null) {
+            let data = []
+            let object = state.FriendsMap
+            for (const key in object) {
+                data.push(object[key])
+            }
+            //按名字升序排
+            let first = _.orderBy(data, 'name')
+            //按备注升序排
+            let second = first.sort((a, b) => {
+                if (a.uuid == state.currentUser.user.uuid || b.uuid == state.currentUser.user.uuid) {
+                    return
+                }
+                if (a.concatInfo == null || b.concatInfo == null) {
+                    return
+                }
+                return a.concatInfo.remarks.localeCompare(b.concatInfo.remarks, 'zh')
+            })
+            //过滤已被拉黑的用户
+            return second.filter((usr) => {
+                if (usr.uuid == state.currentUser.user.uuid) {
+                    return usr
+                }
+                if (usr.concatInfo.status != 3) {
+                    return usr
+                }
+            })
+
+        }
+        return null
+
+    },
+    getGroupsList: (state) => {
+        if (state.GroupsMap != null) {
+            let data = []
+            let object = state.GroupsMap
+            for (const key in object) {
+                data.push(object[key])
+            }
+            //按名字升序排
+            let first = _.orderBy(data, 'name')
+            //按备注升序排
+            let second = first.sort((a, b) => {
+                if (a.concatInfo == null || b.concatInfo == null) {
+                    return
+                }
+                return a.concatInfo.remarks.localeCompare(b.concatInfo.remarks, 'zh')
+            })
+            return second
+        }
+        return null
+
+    },
+    getNoticeList: (state) => {
+        if (state.noticeList != null && state.noticeList.length > 0) {
+            return state.noticeList
+        }
+        return null
+    },
     //整合搜索需要的数据
     getQueryData: (state) => {
         //转回数组
@@ -401,7 +531,16 @@ const getters = {
         }
     },
     getCurrentCheatObj: (state) => {
-        return state.ListType == 'notice' ? { "name": "系统公告" } : state.currentCheatObj
+        if (state.ListType == 'notice') {
+            return { "name": "系统公告", "type": 'notice' }
+        }
+        if (state.ListType == 'talkList' && state.currentCheatObj != null) {
+            return state.currentCheatObj
+        }
+        if (state.ListType == 'friend' && state.checkDetial != null) {
+            return state.checkDetial
+        }
+        return { "name": "系统公告", "type": 'notice' }
     }
 
 }

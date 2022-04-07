@@ -14,15 +14,21 @@
     </div>
     <!-- 聊天内容、列表好友资料显示区域 -->
     <div class="main">
+
+      <!-- 顶部昵称 -->
       <div
         class="title"
-        v-show="listType == 'talkList' || listType == 'notice'"
+        v-if="
+          listType == 'talkList' ||
+          listType == 'notice' ||
+          cheatObj.type == 'friendsRequest'
+        "
       >
         <cheatTitle></cheatTitle>
       </div>
       <div
         class="cheatMain"
-        v-show="
+        v-if="
           listType == 'talkList' &&
           this.$store.state['common'].currentCheatObj.uuid != null
         "
@@ -37,18 +43,30 @@
         </div>
       </div>
 
-      <!-- 通讯录 -->
+      <!-- 通讯录好友信息展示 -->
       <div
         class="infoCard"
-        v-show="
+        v-if="
           listType == 'friend' &&
-          this.$store.state['common'].checkDetial !== null
+          checkDetial != null &&
+          checkDetial.type != 'friendsRequest'
         "
       >
-        <user-info-card :userinfo="$store.state['common'].checkDetial "></user-info-card>
-        <!-- <h1>资料显示组件待开发</h1>
-        <br />
-        <h2>{{ this.$store.state["common"].checkDetial }}</h2> -->
+        <user-info-card
+          :userinfo="checkDetial"
+        ></user-info-card>
+      </div>
+
+      <!-- 新朋友列表 -->
+      <div
+        class="infoCard"
+        v-if="
+          listType == 'friend' &&
+          checkDetial != null &&
+          checkDetial.type == 'friendsRequest'
+        "
+      >
+        <request-list></request-list>
       </div>
 
       <!-- notice -->
@@ -64,7 +82,8 @@ import sidebar from '@/components/sidebar.vue'
 import cheatTitle from '@/components/cheatTitle.vue'
 import messageform from '@/components/MessageForm.vue'
 import sendForm from '@/components/SendForm.vue'
-import UserInfoCard from '../components/userInfoCard.vue'
+import UserInfoCard from '@/components/userInfoCard.vue'
+import RequestList from '@/components/requestList.vue'
 
 
 export default {
@@ -78,6 +97,12 @@ export default {
     currentuser() {
       return this.$store.state['common'].currentUser
     },
+    cheatObj() {
+      return this.$store.getters['common/getCurrentCheatObj']
+    },
+    checkDetial(){
+      return this.$store.state['common'].checkDetial
+    },
     isInit() {
       //0完成初始化，1则未完成
       return this.$store.getters['getInitStatus']
@@ -90,7 +115,7 @@ export default {
   created() {
 
     //刷新后重连socket
-    if (this.isInit != null && this.isInit) { 
+    if (this.isInit != null && this.isInit) {
       this.$store.dispatch('stompSocket/connect');
     }
     //在页面刷新时将vuex里的信息保存到localStorage里
@@ -113,7 +138,8 @@ export default {
     cheatTitle,
     messageform,
     sendForm,
-    UserInfoCard
+    UserInfoCard,
+    RequestList
   }
 }
 
@@ -198,5 +224,9 @@ button {
 .el-popover .el-popover,
 .el-popper {
   text-align: center !important;
+}
+/* 去除最小宽度限制 */
+.el-dialog{
+    min-width: 0 !important;
 }
 </style>

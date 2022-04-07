@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container >
     <!-- <el-header>
       <el-button
         v-if="!loginForm.isAdmin"
@@ -43,6 +43,7 @@
           </el-form-item>
           <el-form-item label="密码:" prop="password">
             <el-input
+              @keydown.enter.native="submitLogin"
               type="password"
               v-model="loginForm.password"
               auto-complete="off"
@@ -68,6 +69,7 @@
               style="width: 45%"
               @click="submitLogin"
               v-loading="Sumiting"
+              :disabled="Sumiting"
               >登录</el-button
             >
           </div>
@@ -81,7 +83,7 @@
       center
     >
       <!-- 二维码 -->
-      <!-- <img :src="QRCode" > :logoSrc="imageUrl" -->
+      <!-- <img :src="QRSrc" > :logoSrc="imageUrl" -->
       <vue-qr  :text="QRtext" :size="320" :logoSrc="imageUrl" :correctLevel="0"></vue-qr>
       <span slot="footer"  class="dialog-footer">
         <el-button @click="getQRcode" icon="el-icon-refresh">刷新</el-button>
@@ -100,9 +102,12 @@ export default {
   name: "Login",
   data() {
     return {
+      Sumiting:false,
       DialogVisible: false,
-      QRCode: '',
-      QRtext: '', //二维码内容
+      //二维码链接
+      QRSrc: '',
+      //二维码内容
+      QRtext: '', 
       imageUrl: require('../assets/cheat.png'), //二维码logo
       sum: 0,
 
@@ -127,7 +132,7 @@ export default {
       this.QRtext = '敬请期待！'
       // this.CreateQRCode('/getCodeImage').then((result) => {
       //    /* 使用URL.createObjectURL方法获取blob对象的url地址 */
-      //    this.QRCode = URL.createObjectURL(result.data)
+      //    this.QRSrc = URL.createObjectURL(result.data)
 
       // }).catch((err) => {
 
@@ -137,7 +142,7 @@ export default {
     },
     submitLogin() {
       this.$refs.loginForm.validate((valid) => {
-        if (valid) {
+        if (valid && !this.Sumiting) {
           this.Sumiting = true
           //console.log(this.loginForm)
           this.Api.postRequest('/auth/login', this.loginForm).then(result => {
@@ -156,8 +161,10 @@ export default {
               this.$router.push({ path: '/cheat' })
             }
 
+          }).finally(()=>{
+            this.Sumiting = false
           })
-          this.Sumiting = false
+          
 
         } else {
           this.$message({

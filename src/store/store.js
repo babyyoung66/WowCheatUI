@@ -38,7 +38,6 @@ const store = new Vuex.Store({
             this.commit('common/upDateConcatTime')
         },
         removeState(state) {
-            this.state['stompSocket'].stomp.disconnect()
             this.commit('common/removeState', {}, { root: true })
             this.commit('message/removeState', {}, { root: true })
             this.commit('stompSocket/removeState', {}, { root: true })
@@ -51,7 +50,7 @@ const store = new Vuex.Store({
     getters: {
         getInitStatus(state) {
             //取异或值，等于0则全部初始化，等于1则未初始化完成
-            return (state['common'].isInit ^ state['message'].isInit) == 1 ? false : true
+            return (state['common'].isInit ^ state['message'].isInit) == 0
         }
     },
     actions: {

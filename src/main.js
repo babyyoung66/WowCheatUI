@@ -41,17 +41,14 @@ new Vue({
   
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
     let isInit = JSON.parse(sessionStorage.getItem("isInit"))
-    if (currentUser != null) {
-      if (isInit != null && isInit == true) {
+    if (currentUser != null && isInit != true) {
         if (this.$route.name != '' && this.$route.name != 'cheat') {
           this.$router.replace("/cheat");
           ElementUI.Message.success({
             message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
             duration: 4500
           });
-        }
-        return
-      }
+        }  
       this.$store.commit('DATA_INIT', currentUser)
       if (this.$route.name != '' && this.$route.name != 'cheat') {
         this.$router.replace("/cheat");
@@ -62,7 +59,7 @@ new Vue({
       });
 
     } 
-    if(currentUser == null && !isInit) {
+    if(currentUser == null && isInit != true) {
       if (this.$route.name != 'login') {
         ElementUI.Message.error({ message: '尚未登录，请登录!' });
         this.$router.replace("/login");//跳转到登陆页

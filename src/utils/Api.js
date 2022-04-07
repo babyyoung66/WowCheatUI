@@ -34,8 +34,9 @@ axios.interceptors.request.use(config => {
 
 /*axios全局响应拦截*/
 axios.interceptors.response.use(success => {
-  if (success.status && success.status == 200 && success.data.success == false) {//请求成功，但处理出现其他错误
-    Message.error({ message: success.data.message })
+  if (success.status && success.status == 200 && success.data.success == false) {
+    //请求成功，但处理出现其他错误
+    Message.warning({ message: success.data.message })
     return success;
   }
   //请求成功且服务器处理无错误
@@ -73,9 +74,9 @@ axios.interceptors.response.use(success => {
   else if (error.response.status == 403) {	//已登录，但是权限不足
 
     if (error.response.data != null) {
-      Message.error({ message: error.response.data.message })
+      Message.warning({ message: error.response.data.message })
     } else {
-      Message.error({ message: '权限不足，请联系管理员!' })
+      Message.warning({ message: '权限不足，请联系管理员!' })
     }
 
   }
@@ -120,6 +121,7 @@ const Api = {
     let currentCheatObj= store.state['common'].currentCheatObj
     //更新当前聊天对象的对话时间
     store.dispatch('common/upDateConcatTimeForLogout',currentCheatObj)
+    store.commit('common/saveTalkId',{})
     axios({
       method: 'post',
       url: `${base}${url}`,
