@@ -353,9 +353,6 @@ export default {
       message.msgType = this.$store.state['common'].messageFormType
       return message
     },
-    uploadImageUrl() {
-      return this.$store.state['common'].urlBase + '/message/sendImage'
-    },
     uploadHeaders() {
       let headers = { "token": this.$store.state['common'].currentUser.token }
       return headers

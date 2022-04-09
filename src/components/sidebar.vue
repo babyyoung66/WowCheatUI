@@ -677,22 +677,19 @@ ul {
   padding: 0 8px 0 8px !important;
   width: 80%;
 }
-.searchbox .el-autocomplete .el-input__inner,
-.el-input {
+.searchbox .el-autocomplete .el-input__inner {
   border-radius: 6px !important;
   background-color: rgb(226, 226, 226);
-  height: 25px;
+  height: 28px ;
 }
 /* 搜索图标及清空图标 */
-.searchbox .el-input__prefix,
+/* .searchbox .el-input__prefix,
 .el-input__suffix {
-  /* top: -7px !important; */
   top: 2px !important;
-}
+} */
 .searchbox .el-input__icon {
   /* top: -7px !important; */
-  line-height: 14px;
-  top: 2px;
+  line-height: 28px;
 }
 .searchbox .el-autocomplete .el-input {
   font-size: 14px;

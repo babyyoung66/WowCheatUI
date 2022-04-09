@@ -364,4 +364,8 @@ export default {
 .RegisterContainer .el-form {
   margin-right: 15px;
 }
+.RegisterContainer .el-input__suffix {
+  /* top: -7px !important; */
+  line-height: 40px !important;
+}
 </style>

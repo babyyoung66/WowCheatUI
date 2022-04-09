@@ -39,7 +39,6 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     messageFormType: "",
     //数字变化时消息框滑动到底部
     MessageFormScroll: 0,
-    urlBase: 'http://127.0.0.1:9999',
 
 }
 
@@ -121,9 +120,9 @@ const mutations = {
         let uuid = sessionStorage.getItem("uuid")
         let key = 'common_' + uuid
         sessionStorage.setItem(key, JSON.stringify(state))
-        this.commit('common/saveTalkId',{})
+        this.commit('common/saveTalkId', {})
     },
-    saveTalkId(state){
+    saveTalkId(state) {
         let uuid = sessionStorage.getItem("uuid")
         //保存消息列表的好友uuid
         var talkId = []
@@ -146,7 +145,7 @@ const mutations = {
         state.FriendRequestList = []
         state.noticeList = []
     },
-    
+
     // 存成key-value格式，uuid为key
     setFriendsMap(state, list) {
         list.forEach(element => {
@@ -185,53 +184,51 @@ const mutations = {
     },
     //将用户置顶到聊天列表(设置消息时间戳，已在getters中按时间戳降序排列)
     setUserOnTopOfTalkList(state, user) {
-        //当前消息列表不存在用户时
-        let NotIn = true
+        //当前消息列表已存在则先删除
         for (let index = 0; index < state.talkList.length; index++) {
             const element = state.talkList[index];
             if (element.uuid == user.uuid) {
-                NotIn = false
+                state.talkList.splice(index, 1)
                 break
             }
         }
-        if (NotIn) {
-            if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
-                let info = state.FriendsMap[user.uuid]
-                state.talkList.unshift(info)
-                return
-            }
-            if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
-                let info = state.GroupsMap[user.uuid]
-                state.talkList.unshift(info)
-                return
-            }
+
+        if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
+            let info = state.FriendsMap[user.uuid]
+            state.talkList.unshift(info)
         }
+        if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
+            let info = state.GroupsMap[user.uuid]
+            state.talkList.unshift(info)
+        }
+        
         //使用现有的commit(模拟message类型格式)
         let msg = { "from": user.uuid, "to": user.uuid, "msgType": user.type, "time": '' }
         this.dispatch('common/setLastMessTime', msg)
     },
     //user={"uuid":,"type":"personal(group)"}
     upDateUnreadTotal(state, user) {
+        
         //是当前聊天对象则不更新
         if (user.uuid == state.currentCheatObj.uuid) {
             return
         }
-        if (user.type === 'personal') {
+        
+        if (user.type == 'personal') {
             let usr = state.FriendsMap[user.uuid]
             if (usr != null && usr != undefined) {
                 let total = state.FriendsMap[user.uuid].concatInfo.unReadTotal
                 state.FriendsMap[user.uuid].concatInfo.unReadTotal = total + 1
+                return
             }
-            return
         }
-
-        if (user.type === 'group') {
+        if (user.type == 'group') {
             let usr = state.GroupsMap[user.uuid]
             if (usr != null && usr != undefined) {
                 let total = state.GroupsMap[user.uuid].concatInfo.unReadTotal
                 state.GroupsMap[user.uuid].concatInfo.unReadTotal = total + 1
+                return
             }
-            return
         }
 
     },

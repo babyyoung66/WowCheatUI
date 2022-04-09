@@ -5,6 +5,7 @@ import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import router from '@/router/router'
 import TimeUtils from '@/utils/TimeUtils'
+import constants from '@/utils/constans'
 const state = {
     isInit: false,
     stomp: null,
@@ -50,7 +51,7 @@ const actions = {
         if (local == null || local == undefined) {
             return
         }
-        context.state.stomp = Stomp.over(new SockJS('http://127.0.0.1:9999/WowCheat'));
+        context.state.stomp = Stomp.over(new SockJS(constants.socketUrl));
         context.state.stomp.debug = null
         // stompClient.reconnectDelay = 5000
         //心跳设置
@@ -154,33 +155,6 @@ const actions = {
         }, context.state.reconnectDelay)
     },
 
-    MessageCover(context, response) {
-        let result = JSON.parse(response.body)
-        if (!result.success) {
-            Notification.warning({
-                title: '系统消息',
-                message: result.errorMessage,
-                position: "top-right",
-                duration: 5000
-            });
-            return
-        }
-        if (result.success) {
-            let fromid = result.message.from
-            //如果发送者为自己，则将消息存入好友id
-            if (fromid === this.state['common'].currentUser.user.uuid) {
-                fromid = result.message.to
-            }
-            let user = { "uuid": fromid, "type": result.message.msgType }
-            let msgData = { "user": user, "message": result.message }
-
-            //追加消息
-            this.commit('message/pushOneMessageByUUID', msgData)
-            this.commit('common/setLastMessTime', result.message)
-
-        }
-
-    },
     /* 消息适配器 */
     messageAdapter(context, response) {
         let result = JSON.parse(response.body)

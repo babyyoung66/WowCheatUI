@@ -5,6 +5,7 @@ import router from '../router/router'
 // 引入vuex的store，方便在请求方法直接设置状态
 import store from '../store/store'
 import qs from 'qs'
+import constants from '@/utils/constans'
 
 axios.defaults.timeout = 5000
 //axios.defaults.headers.post['Content-Type'] = 'application/json';
@@ -14,8 +15,8 @@ axios.defaults.timeout = 5000
 //axios.defaults.withCredentials = true
 
 /* 请求服务地址 */
-const base = 'http://127.0.0.1:9999';
 
+const base = constants.apiBase
 //给全局请求添加Token
 axios.interceptors.request.use(config => {
   let local = JSON.parse(sessionStorage.getItem("currentUser"))      

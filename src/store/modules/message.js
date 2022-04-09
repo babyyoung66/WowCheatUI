@@ -57,14 +57,15 @@ const mutations = {
                 Api.postRequest('/message/getByPage', { "to": user.uuid, "msgType": user.type }).then(res => {
                     if (res.data.success) {
                         let mss = res.data.data
-                        if (mss != null) {
+                     
+                        if (mss != null && mss.length >0) {
                             Vue.set(state.messageMap, user.uuid, mss)
                             //标记最后消息时间
                             let lastmess = mss[mss.length - 1]
                             this.commit('common/setLastMessTime', lastmess)
                         } else {
                             //没有消息时设置默认时间
-                            let mess = { "from": user.uuid, "to": user.uuid, "time": '1990-01-01 01:40:43.796', 'msgType': '' }
+                            let mess = { "from": user.uuid, "to": user.uuid, "time": '1990-01-01 01:40:43.796', 'msgType': user.type }
                             this.dispatch('common/setLastMessTime', mess)
                         }
                     }
@@ -185,11 +186,11 @@ const getters = {
     getlastMessage: (state) => (uid) => {
         if (state.messageMap != null) {
             let msgarry = state.messageMap[uid]
-            return msgarry != null ? msgarry[msgarry.length - 1] : state.defaultMessage
-        } else {
-            return state.defaultMessage
-        }
-
+            if(msgarry != null && msgarry.length > 0){
+                return   msgarry[msgarry.length - 1]
+            }   
+        } 
+        return state.defaultMessage      
     },
     getMessagesByuuid: (state) => (uid, length) => {
         //每次根据刷新的数量递增的方式获取

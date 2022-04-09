@@ -212,6 +212,7 @@ export default {
       this.$store.commit('message/InitUserMessage', this.userinfo)
       this.$store.state['common'].currentCheatObj = this.userinfo
       this.$store.commit('common/setUserOnTopOfTalkList', this.userinfo)
+      this.$store.dispatch('common/upDateConcatTime', this.userinfo)
       this.$store.state['common'].ListType = 'talkList'
       this.$store.state['common'].messageFormType = this.userinfo.type
     },

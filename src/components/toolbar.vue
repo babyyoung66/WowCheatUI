@@ -24,8 +24,9 @@
           content="公告"
           placement="right"
         > 
-          <el-button @click="changeList('notice')"
-            ><i class="bi bi-megaphone"></i> </el-button
+          <el-button @click="changeList('notice')
+          "
+            ><i class="bi bi-megaphone" :class="{ selected: ListType == 'notice' }"></i> </el-button
           >
         </el-tooltip>
 

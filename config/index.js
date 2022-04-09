@@ -43,6 +43,7 @@ module.exports = {
     cssSourceMap: true
   },
 
+  //打包配置
   build: {
     // Template for index.html
     index: path.resolve(__dirname, '../dist/wowcheatui/index.html'),
@@ -50,7 +51,7 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../dist/wowcheatui'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/',
+    assetsPublicPath: './',
 
     /**
      * Source Maps
