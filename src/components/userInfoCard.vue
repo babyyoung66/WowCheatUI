@@ -2,7 +2,7 @@
   <div
     class="infocard"
     v-loading="userinfo == null || !userinfo"
-    v-if="userinfo != null && userinfo.uuid != null"
+    v-if="userinfo != null && userinfo.uuid != null && userinfo.type == 'personal'"
   >
     <!-- 右三点图标 -->
     <div class="header">
@@ -138,6 +138,7 @@
               </button>
             </div>
             <span
+              title="单击修改备注"
               class="addRemarks"
               slot="reference"
               @click="initRemarks"
@@ -164,7 +165,7 @@
                 style="height: 25px; margin: 0 0 0 5px"
                 type="button"
               >
-                修改
+                添加
               </button>
             </div>
             <span

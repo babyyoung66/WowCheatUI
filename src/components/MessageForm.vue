@@ -66,7 +66,7 @@
             <!-- 群聊时才显示名称,以及自身名称不显示 -->
             <p
               v-if="
-                ($store.state['common'].messageFormType == 'group' &&
+                (currentTalkObj.type == 'group' &&
                   message.from != currentUser.uuid) ||
                 message.from != currentUser.uuid
               "
@@ -96,6 +96,7 @@
               class="contentBox"
               :class="{
                 contentBox_self: message.from == currentUser.uuid,
+                contentBox_personal: currentTalkObj.type !== 'group'
               }"
             >
               <!-- 消息 -->
@@ -169,15 +170,23 @@ export default {
     }
   },
   methods: {
+    //根据聊天对象的类型返回对应的信息
     getUserInfo(uuid) {
-      return this.$store.getters['common/getUserByuuid'](uuid)
+      let type = this.currentTalkObj.type
+      if(type === 'personal'){
+        return this.$store.getters['common/getFriendInfoByuuid'](uuid)
+      }
+      if(type === 'group'){
+        return this.$store.getters['common/getGroupMemberInfoByuuid'](uuid)
+      }
+      
     },
     //请求更多记录
     showMoreMessage() {
       //暂存当前ul总高度
       let scrollHeigh = this.currentScrollheight
       let firstmess = { "to": '' }
-      if (this.messageData != null) {
+      if (this.messageData != null ) {
         firstmess = this.messageData[0]
       }
       //防止为空时好友id不存在
@@ -302,7 +311,7 @@ export default {
       //当前滑块高度小于15%时，设置列表大小，请求追加新数据
       let diff = this.currentScrollTop / this.currentScrollheight
       if (diff <= 0.15) {
-        this.messageListSize = this.messageListSize + this.messageLimit
+        this.updateMessageCache()
       }
       if (!this.scrollTimeIsOpen && isNeedScrool) {
         this.scrollTimeIsOpen = true
@@ -338,10 +347,10 @@ export default {
       this.currentScrollTop = top
       this.currentScrollheight = height
       this.ScrollclientHeight = clientHeight
-      if (clientHeight == height) {
+      if (clientHeight >= height) {
         return false
       }
-      if (count >= height - 15) {
+      if (count >= height - 2) {
         this.NeedScrool = true
         return true
       }
@@ -388,16 +397,24 @@ export default {
     },
     ImageloadSuccess(e, imgid) {
       //console.log(this.$refs[imgid])
-    }
+    },
+    //更新缓存中的消息数据
+    updateMessageCache() { 
+      this.messageListSize = this.messageListSize + this.messageLimit
+      this.$store.commit('message/updateMessageCache',{"uuid":this.currentTalkObj.uuid, "length":this.messageListSize})
+    },
 
   },
   computed: {
+    
     messageData() {
       //数据变动时，判断是否需要滚动
       if (this.NeedScrool) {
         this.scrollToBottom()
       }
-      return this.$store.getters['message/getMessagesByuuid'](this.$store.state['common'].currentCheatObj.uuid, this.messageListSize)
+      //return this.$store.getters['message/getMessagesByuuid'](this.currentTalkObj.uuid, this.messageListSize)
+      return this.$store.getters['message/getCheatMessages'](this.currentTalkObj.uuid)
+
     },
     currentUser() {
       return this.$store.state['common'].currentUser.user
@@ -413,7 +430,7 @@ export default {
       return this.$store.state['common'].MessageFormScroll
     },
     ImageIsLoaded() {
-      console.log(document.readyState === 'complete')
+      // console.log(document.readyState === 'complete')
       return document.readyState === 'complete'
     }
 
@@ -423,6 +440,7 @@ export default {
     NeedScroll: function () {
       this.scrollToBottom()
     },
+    //切换聊天对象时更新消息
     currentTalkObj: function (a, b) {
       if (a.uuid != b.uuid) {
         this.changeTalkStatus()
@@ -517,12 +535,17 @@ li {
 .name_self {
   text-align: right;
 }
-.contentBox {
-  margin: 4px 6px 0 6px;
+.contentBox{
+  margin: 2px 6px 0 6px;
   background-color: rgb(255, 255, 255);
   border-radius: 4px;
   border: solid 0.01px rgb(230, 225, 225);
 }
+.contentBox_personal {
+  margin: 7px 6px 0 6px !important;
+
+}
+
 /* 自身发言 */
 .contentBox_self {
   margin: 12px 6px 0 6px;

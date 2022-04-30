@@ -15,12 +15,13 @@
 
       <el-button @click="plusDialogVisible = true" icon="el-icon-plus"></el-button>  
     </div>
+    <!-- 加号弹窗 -->
     <el-dialog
        :visible.sync="plusDialogVisible"
         width="240px"
         center
         :modal="false"
-        :close-on-click-modal="false"
+      
         custom-class="plusDialog"
       >
         <!-- 加号菜单组件 -->
@@ -48,14 +49,14 @@
           <!-- 消息红点 -->
           <el-badge
             :is-dot="
-              it.concatInfo != null &&
-              it.concatInfo.unReadTotal != null &&
-              it.concatInfo.unReadTotal != 0
+              getUserInfo(it).concatInfo != null &&
+              getUserInfo(it).concatInfo.unReadTotal != null &&
+              getUserInfo(it).concatInfo.unReadTotal != 0
             "
             class="dotitem"
           >
             <!-- 头像 -->
-            <el-image fit="cover" :src="it.photourl"> </el-image>
+            <el-image fit="cover" :src="getUserInfo(it).photourl"> </el-image>
           </el-badge>
           <!-- 名称、时间、最新一条记录 -->
           <div class="peopleinfo">
@@ -63,24 +64,28 @@
               <!-- 名称 -->
               <span
                 v-if="
-                  it.concatInfo == null ||
-                  it.concatInfo.remarks == null ||
-                  it.concatInfo.remarks == ''
+                  getUserInfo(it).concatInfo == null ||
+                  getUserInfo(it).concatInfo.remarks == null ||
+                  getUserInfo(it).concatInfo.remarks == ''
                 "
                 class="name"
                 style="font-size: 16px"
-                >{{ it.name }}</span
+                >
+                <p style="font-size: 16px">{{ getUserInfo(it).name }}</p>
+                <p v-if="it.uuid == currentUser.uuid" style="font-size: 16px"> (自己)</p>
+                   
+                </span
               >
               <!-- 有备注则显示备注 -->
               <span
                 v-if="
-                  it.concatInfo != null &&
-                  it.concatInfo.remarks != null &&
-                  it.concatInfo.remarks != ''
+                  getUserInfo(it).concatInfo != null &&
+                  getUserInfo(it).concatInfo.remarks != null &&
+                  getUserInfo(it).concatInfo.remarks != ''
                 "
                 class="name"
                 style="font-size: 16px"
-                >{{ it.concatInfo.remarks }}</span
+                >{{ getUserInfo(it).concatInfo.remarks }}</span
               >
 
               <!-- 时间，取最近一条记录的时间，判断与当前时间间隔，分别显示昨天、前天、七天内显示星期、七天以上显示具体年月日 -->
@@ -92,12 +97,12 @@
               <p
                 class="unReadTotal"
                 v-if="
-                  it.concatInfo != null &&
-                  it.concatInfo.unReadTotal != null &&
-                  it.concatInfo.unReadTotal != 0
+                  getUserInfo(it).concatInfo != null &&
+                  getUserInfo(it).concatInfo.unReadTotal != null &&
+                  getUserInfo(it).concatInfo.unReadTotal != 0
                 "
               >
-                [{{ it.concatInfo.unReadTotal }}条]
+                [{{ getUserInfo(it).concatInfo.unReadTotal }}条]
               </p>
               <!-- 最后一条消息记录 -->
               <p
@@ -325,10 +330,12 @@ export default {
     },
     // 模糊查询
     fuzzyFilter(queryString) {
+      
       return (restaurant) => {
-        let remarksInfo = restaurant.concatInfo != null && restaurant.concatInfo.remarks != null ? restaurant.concatInfo.remarks : null
+        let remarksInfo = (restaurant.concatInfo != null && restaurant.concatInfo.remarks != null) ? restaurant.concatInfo.remarks : null
         //跟据name或id匹配查询结果 indexOf >= 0则模糊匹配，indexOf == 0则精确匹配
-        return (remarksInfo != null && remarksInfo.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
+        return (remarksInfo != null && remarksInfo.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId != null && restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
+       
       };
     },
     // 准确查询
@@ -406,12 +413,12 @@ export default {
       this.$store.commit('common/setmessageFormType', item.type)
     },
   
-    //根据id读取列表(talkList是复制的一份，后续数据是更新FriendMap，所有得从FriendMap读取)
-    getUserInfo(uuid) {
-      return this.$store.getters['common/getUserByuuid'](uuid)
+    //根据列表基本信息，读取用户或群聊详细信息
+    getUserInfo(user) {
+        return this.$store.getters['common/getFriendOrGroupInfo'](user)
     },
+   
 
-  
     // 获取最新的一条记录
     getLastMess(uuid) {
       if (this.$store.state['message'].messageMap != null) {
@@ -600,7 +607,10 @@ ul {
   text-align: left;
   padding: 0 25px 0 0;
 }
-
+.name{
+  display: flex;
+  flex-direction: row;
+}
 .recMessage {
   display: flex;
   justify-content: flex-start;

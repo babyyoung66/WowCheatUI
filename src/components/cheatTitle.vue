@@ -10,13 +10,16 @@
     >
       <!-- 个人信息卡片 -->
       <personal-card :userinfo="cheatObj"></personal-card>
-      <p
-        slot="reference"
-        class="name"
-        v-show="(cheatObj != null && remarks == null) || remarks == ''"
-      >
-        {{ cheatObj.name }}
-      </p>
+      <span slot="reference" class="name">
+        <p   
+          v-show="(cheatObj != null && remarks == null) || remarks == ''"
+        >
+          {{ cheatObj.name }}
+        </p>
+        <p v-show="cheatObj != null && cheatObj.uuid == currentUser.uuid">
+          (自己)
+        </p>
+      </span>
     </el-popover>
 
     <el-popover
@@ -79,10 +82,17 @@ export default {
     },
     //获取备注
     remarks() {
-      return this.cheatObj == null ? null : (this.cheatObj.concatInfo == null ? null : this.cheatObj.concatInfo.remarks)
+      if(this.cheatObj != null && this.cheatObj.concatInfo != null){
+        let remarks = this.cheatObj.concatInfo.remarks
+        return remarks == ''?null:remarks
+      }
+      return null
     },
     listType() {
       return this.$store.state['common'].ListType
+    },
+    currentUser() {
+      return this.$store.state['common'].currentUser.user
     }
   }
 }
@@ -100,7 +110,7 @@ p {
   align-items: center;
 }
 .name {
-  width: 60%;
+  width: auto;
   padding: 8px 60px 0 24px;
   word-break: keep-all; /*不换行*/
   white-space: nowrap; /*不换行*/
@@ -110,6 +120,8 @@ p {
   font-size: 24px;
   color: black;
   cursor: pointer;
+  display: flex;
+  flex-direction: row;
 }
 .cardIcon {
   padding: 25px 10px 0 20px;

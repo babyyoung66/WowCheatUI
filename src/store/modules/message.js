@@ -10,6 +10,8 @@ var key = 'message_' + uuid
 const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.getItem(key)) : {
     isInit: false,
     messageMap: {},
+    //聊天记录缓冲区,聊天记录分段展示，信息框只展示缓冲区内容，为当前聊天对象的消息
+    messageChche: { "uuid": '', message: [] },
     defaultMessage: { "content": "近6个月内没有互动...", "time": "", 'contentType': 'text' },
     //默认发送消息格式
     defaultMess: { "from": '', "to": '', "content": '', "msgType": 'personal', "contentType": "text" },
@@ -57,8 +59,8 @@ const mutations = {
                 Api.postRequest('/message/getByPage', { "to": user.uuid, "msgType": user.type }).then(res => {
                     if (res.data.success) {
                         let mss = res.data.data
-                     
-                        if (mss != null && mss.length >0) {
+
+                        if (mss != null && mss.length > 0) {
                             Vue.set(state.messageMap, user.uuid, mss)
                             //标记最后消息时间
                             let lastmess = mss[mss.length - 1]
@@ -74,14 +76,14 @@ const mutations = {
             }
         }
     },
-    //初始化存在未读记录的用户，并放到talkList
+    //初始化存在未读记录的用户和群聊，并放到talkList
     Init_Friend(state) {
         let friendsMap = this.state['common'].FriendsMap
         if (friendsMap != null) {
             for (const key in friendsMap) {
                 const friend = friendsMap[key];
                 if (friend.concatInfo != null && friend.concatInfo.unReadTotal > 0) {
-                    Api.postRequest('/message/getByPage', { "to": friend.uuid }).then(res => {
+                    Api.postRequest('/message/getByPage', { "to": friend.uuid,"msgType":"personal" }).then(res => {
                         if (res.data.success) {
                             let mss = res.data.data
                             if (mss != null) {
@@ -98,7 +100,8 @@ const mutations = {
                     })
                 }
             }
-        }
+        }           
+          
     },
     Init_Group(state) {
         let GroupsMap = this.state['common'].GroupsMap
@@ -106,7 +109,7 @@ const mutations = {
             for (const key in GroupsMap) {
                 const Group = GroupsMap[key];
                 if (Group.concatInfo != null && Group.concatInfo.unReadTotal > 0) {
-                    Api.postRequest('/message/getByPage', { "to": Group.uuid }).then(res => {
+                    Api.postRequest('/message/getByPage', { "to": Group.uuid ,"msgType":"group" }).then(res => {
                         if (res.data.success) {
                             let mss = res.data.data
                             if (mss != null) {
@@ -127,6 +130,10 @@ const mutations = {
 
     //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "user": "", "message": "" }
     pushOneMessageByUUID(state, messageData) {
+        //当前缓存内容相关
+        // if(messageData.user.uuid == state.messageChche.uuid){
+        //     state.messageChche.message.push(messageData.message)
+        // }
         if (state.messageMap[messageData.user.uuid] != null) {
             //存在则追加到底部
             state.messageMap[messageData.user.uuid].push(messageData.message)
@@ -178,7 +185,29 @@ const mutations = {
             })
         }
 
-    }
+    },
+    //{ "uuid":"", "length": }
+    updateMessageCache(state, info) {
+        //每次根据刷新的数量递增的方式获取
+        let message = state.messageMap[info.uuid]
+        if (message == null || typeof(message)  == undefined || message.length == 0) {
+            return
+        }
+        //默认返回20条数据
+        if (info.length == 0 && message.length > 20) {
+            state.messageChche.message = _.slice(message, message.length - 20)
+            return
+        }
+        //到达顶部或者数据小于20条直接返回
+        if (info.length >= message.length || message.length <= 20) {
+            state.messageChche.message = message
+            return
+        }
+        state.messageChche.message = _.slice(message, message.length - info.length)
+        // if (mess.length > 0) {
+        //     state.messageChche.message = mess.concat(state.messageChche.message)
+        // }
+    },
 
 }
 
@@ -186,13 +215,14 @@ const getters = {
     getlastMessage: (state) => (uid) => {
         if (state.messageMap != null) {
             let msgarry = state.messageMap[uid]
-            if(msgarry != null && msgarry.length > 0){
-                return   msgarry[msgarry.length - 1]
-            }   
-        } 
-        return state.defaultMessage      
+            if (msgarry != null && msgarry.length > 0) {
+                return msgarry[msgarry.length - 1]
+            }
+        }
+        return state.defaultMessage
     },
-    getMessagesByuuid: (state) => (uid, length) => {
+    //返回消息
+    getMessagesByuuid: (state) => (uid, length) => {  
         //每次根据刷新的数量递增的方式获取
         let message = state.messageMap[uid]
         if (message == null || message == undefined || message.length == 0) {
@@ -208,7 +238,29 @@ const getters = {
         }
         let mess = _.slice(message, message.length - length)
         return mess.length > 0 ? mess : null
-    }
+    },
+    getCheatMessages: (state) => (uuid) => {
+        //消息为空，或切换用户时尝试加载消息
+        if(state.messageChche.uuid != uuid || state.messageChche.message.length == 0){
+            //初始化
+            state.messageChche.uuid = uuid  
+            state.messageChche.message = []
+            let message = state.messageMap[uuid]
+            if (message == null || typeof(message)  == undefined || message.length == 0) {
+                return null
+            }
+            if (message.length > 20) {
+                state.messageChche.message = _.slice(message, message.length - 20)
+            }else{
+                state.messageChche.message = message
+            }
+        }
+        let mess = state.messageChche.message
+        if(mess.length > 0){
+            return state.messageChche.message
+        }
+        return null
+    },
 
 }
 
@@ -219,14 +271,8 @@ const actions = {
         this.commit('message/INIT', data)
     },
 
-    //获取聊天记录（未被初始化时），请求格式 { "user": "", "message": "" }
     setMessageMapByUUID(context, messageData) {
-        let oldmess = context.state.messageMap[messageData.user.uuid]
-        //判断是否已存在旧数据
-        if (oldmess == null) {
-            Vue.set(context.state.messageMap, messageData.user.uuid, messageData.message)
-        }
-
+        Vue.set(context.state.messageMap, messageData.user.uuid, messageData.message)
     },
 
 

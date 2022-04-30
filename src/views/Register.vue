@@ -83,7 +83,9 @@
           </el-input>
           <el-button
             @click="getEmailCode()"
-            :disabled="!this.EmailisOk || this.Btntimer !== '获取验证码'"
+            :disabled="
+              requesting || !this.EmailisOk || this.Btntimer !== '获取验证码'
+            "
             style="
               margin-left: 10px;
               padding: 12px 12px 12px 12px;
@@ -103,6 +105,7 @@
         >返回登录</el-button
       >
       <el-button
+        :disabled="requesting"
         type="primary"
         @click="submitRegisterForm('registerForm')"
         style="width: 40%"
@@ -124,6 +127,14 @@ export default {
         callback(new Error('存在特殊字符！'));
       }
     };
+
+    var validateNickname = (rule, value, callback) => {
+      checkName(value, callback)
+      //检查昵称是否重复
+      callback()
+
+    };
+
     var passwordCheck = (value, callback) => {
       if (value !== "") {
         if (this.registerForm.checkPass !== '') {
@@ -135,14 +146,6 @@ export default {
         }
       }
     }
-
-    var validateNickname = (rule, value, callback) => {
-      checkName(value, callback)
-      //检查昵称是否重复
-      callback()
-
-    };
-
     var validatePass = (rule, value, callback) => {
       passwordCheck(value, callback)
       callback();
@@ -196,6 +199,9 @@ export default {
     };
     var checkEailCode = (rule, value, callback) => {
       if (value !== "" && value.length == 6) {
+        if(this.EmailCodeIsCheck == true){
+          return
+        }
         let user = { "code": value, "email": this.registerForm.email }
         this.Api.postRequest("/register/checkEmailCode", user).then(res => {
           if (res.data != null && res.data.success !== true) {
@@ -207,18 +213,21 @@ export default {
                 message: '',
                 type: 'success'
               })
+            this.EmailCodeIsCheck = true
           }
           callback();
         })
       }
     }
     return {
+      requesting: false,
       waitTime: 120,
       Btntimer: "获取验证码",
       uploadDisabled: false,
       //上传的文件信息列表
       fileList: [],
       EmailisOk: false,
+      EmailCodeIsCheck: false,
       //注册表单相关
       formLabelWidth: '120px',
       registerForm: {
@@ -234,7 +243,7 @@ export default {
       registerRules: {
         name: [
           { required: true, message: '请输入名称!', trigger: 'blur' },
-          { min: 1, max: 12, message: '长度在 1 到 12 个字符!', trigger: 'blur' },
+          { min: 1, max: 18, message: '长度在 1 到 18 个字符!', trigger: 'blur' },
           { validator: validateNickname, trigger: 'blur' }
         ],
         wowId: [
@@ -280,12 +289,15 @@ export default {
         code: ''
       };
       this.EmailisOk = false
+      this.requesting = false
+      this.EmailCodeIsCheck = false
     },
 
     //提交注册操作
     submitRegisterForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
+          this.requesting = true
           this.Api.postRequest("/register/", this.registerForm).then(res => {
             if (res.data != null && res.data.success === true) {
               this.$notify(
@@ -295,11 +307,14 @@ export default {
                   type: 'success'
                 })
               this.cancelRegister()
+              this.ReturnForLogin()
             }
+          }).finally(() => {
+            this.requesting = false
           })
         } else {
           this.$message({
-            message: '请输入相关信息！',
+            message: '请检查相关信息是否正确！',
             type: 'error'
           });
           return false;
@@ -308,7 +323,7 @@ export default {
 
     },
     getEmailCode() {
-      this.setBtntimer()
+      this.requesting = true
       this.Api.postRequest("/register/postEmailCode", this.registerForm).then(res => {
         //console.log(res.data)
         if (res.data != null && res.data.success === true) {
@@ -318,8 +333,13 @@ export default {
               message: '',
               type: 'success'
             })
+          this.setBtntimer()
+        } else {
+          this.requesting = false
         }
         //错误信息已在api.js全局拦截
+      }).finally(() => {
+        this.requesting = false
       })
     },
 

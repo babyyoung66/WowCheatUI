@@ -156,7 +156,8 @@ export default {
               }
               this.$message({
                 message: '登录成功!',
-                type: 'success'
+                type: 'success',
+                duration: 2000
               });
               this.$router.push({ path: '/cheat' })
             }

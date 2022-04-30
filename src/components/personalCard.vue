@@ -18,20 +18,22 @@
             <p class="name">{{ userinfo.name }}</p>
           </el-tooltip>
           <!-- 性别图标 -->
-          <img
-            class="sexicon"
-            v-if="userinfo.sex == 1"
-            :src="sexIcons[1]"
-            alt=""
-          />
-          <img
-            class="sexicon"
-            v-if="userinfo.sex == 0"
-            :src="sexIcons[0]"
-            alt=""
-          />
+          <div v-show="userinfo.type == 'personal'">
+            <img
+              class="sexicon"
+              v-if="userinfo.sex == 1"
+              :src="sexIcons[1]"
+              alt=""
+            />
+            <img
+              class="sexicon"
+              v-if="userinfo.sex == 0"
+              :src="sexIcons[0]"
+              alt=""
+            />
+          </div>
         </div>
-        <div class="idinfo">
+        <div class="idinfo" v-show="userinfo.type == 'personal'">
           <el-tooltip
             popper-class="btnitem"
             effect="dark"
@@ -50,13 +52,6 @@
           :preview-src-list="[userinfo.photourl]"
         >
         </el-image>
-        <!-- <el-avatar
-          shape="square"
-          :size="100"
-          fit="cover"
-          :src="userinfo.photourl"
-          :preview-src-list="previewSrcList"
-        ></el-avatar> -->
       </div>
     </div>
     <!-- 分割线 -->
@@ -88,7 +83,7 @@
       </div>
     </div>
     <!-- 地址信息 -->
-    <div class="address">
+    <div class="address" v-show="userinfo.type !== 'group'">
       <div class="addrTi">地　区</div>
 
       <div class="addrdetail">
@@ -126,32 +121,31 @@ export default {
   },
   data() {
     return {
-      sexIcons: ["../static/icon_women.gif", "../static/icon_man.gif"],
+      sexIcons: ["./static/icon_women.gif", "./static/icon_man.gif"],
       //userinfo: {} //改由父组件传入数据
     }
   },
   methods: {
     sendMessage() {
-      if(this.userinfo == null){
+      if (this.userinfo == null) {
         return
       }
-      
-      //如果不在消息列表中则初始化消息
-      // let notIn = true
-      // this.talkList.forEach(element => {
-      //     if(element.uuid == this.userinfo.uuid){
-      //       notIn = false
-      //       return
-      //     }
-      // });
-      // if(notIn){
-      //   this.$store.commit('message/InitUserMessage', { "to": this.userinfo.uuid ,"msgType":this.userinfo.type})
-      // }
-      this.$store.commit('message/InitUserMessage', this.userinfo) 
-      this.$store.state['common'].currentCheatObj = this.userinfo
-      this.$store.commit('common/setUserOnTopOfTalkList', this.userinfo)
-      this.$store.state['common'].ListType = 'talkList'
-      this.$store.state['common'].messageFormType = this.userinfo.type
+      let info = this.$store.state['common'].FriendsMap[this.userinfo.uuid]
+      if (info != null) {
+        //为好友时
+        this.$store.commit('message/InitUserMessage', info)
+        this.$store.state['common'].currentCheatObj = info
+        this.$store.commit('common/setUserOnTopOfTalkList', info)
+        this.$store.state['common'].ListType = 'talkList'
+        this.$store.state['common'].messageFormType = info.type
+      } else {
+        this.$message.warning({
+          message: '请先添加该用户为好友！',
+          duration: 2500
+        });
+      }
+
+
     }
   },
   computed: {
@@ -164,7 +158,7 @@ export default {
     currentUserUUid() {
       return this.$store.state['common'].currentUser.user.uuid
     },
-    talkList(){
+    talkList() {
       return this.$store.state['common'].talkList
     }
   }
@@ -231,9 +225,9 @@ p {
   align-items: center;
 }
 .sexicon {
-  object-fit: cover;
+  object-fit: fill;
   width: 16px;
-  height: 18px;
+  height: 16px;
   padding: 0 3px 0 3px;
   /* padding-top: 42px; */
 }
@@ -270,6 +264,9 @@ p {
   overflow: hidden;
   margin: 8px 0 0 0;
   padding: 0 32px 0 32px;
+}
+.address p {
+  display: inline;
 }
 .addrTi,
 .remarksLabel {

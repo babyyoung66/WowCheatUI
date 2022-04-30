@@ -32,7 +32,7 @@ const mutations = {
             console.log("stomp已断开...")
             state.stomp.disconnect()
         }
-        //state.stomp = null
+        state.stomp = null
         state.reConnec = false
         state.reConnectTimes = 0
         state.needreConnec = false
@@ -43,10 +43,13 @@ const mutations = {
 const actions = {
     connect(context) {
         //正在连接或已连接
-        if (context.state.connecting || context.state.stomp != null && context.state.stomp.connected) {
+        if (context.state.connecting ) {
             return
         }
-        context.state.connecting = true
+        if(context.state.stomp != null && context.state.stomp.connected){
+            return
+        }
+
         const local = JSON.parse(sessionStorage.getItem("currentUser"))
         if (local == null || local == undefined) {
             return
@@ -59,6 +62,8 @@ const actions = {
         context.state.stomp.heartbeatOutgoing = 30000
 
         let headers = { "token": local.token }
+
+        context.state.connecting = true
         context.state.stomp.connect(headers, success => {
             console.log("聊天服务连接成功~" + TimeUtils.dateForMatDefault(new Date()))
             //关闭当前可能存在的重连通知
@@ -121,33 +126,37 @@ const actions = {
 
     },
     ReConnect(context, error) {
-        if (router.app._route.name == 'login') {
+        if (router.app._route.name == 'login'|| context.state.connecting) {
             return
-        }
-        if (!context.state.reConnec || context.state.reConnectTimes == 0) {
-            Notification.warning({
-                title: '系统消息【' + TimeUtils.dateForMatDefault(new Date()) + '】',
-                message: "与聊天服务器断开连接，正在尝试重连中~",
-                position: "top-right",
-                duration: 0
-            });
         }
         setTimeout(() => {
             if (context.state.reConnectTimes >= context.state.maxReConnecTime || context.state.stomp.connected) {
-                context.state.reConnec = false
                 //关闭当前可能存在的重连通知
                 Notification.closeAll()
                 if (!context.state.stomp.connected) {
                     console.log("尝试重连失败~" + TimeUtils.dateForMatDefault(new Date()))
                     Notification.error({
-                        title: '系统消息【' + TimeUtils.dateForMatDefault(new Date()) + '】',
-                        message: "无法与聊天服务器重连，请尝试刷新或重新登陆系统~" + error,
+                        dangerouslyUseHTMLString: true,
+                        title: '系统消息',
+                        message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>无法与聊天服务器重连，请尝试刷新或重新登陆系统~' + error,
                         position: "top-right",
                         duration: 0
                     });
 
                 }
             } else {
+                if(context.state.connecting){
+                    return
+                }
+                if (!context.state.reConnec || context.state.reConnectTimes == 0) {
+                    Notification.warning({
+                        dangerouslyUseHTMLString: true,
+                        title: '系统消息',
+                        message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>与聊天服务器断开连接，正在尝试重连中~',
+                        position: "top-right",
+                        duration: 0
+                    });
+                }
                 context.dispatch('connect')
                 context.state.reConnectTimes = context.state.reConnectTimes + 1
                 console.log("尝试重连socket服务:" + context.state.reConnectTimes + "次　" + TimeUtils.dateForMatDefault(new Date()))

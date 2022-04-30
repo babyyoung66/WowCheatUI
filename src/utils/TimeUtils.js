@@ -63,7 +63,7 @@ const TimeUtils = {
         if (2 >= between && between > 1) {
             return '前天'
         }
-        if (7 > between && between > 2) {
+        if (5 > between && between > 2) {
             let weekdif = today.getDay() - day.getDay()
             if (today.getDay() == 0 || weekdif > 0) {
                 return week[day.getDay()]
@@ -71,7 +71,7 @@ const TimeUtils = {
                 return (day.getMonth() + 1) + '/' + day.getDate()
             }
         }
-        if (between >= 7) {
+        if (between >= 5) {
             if (nowYear == dayYear) {
                 return (day.getMonth() + 1) + '/' + day.getDate()
             } else {
@@ -108,7 +108,7 @@ const TimeUtils = {
         if (2 >= between && between > 1) {
             return '前天    ' + this.dateForMat("hh:mm", day)
         }
-        if (7 > between && between > 2) {
+        if (5 > between && between > 2) {
             let weekdif = today.getDay() - day.getDay()
             if (today.getDay() == 0 || weekdif > 0) {
                 return week[day.getDay()] + '   ' + this.dateForMat("hh:mm", day)
@@ -116,7 +116,7 @@ const TimeUtils = {
                 return (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
             }
         }
-        if (between >= 7) {
+        if (between >= 5) {
             if (nowYear == dayYear) {
                 return (day.getMonth() + 1) + '月' + day.getDate() + '日     ' + this.dateForMat("hh:mm", day)
             } else {

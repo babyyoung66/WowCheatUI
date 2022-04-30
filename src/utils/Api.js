@@ -122,7 +122,7 @@ const Api = {
     let currentCheatObj= store.state['common'].currentCheatObj
     //更新当前聊天对象的对话时间
     store.dispatch('common/upDateConcatTimeForLogout',currentCheatObj)
-    store.commit('common/saveTalkId',{})
+    store.commit('common/saveTalkList',{})
     axios({
       method: 'post',
       url: `${base}${url}`,

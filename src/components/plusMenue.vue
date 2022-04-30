@@ -1,6 +1,6 @@
-
+ <!-- 搜索加号键弹窗 -->
 <template>
-  <div>
+  <div @click.stop>
     <div class="plusMenue">
       <el-button @click="SearchFriendDialog = true" type="primary" size="mini"
         >添加好友</el-button
@@ -15,7 +15,6 @@
       :visible.sync="SearchFriendDialog"
       width="320px"
       :modal="false"
-      :close-on-click-modal="false"
       custom-class="innerDialog"
       :before-close="cleanSearch"
     >
@@ -26,6 +25,7 @@
       >
         <el-form-item prop="searchWowId">
           <el-input
+            @keydown.enter.native="seachUser"
             placeholder="请输入WowId"
             prefix-icon="el-icon-search"
             v-model="searchWowIdForm.searchWowId"
@@ -97,7 +97,7 @@
       :close-on-click-modal="false"
       custom-class="innerDialog"
     >
-      <span>这是一段信息</span>
+      <span>暂未开通该功能~</span>
       <span slot="footer" class="dialog-footer">
         <el-button
           plain
