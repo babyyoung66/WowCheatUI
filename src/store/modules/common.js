@@ -75,12 +75,12 @@ const mutations = {
                             Vue.set(state.GroupsMap, element.uuid, element)
                         });
                     }
-                    //添加后将消息初始化放至该位置
-                    this.dispatch('message/INIT', data)
-                    this.dispatch('stompSocket/connect');
-                    this.commit('common/InitFriendRequet')
+                    //添加后将消息初始化放至该位置         
                     this.commit('common/InitGroupMember', data)
-                    this.commit('common/InitTalkList', data)
+                    this.commit('common/InitTalkList', data) 
+                    this.commit('common/InitFriendRequet')
+                    this.dispatch('stompSocket/connect');
+                    this.dispatch('message/INIT', data)
                     state.isInit = true
                 })
 
@@ -174,10 +174,13 @@ const mutations = {
     setCurrentCheatObj(state, user) {
         if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
             state.currentCheatObj = state.FriendsMap[user.uuid]
+            state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0
             return
         }
         if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
             state.currentCheatObj = state.GroupsMap[user.uuid]
+            //未读清0
+            state.GroupsMap[user.uuid].concatInfo.unReadTotal = 0
             return
         }
     },
@@ -215,12 +218,12 @@ const mutations = {
         this.dispatch('common/setLastMessTime', msg)
     },
     //user={"uuid":,"type":"personal(group)"}
-    upDateUnreadTotal(state, user) {
+    addUnreadTotal(state, user) {
 
         //是当前聊天对象则不更新
-        // if (user.uuid == state.currentCheatObj.uuid) {
-        //     return
-        // }
+        if (user.uuid == state.currentCheatObj.uuid) {
+            return
+        }
 
         if (user.type == 'personal') {
             let usr = state.FriendsMap[user.uuid]
@@ -333,7 +336,6 @@ const actions = {
         } else if (user.type == 'group') {
             //群聊，预留，后台未开发
             Data = context.state.GroupsMap
-            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": uuid })
         }
         if (Data == null) {
             return
@@ -375,8 +377,8 @@ const actions = {
         }
     },
     //user={"uuid":,"type":"personal(group)"}
-    upDateUnreadTotal(context, user) {
-        context.commit('upDateUnreadTotal', user)
+    addUnreadTotal(context, user) {
+        context.commit('addUnreadTotal', user)
 
     },
     //message类,标记最后消息时间,只用于初始化时排序

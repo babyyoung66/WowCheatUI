@@ -225,7 +225,7 @@ const actions = {
         this.commit('message/pushOneMessageByUUID', msgData)
         this.commit('common/setLastMessTime', message)
         //更新未读计数
-        this.dispatch('common/upDateUnreadTotal', user)
+        this.dispatch('common/addUnreadTotal', user)
         //置顶用户
         this.commit('common/setUserOnTopOfTalkList', user)
     },
