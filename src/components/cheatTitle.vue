@@ -11,12 +11,17 @@
       <!-- 个人信息卡片 -->
       <personal-card :userinfo="cheatObj"></personal-card>
       <span slot="reference" class="name">
-        <p   
+        <p
+          class="username"
+          style="line-height: 25px"
           v-show="(cheatObj != null && remarks == null) || remarks == ''"
         >
           {{ cheatObj.name }}
         </p>
-        <p v-show="cheatObj != null && cheatObj.uuid == currentUser.uuid">
+        <p
+          style="line-height: 23px"
+          v-show="cheatObj != null && cheatObj.uuid == currentUser.uuid"
+        >
           (自己)
         </p>
       </span>
@@ -82,9 +87,9 @@ export default {
     },
     //获取备注
     remarks() {
-      if(this.cheatObj != null && this.cheatObj.concatInfo != null){
+      if (this.cheatObj != null && this.cheatObj.concatInfo != null) {
         let remarks = this.cheatObj.concatInfo.remarks
-        return remarks == ''?null:remarks
+        return remarks == '' ? null : remarks
       }
       return null
     },

@@ -16,7 +16,6 @@
 
 ### 安装vuex
 * npm install vuex@3 --save 
-* npm install es6-promise --save
 
 ### 安装bootstrap图标库
 * npm install bootstrap-icons -g
@@ -36,6 +35,9 @@
 ### lodash集合操作类
 * npm i --save lodash
 
+### 部署事项
+* 在constans.js文件中修改后台请求base地址
+
 ### 最后
 * sidebar组件有点乱，其实可以根据列表类型拆分成多个组件......
-* 逻辑有点乱，不想写文档....
+* 逻辑有点乱，调用关系复杂，业余人员，代码稍丑陋，仅作为学习使用....

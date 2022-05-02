@@ -7,7 +7,7 @@ import store from '../store/store'
 import qs from 'qs'
 import constants from '@/utils/constans'
 
-axios.defaults.timeout = 5000
+axios.defaults.timeout = 10000
 //axios.defaults.headers.post['Content-Type'] = 'application/json';
 
 
@@ -19,7 +19,7 @@ axios.defaults.timeout = 5000
 const base = constants.apiBase
 //给全局请求添加Token
 axios.interceptors.request.use(config => {
-  let local = JSON.parse(sessionStorage.getItem("currentUser"))      
+  let local = JSON.parse(sessionStorage.getItem("currentUser"))
   if (local != null) {
     const token = local.token
     if (token != null && token != "") {
@@ -43,30 +43,30 @@ axios.interceptors.response.use(success => {
   //请求成功且服务器处理无错误
   if (success.data.success) {
     let token = success.headers['newtoken']
-    
-    if (token !== null && token !== undefined ) {    
-      let localusr = JSON.parse(localStorage.getItem("currentUser")) 
-      if(localusr != null){
+
+    if (token !== null && token !== undefined) {
+      let localusr = JSON.parse(localStorage.getItem("currentUser"))
+      if (localusr != null) {
         localusr.token = token
         localStorage.setItem("currentUser", JSON.stringify(localusr))
       }
-      let sessionusr = JSON.parse(sessionStorage.getItem("currentUser")) 
+      let sessionusr = JSON.parse(sessionStorage.getItem("currentUser"))
       sessionusr.token = token
       sessionStorage.setItem("currentUser", JSON.stringify(sessionusr))
-      
+
     }
     return success;
   }
 
 }, error => {
-  if (error.response == null) { 
-    if(error.message == 'Network Error'){
-      Message.error({ message:  '服务器无响应！' })
-    }else{
-      Message.error({ message:  error.message })
+  if (error.response == null) {
+    if (error.message == 'Network Error') {
+      Message.error({ message: '服务器无响应！' })
+    } else {
+      Message.error({ message: error.message })
     }
-    
-    return 
+
+    return
   }
 
   if (error.response.status == 504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
@@ -99,7 +99,7 @@ axios.interceptors.response.use(success => {
     Message.error({ message: '服务器未找到请求资源!' })
   } else if (error.response.status == 405) {
     Message.error({ message: '服务请求方式错误!' })
-  } 
+  }
   else if (error.response.status == 500) {
     Message.error({ message: '服务器内部错误，无法完成请求!' })
   } else {
@@ -119,19 +119,19 @@ axios.interceptors.response.use(success => {
 const Api = {
 
   logoutRequest(url) {
-    let currentCheatObj= store.state['common'].currentCheatObj
+    let currentCheatObj = store.state['common'].currentCheatObj
     //更新当前聊天对象的对话时间
-    store.dispatch('common/upDateConcatTimeForLogout',currentCheatObj)
-    store.commit('common/saveTalkList',{})
-    axios({
-      method: 'post',
-      url: `${base}${url}`,
-    })
-      .then(res => {
-    
-      }).finally(() => {
-        store.commit('removeState')
+    store.dispatch('common/upDateConcatTimeForLogout', currentCheatObj).then(() => {
+      store.commit('common/saveTalkList', {})
+      axios({
+        method: 'post',
+        url: `${base}${url}`,
       })
+        .then(res => {
+          store.commit('removeState')
+        })
+    })
+
   },
 
   postRequest(url, params) {
@@ -146,6 +146,7 @@ const Api = {
   // 封装form-data请求,文件上传用
   postByFormData(url, params) {
     return axios({
+      timeout: 30000,
       method: 'post',
       url: `${base}${url}`,
       data: params,

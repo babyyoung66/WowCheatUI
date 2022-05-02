@@ -73,6 +73,9 @@ const mutations = {
                             let mess = { "from": user.uuid, "to": user.uuid, "time": '1990-01-01 01:40:43.796', 'msgType': user.type }
                             this.dispatch('common/setLastMessTime', mess)
                         }
+                    }else{
+                        //初始化错误，从列表移除 
+                        this.commit('common/removeFromTalkList', user)
                     }
                 })
 
@@ -132,11 +135,7 @@ const mutations = {
     },
 
     //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "user": "", "message": "" }
-    pushOneMessageByUUID(state, messageData) {
-        //当前缓存内容相关
-        if(messageData.user.uuid == state.messageChche.uuid){
-            state.messageChche.message.push(messageData.message)
-        }
+    pushOneMessageByUUID(state, messageData) {   
         if (state.messageMap[messageData.user.uuid] != null) {
             //存在则追加到底部
             state.messageMap[messageData.user.uuid].push(messageData.message)
@@ -145,6 +144,15 @@ const mutations = {
             let messArry = []
             messArry.push(messageData.message)
             Vue.set(state.messageMap, messageData.user.uuid, messArry)
+        }
+         //当前缓存内容相关
+         if(messageData.user.uuid == state.messageChche.uuid){
+            let message = state.messageMap[messageData.user.uuid]
+            let curSize = state.messageChche.message.length
+            let total = message.length
+            let start = total - curSize
+            //刷新缓存
+            state.messageChche.message = _.slice(message, start)
         }
     },
     // 查询或追加历史聊天记录,请求格式 { "user": "", "message": "" }
@@ -210,6 +218,9 @@ const mutations = {
         // if (mess.length > 0) {
         //     state.messageChche.message = mess.concat(state.messageChche.message)
         // }
+    },
+    deleteMessageById(state,uuid){
+        Vue.delete(state.messageMap, uuid)
     },
 
 }

@@ -1,102 +1,117 @@
 <template>
   <div class="RegisterContainer">
-    <el-form
-      :model="registerForm"
-      status-icon
-      :rules="registerRules"
-      ref="registerForm"
-    >
-      <el-form-item
-        label="用户昵称："
-        :label-width="formLabelWidth"
-        prop="name"
+    <div style="text-align: right">
+      <el-button
+        @click="getTestUser"
+        icon="el-icon-d-arrow-right"
+        style="border: none"
+        >获取测试账号</el-button
       >
-        <el-input
-          v-model="registerForm.name"
-          autocomplete="off"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item label="Wow号：" :label-width="formLabelWidth" prop="wowId">
-        <el-input
-          v-model="registerForm.wowId"
-          autocomplete="off"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item
-        label="密码："
-        :label-width="formLabelWidth"
-        prop="password"
+    </div>
+    <div>
+      <el-form
+        :model="registerForm"
+        status-icon
+        :rules="registerRules"
+        ref="registerForm"
       >
-        <el-input
-          type="password"
-          v-model="registerForm.password"
-          autocomplete="off"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item
-        label="确认密码："
-        :label-width="formLabelWidth"
-        prop="checkPass"
-      >
-        <el-input
-          type="password"
-          v-model="registerForm.checkPass"
-          autocomplete="off"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item
-        label="绑定邮箱："
-        :label-width="formLabelWidth"
-        prop="email"
-      >
-        <el-input
-          type="email"
-          v-model="registerForm.email"
-          autocomplete="off"
-          clearable
-        ></el-input>
-      </el-form-item>
-
-      <el-form-item
-        label="验证码："
-        :label-width="this.formLabelWidth"
-        prop="code"
-      >
-        <div style="display: flex; justify-content: space-between">
+        <el-form-item
+          label="用户昵称："
+          :label-width="formLabelWidth"
+          prop="name"
+        >
           <el-input
-            :disabled="!this.EmailisOk"
-            type="text"
-            placeholder="请输入邮箱验证码"
-            v-model="registerForm.code"
-            maxlength="6"
-            show-word-limit
+            v-model="registerForm.name"
+            autocomplete="off"
             clearable
-          >
-          </el-input>
-          <el-button
-            @click="getEmailCode()"
-            :disabled="
-              requesting || !this.EmailisOk || this.Btntimer !== '获取验证码'
-            "
-            style="
-              margin-left: 10px;
-              padding: 12px 12px 12px 12px;
-              width: 100px;
-            "
-            type="primary"
-            >{{ Btntimer }}</el-button
-          >
-        </div>
-      </el-form-item>
-    </el-form>
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item
+          label="Wow号："
+          :label-width="formLabelWidth"
+          prop="wowId"
+        >
+          <el-input
+            v-model="registerForm.wowId"
+            autocomplete="off"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item
+          label="密码："
+          :label-width="formLabelWidth"
+          prop="password"
+        >
+          <el-input
+            type="password"
+            v-model="registerForm.password"
+            autocomplete="off"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item
+          label="确认密码："
+          :label-width="formLabelWidth"
+          prop="checkPass"
+        >
+          <el-input
+            type="password"
+            v-model="registerForm.checkPass"
+            autocomplete="off"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item
+          label="绑定邮箱："
+          :label-width="formLabelWidth"
+          prop="email"
+        >
+          <el-input
+            type="email"
+            v-model="registerForm.email"
+            autocomplete="off"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item
+          label="验证码："
+          :label-width="this.formLabelWidth"
+          prop="code"
+        >
+          <div style="display: flex; justify-content: space-between">
+            <el-input
+              :disabled="!this.EmailisOk"
+              type="text"
+              placeholder="请输入邮箱验证码"
+              v-model="registerForm.code"
+              maxlength="6"
+              show-word-limit
+              clearable
+            >
+            </el-input>
+            <el-button
+              @click="getEmailCode()"
+              :disabled="
+                requesting || !this.EmailisOk || this.Btntimer !== '获取验证码'
+              "
+              style="
+                margin-left: 10px;
+                padding: 12px 12px 12px 12px;
+                width: 100px;
+              "
+              type="primary"
+              >{{ Btntimer }}</el-button
+            >
+          </div>
+        </el-form-item>
+      </el-form>
+    </div>
+
     <div>
       <el-button
         type="primary"
@@ -108,10 +123,32 @@
         :disabled="requesting"
         type="primary"
         @click="submitRegisterForm('registerForm')"
-        style="width: 40%"
+        style="width: 43%"
         >注册</el-button
       >
     </div>
+
+    <el-dialog
+      title="测试账号"
+      :visible.sync="TestDialogVisible"
+      width="25%"
+      center
+    >
+      <div class="testUserBox">
+        <ul>
+          <li style="width: 80%;"  v-for="(it, index) in TestUser" :key="index">
+            <span style="padding: 0 10px 0 10px;"> 账号:{{ it.wowId }}</span>
+            <span style="padding: 0 10px 0 10px;"> 密码:123456</span>   
+          </li>
+        </ul>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="TestDialogVisible = false"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -199,7 +236,7 @@ export default {
     };
     var checkEailCode = (rule, value, callback) => {
       if (value !== "" && value.length == 6) {
-        if(this.EmailCodeIsCheck == true){
+        if (this.EmailCodeIsCheck == true) {
           return
         }
         let user = { "code": value, "email": this.registerForm.email }
@@ -220,6 +257,8 @@ export default {
       }
     }
     return {
+      TestDialogVisible: false,
+      TestUser: null,
       requesting: false,
       waitTime: 120,
       Btntimer: "获取验证码",
@@ -238,7 +277,6 @@ export default {
         email: '',
         code: ''
       },
-
 
       registerRules: {
         name: [
@@ -358,6 +396,19 @@ export default {
     ReturnForLogin() {
       this.$router.push({ path: '/login' })
     },
+    getTestUser() {
+      if (this.TestUser != null) {
+        this.TestDialogVisible = true
+        return
+      }
+      this.Api.postRequest('/user/getTestUser', {}).then(res => {
+        if (res.data.success) {
+          console.log(res.data.data)
+          this.TestUser = res.data.data
+          this.TestDialogVisible = true
+        }
+      })
+    }
 
 
   },
@@ -365,9 +416,9 @@ export default {
 </script>
 <style >
 .RegisterContainer {
+  position: relative;
   width: 400px;
   margin: 100px auto;
-
   border-radius: 15px;
   border: 1px solid #eaeaea;
   /*添加阴影 h-shadow(水平阴影位置)，v-shadow(垂直阴影位置)，blur(阴影大小)，color(颜色)*/
@@ -380,6 +431,20 @@ export default {
   background-clip: padding-box;
   padding: 25px 35px 25px 35px;
 }
+.RegisterContainer .el-dialog__body{
+  padding: 0 !important;
+}
+.testUserBox {
+  width: 100%;
+  height: auto;
+  max-height: 450px;
+  overflow: hidden;
+}
+.testUserBox ul,
+li {
+  list-style: none;
+}
+
 
 .RegisterContainer .el-form {
   margin-right: 15px;

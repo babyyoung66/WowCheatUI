@@ -49,12 +49,25 @@
         v-if="
           listType == 'friend' &&
           checkDetial != null &&
-          checkDetial.type != 'friendsRequest'
+          checkDetial.type == 'personal'
         "
       >
         <user-info-card
           :userinfo="checkDetial"
         ></user-info-card>
+      </div>
+
+      <!-- 通讯录群聊信息展示 -->
+      <div
+        class="infoCard"
+        v-if="
+          listType == 'friend' &&
+          checkDetial != null &&
+          checkDetial.type == 'group'
+        "
+      >
+      <group-info-card :groupInfo="checkDetial">
+      </group-info-card>
       </div>
 
       <!-- 新朋友列表 -->
@@ -84,6 +97,7 @@ import messageform from '@/components/MessageForm.vue'
 import sendForm from '@/components/SendForm.vue'
 import UserInfoCard from '@/components/userInfoCard.vue'
 import RequestList from '@/components/requestList.vue'
+import GroupInfoCard from '@/components/groupInfoCard.vue'
 
 
 export default {
@@ -139,7 +153,8 @@ export default {
     messageform,
     sendForm,
     UserInfoCard,
-    RequestList
+    RequestList,
+    GroupInfoCard
   }
 }
 
@@ -208,7 +223,29 @@ div {
   /* border-bottom: solid 1px rgb(217,217,217); */
 }
 </style>
+
+/**
+  全局样式
+ */
 <style>
+/* 头像弹出层 */
+.el-popover.photoPopover {
+  margin-left: -18px !important;
+  margin-right: -22px !important;
+  margin-top: 12px !important;
+  border-radius: 0;
+  width: 290px !important;
+  height: 250px !important;
+  padding: 0;
+}
+
+.el-popover.photoPopover .popper__arrow {
+  display: none;
+}
+.el-popover .popper__arrow {
+  display: none;
+}
+
 /* 鼠标样式改为小手 */
 .el-image__inner,
 i,
@@ -228,5 +265,35 @@ button {
 /* 去除最小宽度限制 */
 .el-dialog{
     min-width: 0 !important;
+}
+/* 文字不换行且显示省略号 */
+.ellipsisWord {
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+/* tooltip下弹出的箭头样式 */
+.btnitem[x-placement^="bottom"] .popper__arrow {
+  border-bottom-color: transparent !important;
+}
+.btnitem[x-placement^="bottom"] .popper__arrow::after {
+  border-bottom-color: rgba(37, 49, 57, 0.7) !important;
+}
+.btnitem[x-placement^="top"] .popper__arrow {
+  border-top-color: transparent !important;
+}
+.btnitem[x-placement^="top"] .popper__arrow::after {
+  border-top-color: rgba(37, 49, 57, 0.7) !important;
+}
+.btnitem[x-placement^="right"] .popper__arrow {
+  border-right-color: transparent !important;
+}
+.btnitem[x-placement^="right"] .popper__arrow::after {
+  border-right-color: rgba(37, 49, 57, 0.7) !important;
+}
+.btnitem.el-tooltip__popper {
+  max-width: 200px !important;
 }
 </style>

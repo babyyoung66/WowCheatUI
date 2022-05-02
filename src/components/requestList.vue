@@ -9,29 +9,35 @@
         :class="{ selected: currentSelectIndex == index }"
         @click="selectLi(index)"
       >
-        <el-popover
-          popper-class="photoPopover"
-          placement="left-start"
-          width="200"
-          trigger="click"
-        >
-          <personal-card
-            :userinfo="it.userInfo"
-            :showFooter="it.requestStatus == 1"
-          ></personal-card>
-          <div class="info" slot="reference">
-            <!-- 头像 -->
-            <el-image
-              fit="cover"
-              style="padding: 0 0 0 10px"
-              :src="it.userInfo.photourl"
-            >
-            </el-image>
-            <span class="name" style="font-size: 16px; padding: 0 30px 0 15px">
-              {{ it.userInfo.name }}
-            </span>
-          </div>
-        </el-popover>
+        <div style="width:45%;padding: 0 0 0 10px;">
+          <el-popover
+            popper-class="photoPopover requestListPopover"
+            placement="right-start"
+            width="200"
+            trigger="click"
+          >
+            <personal-card
+              :userinfo="it.userInfo"
+              :showFooter="it.requestStatus == 1"
+            ></personal-card>
+            <div class="info" slot="reference">
+              <!-- 头像 -->
+              <el-image
+                fit="cover"
+                style="padding: 0 0 0 10px"
+                :src="it.userInfo.photourl"
+              >
+              </el-image>
+              <span
+                class="name"
+                style="font-size: 16px; padding: 0 30px 0 15px"
+              >
+                {{ it.userInfo.name }}
+              </span>
+            </div>
+          </el-popover>
+        </div>
+
         <div class="btnbox">
           <span
             title="点击查看"
@@ -76,13 +82,17 @@
       </li>
     </ul>
     <el-dialog
-      title="验证消息"
+      title=""
       :visible.sync="requestMessagedialogVisible"
       width="360px"
       :modal="false"
       :before-close="handleClose"
       custom-class="requestMessageDialog"
     >
+      <div v-if="currentCheck != null" style="text-align: left; width: 100%">
+        请求时间：{{ currentCheck.requestTime }}
+      </div>
+      <div style="text-align: left; width: 100%">请求信息：</div>
       <div v-if="currentCheck != null" class="message">
         <p>{{ currentCheck.requestMessage }}</p>
       </div>
@@ -159,9 +169,9 @@ export default {
       this.requesting = true
       this.currentCheck.requestStatus = status
       this.Api.postRequest('/friend/setRequestStatus', this.currentCheck).then(res => {
-        if (res.data.success ) {
+        if (res.data.success) {
           //同意时socket会返回好友信息
-          
+
           this.requestList[this.currentSelectIndex] = this.currentCheck
           this.handleClose()
         }
@@ -171,7 +181,7 @@ export default {
     },
   },
   computed: {
-    requestList(){
+    requestList() {
       return this.$store.state['common'].FriendRequestList
     },
     currentUser() {
@@ -260,38 +270,44 @@ p {
 .requestInfo .message p {
   padding: 0 4px;
 }
+
 </style>
 <style>
-.requestMessageDialog .el-dialog{
-  min-width: 0 !important;
+.el-popper.requestListPopover{
+  margin-left: -20% !important;
+  margin-right: -22px !important;
+}
+.requestMessageDialog .el-dialog {
+  min-width: 0;
 }
 .requestMessageDialog .el-dialog__header {
-  padding: 5px 10px 10px 0 !important;
-  text-align: center !important;
+  padding: 5px 10px 10px 0;
+  text-align: center;
 }
 .requestMessageDialog .el-dialog__headerbtn {
-  top: 6px !important;
-  right: 6px !important ;
+  top: 6px;
+  right: 6px;
 }
 .requestMessageDialog .el-dialog__body {
-  padding: 5px 25px 15px 25px !important ;
-  text-align: center !important;
+  padding: 5px 25px 15px 25px;
+  text-align: center;
+  flex-direction: column;
 }
 .requestMessageDialog .el-dialog__footer {
-  text-align: right !important;
-  padding: 10px 25px 20px 25px !important;
+  text-align: right;
+  padding: 10px 25px 20px 25px;
 }
 .requestMessageDialog .el-input__inner,
 .el-input {
-  border-radius: 6px !important;
-  background-color: rgb(226, 226, 226) !important;
-  height: 28px !important;
+  border-radius: 6px;
+  background-color: rgb(226, 226, 226);
+  height: 28px;
 }
 .requestMessageDialog .el-form-item__content,
 .el-input__icon,
 .el-input__prefix,
 .el-input__suffix {
-  line-height: 28px !important;
+  line-height: 28px;
 }
 .requestMessageDialog .el-form-item__content {
   display: flex;
@@ -299,6 +315,6 @@ p {
 }
 .requestMessageDialog .el-input__prefix,
 .el-input__suffix {
-  top: 0 !important;
+  top: 0;
 }
 </style>

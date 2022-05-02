@@ -310,22 +310,7 @@ export default {
   border-right-color: rgba(37, 49, 57, 0.7) !important;
 }
 
-/* 头像弹出层 */
-.el-popover.photoPopover {
-  margin-left: -18px !important;
-  margin-top: 12px !important;
-  border-radius: 0;
-  width: 290px !important;
-  height: 250px !important;
-  padding: 0;
-}
 
-.el-popover.photoPopover .popper__arrow {
-  display: none;
-}
-.el-popover .popper__arrow {
-  display: none;
-}
 .PersonalCenterDialog {
   margin-top: 8vh !important;
   height: 560px !important;

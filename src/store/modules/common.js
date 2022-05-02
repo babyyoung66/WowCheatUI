@@ -41,7 +41,7 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
     //数字变化时消息框滑动到底部
     MessageFormScroll: 0,
     //用户不存在
-    noThatUser: { "uuid": "undefined", "name": "undefined", "wowId": "该用户存在或已注销...", "sex": 2, "photourl": "../static/photo_default.webp", "address": '' }
+    noThatUser: { "uuid": "undefined", "name": "undefined", "wowId": "该用户存在或已注销...", "sex": 2, "photourl": "./static/photo_default.webp", "address": '' }
 
 }
 
@@ -52,10 +52,10 @@ const mutations = {
 
         // 初始化好友列表
         if (state.isInit == false) {
-            state.currentUser = data
             //同时存入自己的信息
             Vue.set(data.user, 'type', 'personal')
             Vue.set(state.FriendsMap, data.user.uuid, data.user)
+            state.currentUser = data
             //获取好友列表
             Api.postRequest('/friend/getList').then(res => {
                 if (res.data.success) {
@@ -101,27 +101,35 @@ const mutations = {
         //初始群成员，如新人入群则会在获取时添加没有信息的，加入新群时，根据新群信息增添
         let idkey = 'groupMember_' + data.user.uuid
         let members = JSON.parse(localStorage.getItem(idkey))
-        if (members != null) {
-            state.GroupMember = members
-        }else{
+        //数据实时性低，暂时不存入localStorage
+        // if (members != null) {
+        //     state.GroupMember = members
+        // }else{}
             Api.postRequest('/groupMember/getMembers').then(res => {
                 if(res.data.success){
                     let users = res.data.data
                     users.forEach(element => {
+                        Vue.set(element, "type", 'personal')
                         Vue.set(state.GroupMember, element.uuid, element)
                     });
                 }
             })
-        }
+        
     },
     InitFriendRequet(state) {
         //获取好友请求列表
         Api.postRequest('/friend/getRequestList', {}).then(res => {
             if (res.data.success && res.data.data != null) {
                 let list = res.data.data
-                list.forEach(element => {
-                    element.userInfo.type = 'personal'
-                });
+                for (let index = 0; index < list.length; index++) {
+                    const element = list[index];
+                    if(element.userInfo != null){
+                        element.userInfo.type = 'personal'
+                    }else{
+                        //用户信息不存在，删除该请求信息
+                        list.splice(index,1)
+                    } 
+                }
                 state.FriendRequestList = list
             }
         })
@@ -172,6 +180,10 @@ const mutations = {
     },
     //更新当前聊天对象
     setCurrentCheatObj(state, user) {
+        if(user.uuid == state.currentUser.user.uuid){
+            state.currentCheatObj = state.currentUser.user
+            return
+        }
         if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
             state.currentCheatObj = state.FriendsMap[user.uuid]
             state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0
@@ -399,27 +411,34 @@ const getters = {
             for (let index = 0; index < state.talkList.length; index++) {
                 const element = state.talkList[index];
                 let info = null
+                //自己
+                if (element.uuid == state.currentUser.user.uuid) {
+                    info = state.currentUser.user
+                    data.push(info)
+                    continue
+                }
                 if (element.type == 'personal' && state.FriendsMap[element.uuid] != null) {
-                    let user = state.FriendsMap[element.uuid]
+                    info = state.FriendsMap[element.uuid]
+                    data.push(info)
+                    continue
                     //talkList只存三个属性，lastMessTime用于排序
-                    info = { "uuid": user.uuid, "type": user.type, "lastMessTime": user.lastMessTime }
+                    //info = { "uuid": user.uuid, "type": user.type, "lastMessTime": user.lastMessTime }
                 }
                 if (element.type == 'group' && state.GroupsMap[element.uuid] != null) {
-                    let group = state.GroupsMap[element.uuid]
+                    info = state.GroupsMap[element.uuid]
+                    data.push(info)
+                    continue
                     //talkList只存三个属性，lastMessTime用于排序
-                    info = { "uuid": group.uuid, "type": group.type, "lastMessTime": group.lastMessTime }
+                    //info = { "uuid": group.uuid, "type": group.type, "lastMessTime": group.lastMessTime }
                 }
 
-                if (info != null) {
-                    data.push(info)
-                }
 
             }
             // state.talkList.forEach(element => {            
 
             // });
-            state.talkList = _.orderBy(data, 'lastMessTime', 'desc')
-            return state.talkList
+            return _.orderBy(data, 'lastMessTime', 'desc')
+            
         }
         return null
     },
@@ -502,6 +521,8 @@ const getters = {
             }
 
         }
+        //自己
+        data.push(state.currentUser.user)
         return data
     },
     //获取好友或群聊信息,参数类型：{ "uuid": user.uuid, "type": user.type }
@@ -537,21 +558,25 @@ const getters = {
             return state.currentUser.user
         }
         //先从本地获取，不为空则返回，为空则查询数据库
-        if (state.GroupMember != null) {
+        if (uuid != null && state.GroupMember != null  ) {
             if (state.GroupMember[uuid] != null) {
                 return state.GroupMember[uuid]
             } else {
                 Api.postByXWForm('/user/queryUserByUid', { "uuid": uuid }).then(res => {
                     if (res.data.success && res.data.data != null) {
-                        Vue.set(state.GroupMember, uuid, res.data.data)
-                        return res.data.data
+                        let user = res.data.data
+                        Vue.set(user, "type", 'personal')
+                        Vue.set(state.GroupMember, uuid, user)
+                        //return res.data.data
                     } else {
-                        Vue.set(state.GroupMember, uuid, state.noThatUser)
-                        return state.noThatUser
+                        let user = JSON.parse(JSON.stringify(state.noThatUser))
+                        Vue.set(user, "type", 'personal')
+                        Vue.set(state.GroupMember, uuid, user)
+                        //return state.noThatUser
                     }
                     
                 })
-                console.clear()
+                return state.noThatUser
             }
     
         }
@@ -567,6 +592,17 @@ const getters = {
             return state.checkDetial
         }
         return { "name": "系统公告", "type": 'notice' }
+    },
+    hasFriendsRequest: (state) =>{
+        let hasRequest = false
+        state.FriendRequestList.forEach(element => {
+            let currentUid = state.currentUser.user.uuid
+            if(element.receiverUuid == currentUid && element.requestStatus == 0){
+                hasRequest = true
+            }
+            
+        });
+        return hasRequest
     }
 
 }

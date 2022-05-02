@@ -213,6 +213,7 @@ export default {
         if (valid) {
           this.searchResult = null
           this.requesting = true
+          this.alreadySend = false
           this.Api.postByXWForm('/user/queryUser', { "wowId": this.searchWowIdForm.searchWowId }).then(res => {
             if (res.data.success && res.data.data != null) {
               this.searchResult = res.data.data

@@ -55,6 +55,7 @@
                 :userinfo="getUserInfo(message.from)"
               ></personal-card>
               <el-image
+                v-if="getUserInfo(message.from) != null"
                 :src="getUserInfo(message.from).photourl"
                 slot="reference"
               >
@@ -64,39 +65,42 @@
           <!-- 消息及姓名 -->
           <div class="message">
             <!-- 群聊时才显示名称,以及自身名称不显示 -->
-            <p
-              v-if="
-                (currentTalkObj.type == 'group' &&
-                  message.from != currentUser.uuid) ||
-                message.from != currentUser.uuid
-              "
-              class="name"
-              :class="{
-                name_self: message.from == currentUser.uuid,
-              }"
-            >
-              <span
+            <div class="nameBox">
+              <p
                 v-if="
-                  getUserInfo(message.from).concatInfo == null ||
-                  getUserInfo(message.from).concatInfo.remarks == null
+                  (currentTalkObj.type == 'group' &&
+                    message.from != currentUser.uuid) ||
+                  message.from != currentUser.uuid
                 "
-                >{{ getUserInfo(message.from).name }}</span
+                class="name"
+                :class="{
+                  name_self: message.from == currentUser.uuid,
+                }"
               >
-              <span
-                v-if="
-                  getUserInfo(message.from).concatInfo != null &&
-                  getUserInfo(message.from).concatInfo.remarks != null
-                "
-                >{{ getUserInfo(message.from).concatInfo.remarks }}</span
-              >
-            </p>
+                <span
+                  v-if="
+                    getUserInfo(message.from).concatInfo == null ||
+                    getUserInfo(message.from).concatInfo.remarks == null
+                  "
+                  >{{ getUserInfo(message.from).name }}</span
+                >
+                <span
+                  v-if="
+                    getUserInfo(message.from).concatInfo != null &&
+                    getUserInfo(message.from).concatInfo.remarks != null
+                  "
+                  >{{ getUserInfo(message.from).concatInfo.remarks }}</span
+                >
+              </p>
+            </div>
+
             <!-- 文本消息 -->
             <div
               v-if="message.contentType == 'text'"
               class="contentBox"
               :class="{
                 contentBox_self: message.from == currentUser.uuid,
-                contentBox_personal: currentTalkObj.type !== 'group'
+                contentBox_personal: currentTalkObj.type !== 'group',
               }"
             >
               <!-- 消息 -->
@@ -173,20 +177,20 @@ export default {
     //根据聊天对象的类型返回对应的信息
     getUserInfo(uuid) {
       let type = this.currentTalkObj.type
-      if(type === 'personal'){
+      if (type === 'personal') {
         return this.$store.getters['common/getFriendInfoByuuid'](uuid)
       }
-      if(type === 'group'){
+      if (type === 'group') {
         return this.$store.getters['common/getGroupMemberInfoByuuid'](uuid)
       }
-      
+
     },
     //请求更多记录
     showMoreMessage() {
       //暂存当前ul总高度
       let scrollHeigh = this.currentScrollheight
       let firstmess = { "to": '' }
-      if (this.messageData != null ) {
+      if (this.messageData != null) {
         firstmess = this.messageData[0]
       }
       //防止为空时好友id不存在
@@ -373,7 +377,7 @@ export default {
       let targetId = imgid
       this.restImageList.push(imgid)
       let times = 0
-      let tryImage = setInterval(() => {
+      var tryImage = setInterval(() => {
         //尝试5秒,通过refs时候或img标签的error状态
         if (times >= 10 || this.$refs[targetId][0].error == false) {
           clearInterval(tryImage)
@@ -399,14 +403,14 @@ export default {
       //console.log(this.$refs[imgid])
     },
     //更新缓存中的消息数据
-    updateMessageCache() { 
+    updateMessageCache() {
       this.messageListSize = this.messageListSize + this.messageLimit
-      this.$store.commit('message/updateMessageCache',{"uuid":this.currentTalkObj.uuid, "length":this.messageListSize})
+      this.$store.commit('message/updateMessageCache', { "uuid": this.currentTalkObj.uuid, "length": this.messageListSize })
     },
 
   },
   computed: {
-    
+
     messageData() {
       //数据变动时，判断是否需要滚动
       if (this.NeedScrool) {
@@ -524,26 +528,34 @@ li {
   flex-direction: column;
   max-width: 56%;
 }
+
 .name {
+  max-width: 45%;
   padding: 0 8px 0 8px;
   text-align: left;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 450;
   color: rgb(104, 100, 100);
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }
 /* 自身发言时 */
 .name_self {
   text-align: right;
 }
-.contentBox{
+.contentBox {
+  width: fit-content;
   margin: 2px 6px 0 6px;
   background-color: rgb(255, 255, 255);
   border-radius: 4px;
   border: solid 0.01px rgb(230, 225, 225);
+  word-break: break-all;
 }
 .contentBox_personal {
   margin: 7px 6px 0 6px !important;
-
 }
 
 /* 自身发言 */

@@ -56,7 +56,7 @@
             cancel-button-text="取消"
             icon="el-icon-info"
             icon-color="red"
-            title="确定删除该好友吗？"
+            title="删除好友后将清空所有消息记录，确定删除该好友吗？"
             @confirm="deleteFriend"
           >
             <li slot="reference">删除好友</li>
@@ -67,7 +67,6 @@
           style="font-size: 20px"
           class="bi bi-three-dots cardIcon"
           slot="reference"
-          v-show="userinfo.type == 'personal'"
         ></i>
       </el-popover>
     </div>
@@ -255,6 +254,7 @@ export default {
       this.Api.postRequest('/friend/delete', friend).then(res => {
         if (res.data.success) {
           //删除本地信息
+          this.$store.commit('message/deleteMessageById',this.userinfo.uuid)
           this.$store.commit('common/deleteUser',this.userinfo)
           this.$message({
             message: res.data.message,

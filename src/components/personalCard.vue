@@ -18,7 +18,7 @@
             <p class="name">{{ userinfo.name }}</p>
           </el-tooltip>
           <!-- 性别图标 -->
-          <div v-show="userinfo.type == 'personal'">
+          <div v-show="userinfo.type !== 'group'">
             <img
               class="sexicon"
               v-if="userinfo.sex == 1"
@@ -33,7 +33,7 @@
             />
           </div>
         </div>
-        <div class="idinfo" v-show="userinfo.type == 'personal'">
+        <div class="idinfo" v-show="userinfo.type !== 'group'">
           <el-tooltip
             popper-class="btnitem"
             effect="dark"
@@ -130,17 +130,24 @@ export default {
       if (this.userinfo == null) {
         return
       }
-      let info = this.$store.state['common'].FriendsMap[this.userinfo.uuid]
+      let info = null
+      if(this.userinfo.type == 'personal'){
+        info = this.$store.state['common'].FriendsMap[this.userinfo.uuid]
+      }
+      if(this.userinfo.type == 'group'){
+        info = this.$store.state['common'].GroupsMap[this.userinfo.uuid]
+      }
       if (info != null) {
         //为好友时
         this.$store.commit('message/InitUserMessage', info)
         this.$store.state['common'].currentCheatObj = info
+        this.$store.dispatch('common/upDateConcatTime', info)
         this.$store.commit('common/setUserOnTopOfTalkList', info)
         this.$store.state['common'].ListType = 'talkList'
         this.$store.state['common'].messageFormType = info.type
       } else {
         this.$message.warning({
-          message: '请先添加该用户为好友！',
+          message: '未添加好友或群聊！',
           duration: 2500
         });
       }
@@ -312,15 +319,3 @@ p {
 }
 </style>
 
-<style>
-/* tooltip下弹出的箭头样式 */
-.btnitem[x-placement^="bottom"] .popper__arrow {
-  border-bottom-color: transparent !important;
-}
-.btnitem[x-placement^="bottom"] .popper__arrow::after {
-  border-bottom-color: rgba(37, 49, 57, 0.7) !important;
-}
-.btnitem.el-tooltip__popper {
-  max-width: 200px !important;
-}
-</style>

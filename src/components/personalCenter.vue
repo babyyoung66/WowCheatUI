@@ -1,6 +1,10 @@
 <template>
   <div class="personalCenter">
-    <div class="photoUpload">
+    <div
+      class="photoUpload"
+      v-loading="uploading"
+      element-loading-text="上传中..."
+    >
       <el-image
         style="width: 100px; height: 100px"
         :src="currentUser.photourl"
@@ -10,6 +14,7 @@
         :action="uplaodUrl"
         :headers="headers"
         :show-file-list="false"
+        :on-error="handleAvatarError"
         :on-success="handleAvatarSuccess"
         :before-upload="beforeAvatarUpload"
         :accept="imageType"
@@ -101,6 +106,7 @@ export default {
     };
     return {
       requesting: false,
+      uploading: false,
       edit: false,
       uplaodUrl: constants.apiBase + '/user/editPhoto',
       userInfoForm: {
@@ -152,6 +158,11 @@ export default {
       }
       return false
     },
+
+    handleAvatarError(res, file) {
+      this.uploading = false
+      this.$message.warning(res.message);
+    },
     handleAvatarSuccess(res, file) {
       if (res.success) {
         this.$message.success('修改成功！');
@@ -160,6 +171,7 @@ export default {
       } else {
         this.$message.warning(res.message);
       }
+      this.uploading = false
     },
     beforeAvatarUpload(file) {
       if (file.type.indexOf('image') === -1) {
@@ -178,10 +190,11 @@ export default {
         this.$message.error('上传头像图片大小不能超过 10MB!');
         return false
       }
+      this.uploading = true
       return true
     },
     submitEdit() {
-      if(!this.infoHasChange()){
+      if (!this.infoHasChange()) {
         this.edit = false
         return
       }
@@ -190,6 +203,7 @@ export default {
           this.requesting = true
           this.Api.postRequest('/user/editInfo', this.userInfoForm).then(res => {
             if (res.data.success && res.data.data != null) {
+              this.$set(res.data.data, 'type', 'personal')
               this.$store.state['common'].currentUser.user = res.data.data
               this.$message.success('修改成功！');
             }

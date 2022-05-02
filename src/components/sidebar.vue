@@ -13,23 +13,31 @@
         @clear="afterClear"
       ></el-autocomplete>
 
-      <el-button @click="plusDialogVisible = true" icon="el-icon-plus"></el-button>  
+      <el-button
+        @click="plusDialogVisible = true"
+        icon="el-icon-plus"
+      ></el-button>
     </div>
     <!-- 加号弹窗 -->
     <el-dialog
-       :visible.sync="plusDialogVisible"
-        width="240px"
-        center
-        :modal="false"
-      
-        custom-class="plusDialog"
-      >
-        <!-- 加号菜单组件 -->
-        <plus-menue></plus-menue>
-        <span slot="footer" class="dialog-footer">
-          <el-button plain type="primary" size="mini" @click="plusDialogVisible = false">取 消</el-button>
-        </span>
-      </el-dialog>
+      :visible.sync="plusDialogVisible"
+      width="240px"
+      center
+      :modal="false"
+      custom-class="plusDialog"
+    >
+      <!-- 加号菜单组件 -->
+      <plus-menue></plus-menue>
+      <span slot="footer" class="dialog-footer">
+        <el-button
+          plain
+          type="primary"
+          size="mini"
+          @click="plusDialogVisible = false"
+          >取 消</el-button
+        >
+      </span>
+    </el-dialog>
 
     <!-- 列表区域 -->
     <div class="listbox">
@@ -48,44 +56,67 @@
         >
           <!-- 消息红点 -->
           <el-badge
+            v-if="it.uuid != currentUser.uuid"
             :is-dot="
-              getUserInfo(it).concatInfo != null &&
-              getUserInfo(it).concatInfo.unReadTotal != null &&
-              getUserInfo(it).concatInfo.unReadTotal != 0
+              it.concatInfo != null &&
+              it.type == 'group' &&
+              it.concatInfo.unReadTotal != null &&
+              it.concatInfo.unReadTotal != 0
             "
-            class="dotitem"
+            :value="it.concatInfo.unReadTotal"
+            :class="{ personal_badge: it.type == 'personal' }"
+            :hidden="
+              it.concatInfo.unReadTotal == null ||
+              it.concatInfo.unReadTotal == 0
+            "
+            :max="99"
           >
             <!-- 头像 -->
-            <el-image fit="cover" :src="getUserInfo(it).photourl"> </el-image>
+            <el-image
+              v-if="it.uuid !== currentUser.uuid"
+              fit="cover"
+              :src="it.photourl"
+            >
+            </el-image>
           </el-badge>
+          <!-- 自己时 -->
+          <div>
+            <el-image
+              v-if="it.uuid == currentUser.uuid"
+              fit="cover"
+              :src="it.photourl"
+            >
+            </el-image>
+          </div>
+
           <!-- 名称、时间、最新一条记录 -->
           <div class="peopleinfo">
             <div class="namewithTime">
               <!-- 名称 -->
               <span
                 v-if="
-                  getUserInfo(it).concatInfo == null ||
-                  getUserInfo(it).concatInfo.remarks == null ||
-                  getUserInfo(it).concatInfo.remarks == ''
+                  it.concatInfo == null ||
+                  it.concatInfo.remarks == null ||
+                  it.concatInfo.remarks == ''
                 "
                 class="name"
                 style="font-size: 16px"
-                >
-                <p style="font-size: 16px">{{ getUserInfo(it).name }}</p>
-                <p v-if="it.uuid == currentUser.uuid" style="font-size: 16px"> (自己)</p>
-                   
-                </span
               >
+                <p style="font-size: 16px" class="ellipsisWord">{{ it.name }}</p>
+                <p v-if="it.uuid == currentUser.uuid" style="font-size: 16px">
+                  (自己)
+                </p>
+              </span>
               <!-- 有备注则显示备注 -->
               <span
                 v-if="
-                  getUserInfo(it).concatInfo != null &&
-                  getUserInfo(it).concatInfo.remarks != null &&
-                  getUserInfo(it).concatInfo.remarks != ''
+                  it.concatInfo != null &&
+                  it.concatInfo.remarks != null &&
+                  it.concatInfo.remarks != ''
                 "
                 class="name"
                 style="font-size: 16px"
-                >{{ getUserInfo(it).concatInfo.remarks }}</span
+                >{{ it.concatInfo.remarks }}</span
               >
 
               <!-- 时间，取最近一条记录的时间，判断与当前时间间隔，分别显示昨天、前天、七天内显示星期、七天以上显示具体年月日 -->
@@ -97,16 +128,53 @@
               <p
                 class="unReadTotal"
                 v-if="
-                  getUserInfo(it).concatInfo != null &&
-                  getUserInfo(it).concatInfo.unReadTotal != null &&
-                  getUserInfo(it).concatInfo.unReadTotal != 0
+                  it.type == 'group' &&
+                  it.concatInfo != null &&
+                  it.concatInfo.unReadTotal != null &&
+                  it.concatInfo.unReadTotal != 0
                 "
               >
-                [{{ getUserInfo(it).concatInfo.unReadTotal }}条]
+                [{{ it.concatInfo.unReadTotal }}条]
+              </p>
+              <!-- 群聊最近一条消息的人名 -->
+              <p
+                v-if="
+                  it.type == 'group' &&
+                  getGroupMemberInfo(getLastMess(it.uuid).from) != null &&
+                  getGroupMemberInfo(getLastMess(it.uuid).from).uuid !=
+                    currentUser.uuid
+                "
+                class="mess ellipsisWord"
+                style="
+                  padding: 0 0 0 0;
+                  max-width: 55px;
+                  width: auto;
+                  line-height: 25px;
+                "
+              >
+                {{ getGroupMemberInfo(getLastMess(it.uuid).from).name }}
+              </p>
+              <p
+                v-show="
+                  it.type == 'group' &&
+                  getGroupMemberInfo(getLastMess(it.uuid).from) != null &&
+                  getGroupMemberInfo(getLastMess(it.uuid).from).uuid !=
+                    currentUser.uuid
+                "
+                class="mess"
+                style="
+                  padding: 0 0 0 2px;
+                  margin: 0 4px 0 0;
+                  min-width: 4px;
+                  font-weight: bold;
+                  line-height: 25px;
+                "
+              >
+                :
               </p>
               <!-- 最后一条消息记录 -->
               <p
-                class="mess"
+                class="mess ellipsisWord"
                 v-if="
                   getLastMess(it.uuid) != null &&
                   getLastMess(it.uuid)['contentType'] == 'text'
@@ -122,7 +190,8 @@
                 "
                 class="mess"
               >
-                [图片]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
+                [图片]
+                <!-- {{ getLastMess(it.uuid)["fileDetail"].fileName }} -->
               </p>
               <p
                 v-if="
@@ -132,7 +201,8 @@
                 "
                 class="mess"
               >
-                [视频]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
+                [视频]
+                <!-- {{ getLastMess(it.uuid)["fileDetail"].fileName }} -->
               </p>
               <p
                 v-if="
@@ -142,7 +212,8 @@
                 "
                 class="mess"
               >
-                [文件]{{ getLastMess(it.uuid)["fileDetail"].fileName }}
+                [文件]
+                <!-- {{ getLastMess(it.uuid)["fileDetail"].fileName }} -->
               </p>
             </div>
           </div>
@@ -156,20 +227,22 @@
         <li
           @click="checkFriendRequest"
           class="userli"
-          style="justify-content: start"
+          style="justify-content: start; padding-bottom: 6px"
           :class="{
             onSelect:
               $store.state['common'].checkDetial != null &&
               $store.state['common'].checkDetial.type == 'friendsRequest',
           }"
         >
-          <!-- 头像 -->
-          <el-image
-            fit="cover"
-            style="padding: 0 0 0 10px"
-            src="../static/newFriendPic.png"
-          >
-          </el-image>
+          <el-badge :is-dot="hasNewRequest" class="dotitem">
+            <!-- 头像 -->
+            <el-image
+              fit="cover"
+              style="padding: 0 0 0 10px"
+              src="./static/newFriendPic.png"
+            >
+            </el-image>
+          </el-badge>
           <span class="name" style="font-size: 16px; padding: 0 30px 0 15px">
             新的朋友
           </span>
@@ -254,17 +327,19 @@
           <!-- 头像 -->
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
-          <span
-            v-if="
-              it.concatInfo == null ||
-              it.concatInfo.remarks == null ||
-              it.concatInfo.remarks == ''
-            "
-            class="name"
-            style="font-size: 16px; padding: 0 30px 0 15px"
-          >
-            {{ it.name }}
-          </span>
+          <div class="ellipsisWord" style="width: 65%">
+            <span
+              v-if="
+                it.concatInfo == null ||
+                it.concatInfo.remarks == null ||
+                it.concatInfo.remarks == ''
+              "
+              style="font-size: 16px; padding: 0 30px 0 15px"
+            >
+              {{ it.name }}
+            </span>
+          </div>
+
           <!-- 备注 -->
           <span
             v-if="
@@ -311,7 +386,7 @@ export default {
   name: "sidebar",
   data() {
     return {
-      plusDialogVisible:false,
+      plusDialogVisible: false,
       //右键选中的用户
       rightClikObj: null,
       contextMenuVisible: false,
@@ -330,12 +405,12 @@ export default {
     },
     // 模糊查询
     fuzzyFilter(queryString) {
-      
+
       return (restaurant) => {
         let remarksInfo = (restaurant.concatInfo != null && restaurant.concatInfo.remarks != null) ? restaurant.concatInfo.remarks : null
         //跟据name或id匹配查询结果 indexOf >= 0则模糊匹配，indexOf == 0则精确匹配
         return (remarksInfo != null && remarksInfo.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.name.toLowerCase().indexOf(queryString.toLowerCase()) >= 0) || (restaurant.wowId != null && restaurant.wowId.toLowerCase().indexOf(queryString.toLowerCase()) >= 0);
-       
+
       };
     },
     // 准确查询
@@ -359,7 +434,7 @@ export default {
     TalkSelect(item) {
       // 查询聊天记录
       this.$store.commit('message/InitUserMessage', item)
-     
+
       //设置为选中
       this.SelectList(item, 0)
       this.moveToTop(item)
@@ -372,7 +447,7 @@ export default {
     FriendSelect(item) {
 
       //设置为选中
-      this.SelectList(item, index)
+      this.SelectList(item, 0)
       //根据设置refs获取对应的元素
       let target = this.$refs[item.uuid]['0']
       let targetOffset = target.offsetTop
@@ -412,12 +487,14 @@ export default {
     changeMessageFormType(item) {
       this.$store.commit('common/setmessageFormType', item.type)
     },
-  
+
     //根据列表基本信息，读取用户或群聊详细信息
     getUserInfo(user) {
-        return this.$store.getters['common/getFriendOrGroupInfo'](user)
+      return this.$store.getters['common/getFriendOrGroupInfo'](user)
     },
-   
+    getGroupMemberInfo(uuid) {
+      return this.$store.getters['common/getGroupMemberInfoByuuid'](uuid)
+    },
 
     // 获取最新的一条记录
     getLastMess(uuid) {
@@ -505,6 +582,9 @@ export default {
     },
     currentUser() {
       return this.$store.state['common'].currentUser.user
+    },
+    hasNewRequest() {
+      return this.$store.getters['common/hasFriendsRequest']
     }
 
 
@@ -589,7 +669,8 @@ ul {
   font-size: 12px;
 }
 .mess {
-  line-height: 19px;
+  line-height: 25px;
+  max-width: 65%;
 }
 .peopleinfo .time {
   width: auto;
@@ -600,16 +681,14 @@ ul {
 .name,
 .recMessage .mess {
   width: auto;
-  word-break: keep-all; /*不换行*/
-  white-space: nowrap; /*不换行*/
-  overflow: hidden;
-  text-overflow: ellipsis;
   text-align: left;
   padding: 0 25px 0 0;
 }
-.name{
+.name {
   display: flex;
   flex-direction: row;
+  line-height: 15px;
+  max-width: 65%;
 }
 .recMessage {
   display: flex;
@@ -620,6 +699,7 @@ ul {
   width: auto;
   white-space: nowrap;
   padding: 0 4px 0 0;
+  line-height: 22px;
 }
 
 .listbox ul {
@@ -681,6 +761,15 @@ ul {
 
 
 <style>
+.personal_badge .el-badge__content {
+  font-size: 4px;
+  height: auto;
+  width: auto;
+  min-width: 12px;
+  line-height: 12px;
+  padding: 1px;
+}
+
 /* 继承或覆盖父属性则放在此 */
 /* 查询输入框 */
 .searchbox .el-autocomplete {
@@ -690,7 +779,7 @@ ul {
 .searchbox .el-autocomplete .el-input__inner {
   border-radius: 6px !important;
   background-color: rgb(226, 226, 226);
-  height: 28px ;
+  height: 28px;
 }
 /* 搜索图标及清空图标 */
 /* .searchbox .el-input__prefix,
@@ -754,21 +843,28 @@ input:-ms-input-placeholder {
 .contextmenu li button {
   color: #2c3e50;
 }
-.plusDialog .el-dialog__header{
+.plusDialog .el-dialog__header {
   padding: 5px 10px 10px 0 !important;
 }
 /* .plusDialog .el-dialog__title{
   display: none !important;
 } */
-.plusDialog .el-dialog__headerbtn{
+.plusDialog .el-dialog__headerbtn {
   top: 6px !important;
   right: 6px !important ;
 }
-.plusDialog .el-dialog__body{
+.plusDialog .el-dialog__body {
   padding: 25px 25px 15px 25px !important ;
 }
-.plusDialog .el-dialog__footer{
+.plusDialog .el-dialog__footer {
   text-align: right !important;
   padding: 10px 25px 20px 25px !important;
+}
+.ellipsisWord {
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }
 </style>

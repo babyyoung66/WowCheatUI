@@ -218,6 +218,11 @@ const actions = {
         //群消息时，to固定为群uuid
         if (msgType == 'group') {
             fromid = message.to
+            //为群聊时，判断是否已屏蔽
+            let GroupsMap = this.state['common'].GroupsMap
+            if(GroupsMap[fromid].concatInfo.notifyStatus !== 0){
+                return
+            } 
         }
         let user = { "uuid": fromid, "type": msgType }
         let msgData = { "user": user, "message": message }

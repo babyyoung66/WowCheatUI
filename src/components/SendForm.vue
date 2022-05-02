@@ -75,7 +75,12 @@
           :before-upload="checkImageFile"
         >
           <i slot="default" class="el-icon-plus"></i>
-          <div slot="file" slot-scope="{ file }">
+          <div
+            slot="file"
+            slot-scope="{ file }"
+            v-loading="sending"
+            element-loading-text="发送中..."
+          >
             <img
               class="el-upload-list__item-thumbnail"
               :src="file.url"
@@ -99,6 +104,7 @@
         </el-upload>
         <div style="margin: 10px 0 0 0">
           <el-button
+            :disabled="sending"
             style="margin-left: 10px"
             size="small"
             type="success"
@@ -161,6 +167,7 @@ export default {
       disabled: false,
       ImagePopVisiable: false,
       hideUploadEdit: false,
+      sending: false,
       uploadLimit: 1,
       FileList: [],
       imageType: ".jpg,.jpeg,.png,.jfif,.tif,.gif,.svg,.bmp,.webp",
@@ -221,6 +228,30 @@ export default {
       //触发消息框置底
       this.$store.state['common'].MessageFormScroll = this.$store.state['common'].MessageFormScroll + 1
     },
+    //如果是群聊，判断是否被禁言
+    hasRoleToSend(){
+      let currentCheat = this.currentCheatObj
+      if(currentCheat.type == 'personal'){
+        return true
+      }
+      if(currentCheat.type == 'group' && currentCheat.concatInfo.notifyStatus == 1){
+        this.$message.warning('您已屏蔽该群聊！');
+        return false
+      }
+      if(currentCheat.type == 'group' && currentCheat.groupStatus == 2){
+        this.$message.warning('该群聊已被封禁！');
+        return false
+      }
+      if(currentCheat.type == 'group' && currentCheat.groupStatus == 1){
+        this.$message.warning('该群聊已开启全体禁言！');
+        return false
+      } 
+      if(currentCheat.type == 'group' && currentCheat.concatInfo.memberStatus == 1){
+        this.$message.warning('您已被管理员禁言！');
+        return false
+      }
+      return true
+    },
     sendTextMessage() {
       if (this.content.trim() == '') {
         return
@@ -232,6 +263,9 @@ export default {
       }
 
       let currentCheat = this.currentCheatObj
+      if(!this.hasRoleToSend()){
+        return
+      }
       let mess = this.myutils.deepClone(this.$store.state['message'].defaultMess)
       mess.content = this.content.trim()
       mess.to = currentCheat.uuid
@@ -307,8 +341,15 @@ export default {
         this.$message.error('聊天服务器连接失败，请尝试重新登录~');
         return
       }
-      let formData = new FormData();
       let FileInfo = this.FileList[0]
+      if(FileInfo == null){
+        this.$message.warning('请选择图片！');
+        return
+      }
+      if(!this.hasRoleToSend()){
+        return
+      }
+      let formData = new FormData();
       //单个文件使用set，多个使用addend，真实文件为element返回文件信息的raw属性
       formData.set("file", FileInfo.raw)
       if (this.FileisTrue) {
@@ -316,6 +357,7 @@ export default {
           const value = this.uploaadMessage[key];
           formData.set(key, value)
         }
+        this.sending = true
         //console.log(formData.get())
         this.Api.postByFormData('/message/sendImage', formData).then(res => {
           if (res.data.success) {
@@ -324,12 +366,15 @@ export default {
             this.$refs.uploadImage.clearFiles()
             this.scrollMessageForm()
           }
+          this.sending = false
+        }).finally(() => {
+          this.sending = false
         })
       } else {
         this.checkImageFile(FileInfo)
       }
     },
-    submitFile(){
+    submitFile() {
       this.$message.warning('发送文件暂未开放！');
     }
 
@@ -337,6 +382,8 @@ export default {
   },
   computed: {
     currentCheatObj() {
+      //切换用户清空输入
+      //this.content = ''
       return this.$store.state['common'].currentCheatObj
     },
     currentUserUUid() {
