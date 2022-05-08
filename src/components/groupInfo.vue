@@ -25,7 +25,10 @@
             title="确定屏蔽该群聊吗？"
             @confirm="changeGroupStatus(1)"
           >
-            <li v-show="groupInfo.concatInfo.notifyStatus == 0" slot="reference">
+            <li
+              v-show="groupInfo.concatInfo.notifyStatus == 0"
+              slot="reference"
+            >
               屏蔽群聊
             </li>
           </el-popconfirm>
@@ -38,7 +41,10 @@
             title="确定取消屏蔽该群聊吗？"
             @confirm="changeGroupStatus(0)"
           >
-            <li v-show="groupInfo.concatInfo.notifyStatus == 1" slot="reference">
+            <li
+              v-show="groupInfo.concatInfo.notifyStatus == 1"
+              slot="reference"
+            >
               取消屏蔽
             </li>
           </el-popconfirm>
@@ -92,9 +98,10 @@
       <!-- 分割线 -->
       <div class="splice" style="margin: 40px 0 0 0"></div>
 
+      <!-- 基本信息及成员 -->
       <el-form label-width="60px">
         <el-form-item label="备　注" v-if="groupInfo.uuid != currentUserUUid">
-          <el-popover
+          <!-- <el-popover
             ref="editRemarks"
             placement="top"
             width="auto"
@@ -104,7 +111,7 @@
               <input
                 type="text"
                 style="height: 20px"
-                placeholder="请输入备注进行修改"
+                placeholder="请输入备注（至多12位）"
                 v-model="edit.remarks"
               />
               <button
@@ -120,7 +127,7 @@
               class="addRemarks"
               slot="reference"
               @click="initRemarks"
-              v-if="groupInfo.concatInfo != null && groupInfo.concatInfo != ''"
+              v-if="this.myutils.hasText(groupInfo.concatInfo, 'remarks')"
               >{{ groupInfo.concatInfo.remarks }}</span
             >
           </el-popover>
@@ -135,7 +142,7 @@
               <input
                 style="height: 20px"
                 type="text"
-                placeholder="请输入备注"
+                placeholder="请输入备注（至多12位）"
                 v-model="edit.remarks"
               />
               <button
@@ -147,15 +154,27 @@
               </button>
             </div>
             <span
-              v-if="
-                groupInfo.concatInfo == null ||
-                groupInfo.concatInfo.remarks == ''
-              "
+              v-if="!this.myutils.hasText(groupInfo.concatInfo, 'remarks')"
               class="addRemarks"
               slot="reference"
               >点击添加备注</span
             >
-          </el-popover>
+          </el-popover> -->
+          <div @click="editRemarksPrompt">
+            <span
+              title="单击修改备注"
+              class="addRemarks"
+              v-if="groupInfo.concatInfo != null && groupInfo.concatInfo.remarks != null && groupInfo.concatInfo.remarks.trim() != ''"
+              >{{ groupInfo.concatInfo.remarks }}</span
+            >
+            <span
+              v-if="
+                groupInfo.concatInfo == null || groupInfo.concatInfo.remarks == null || groupInfo.concatInfo.remarks.trim() == ''
+              "
+              class="addRemarks"
+              >点击添加备注</span
+            >
+          </div>
         </el-form-item>
         <!-- 群成员列表 -->
         <p style="text-align: left; color: rgb(129, 129, 129); font-size: 14px">
@@ -186,20 +205,17 @@
                   placement="right-end"
                 >
                   <!-- 名字 -->
-                  <p
-                    style="
-                      width: auto;
-                      max-width: 52px;
-                      text-align: center;
-                      cursor: pointer;
-                    "
-                    class="ellipsisWord"
-                  >
+                  <p class="memberName ellipsisWord">
                     {{ getMemberInfo(uuid).name }}
                   </p>
                 </el-tooltip>
               </div>
             </el-popover>
+          </span>
+          <!-- 尾部添加按钮 -->
+          <span @click="inviteMember" class="groupMemberAvatar" style="">
+            <i class="el-icon-plus"></i>
+            <p class="memberName ellipsisWord">添加</p>
           </span>
         </div>
       </el-form>
@@ -212,14 +228,29 @@
         <button @click="sendMessage" class="sendMessBtn">发消息</button>
       </div>
     </div>
+
+    <el-dialog
+      title="邀请好友"
+      :visible.sync="inviteDialog"
+      width="350px"
+      custom-class="inviteDialog"
+      :destroy-on-close="true"
+    >
+      <invite-grouop-member
+        :groupInfo="groupInfo"
+        :type="'invite'"
+      ></invite-grouop-member>
+    </el-dialog>
   </div>
 </template>
 <script>
 import PersonalCard from '@/components/personalCard.vue'
+import inviteGrouopMember from '@/components/inviteGrouopMember.vue'
 export default {
-  name: 'userInfoCard',
+  name: 'groupInfo',
   components: {
-    PersonalCard
+    PersonalCard,
+    inviteGrouopMember
   },
   //父组件传入
   props: {
@@ -227,7 +258,8 @@ export default {
   },
   data() {
     return {
-      sexIcons: ["../static/icon_women.gif", "../static/icon_man.gif"],
+      inviteDialog: false,
+      sexIcons: ["./static/icon_women.gif", "./static/icon_man.gif"],
       edit: {
         remarks: ''
       }
@@ -246,30 +278,43 @@ export default {
       this.$store.state['common'].messageFormType = this.groupInfo.type
     },
     initRemarks() {
-      if (this.groupInfo.concatInfo != null && this.groupInfo.concatInfo.remarks != null && this.groupInfo.concatInfo.remarks != '') {
+      if (this.myutils.hasText(this.groupInfo.concatInfo, 'remarks')) {
         this.edit.remarks = this.groupInfo.concatInfo.remarks
       } else {
         this.edit.remarks = ''
       }
     },
-    editRemarks(propp) {
-      // propp dom节点名
-      if (this.edit.remarks == this.groupInfo.concatInfo.remarks) {
+    editRemarksPrompt() {
+      this.initRemarks()
+      this.$prompt('请输入备注', '', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue:this.edit.remarks,
+      }).then(({ value }) => {
+        if (value != null) {
+          this.edit.remarks = value
+        }
+        this.editRemarks()
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        });
+      });
+    },
+    editRemarks() {
+      if (this.edit.remarks == this.groupInfo.concatInfo.remarks.trim()) {
         return
       }
-      //获取当前冒泡窗
-      let propper = this.$refs[propp]
-      //console.log(propper)  
-      let friend = { "fUuid": this.groupInfo.uuid, "remarks": this.edit.remarks }
-      this.Api.postRequest('/friend/editRemarks', friend).then(res => {
+      let group = { "groupUuid": this.groupInfo.uuid, "remarks": this.edit.remarks }
+      this.Api.postRequest('/group/editRemarks', group).then(res => {
         if (res.data.success) {
           //更新本地remarks
-          this.$store.state['common'].FriendsMap[this.groupInfo.uuid].concatInfo.remarks = this.edit.remarks
+          this.$store.state['common'].GroupsMap[this.groupInfo.uuid].concatInfo.remarks = this.edit.remarks
           this.groupInfo.concatInfo.remarks = this.edit.remarks
           this.edit.remarks = ''
-          propper.doClose()
           this.$message({
-            message: '修改成功',
+            message: '修改成功！',
             type: 'success'
           });
         }
@@ -284,8 +329,8 @@ export default {
       this.Api.postByXWForm('/group/exitGroup', group).then(res => {
         if (res.data.success) {
           //删除本地信息
-          this.$store.commit('message/deleteMessageById',this.groupInfo.uuid)
-          this.$store.commit('common/deleteUser',this.groupInfo)
+          this.$store.commit('message/deleteMessageById', this.groupInfo.uuid)
+          this.$store.commit('common/deleteGroup', this.groupInfo)
           this.$message({
             message: res.data.message,
             type: 'success'
@@ -309,6 +354,9 @@ export default {
         }
 
       })
+    },
+    inviteMember() {
+      this.inviteDialog = true
     }
   },
   computed: {
@@ -378,6 +426,7 @@ li:hover {
   justify-content: space-between;
 }
 .idname {
+  max-width: 70%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -387,9 +436,8 @@ li:hover {
 }
 
 .idname .name {
+  /* max-width: 70%;   */
   height: auto;
-}
-.idname .name {
   word-break: keep-all; /*不换行*/
   white-space: nowrap; /*不换行*/
   overflow: hidden;
@@ -401,7 +449,6 @@ li:hover {
 }
 .nameandicon {
   display: flex;
-
   text-align: center;
   align-items: center;
 }
@@ -448,7 +495,24 @@ li:hover {
   border-radius: 0;
   padding: 0;
 }
+.groupMemberAvatar {
+  height: fit-content;
+}
+.groupMemberAvatar .el-icon-plus {
+  width: 31px;
+  height: 31px;
+  font-size: 28px;
+  color: rgb(176, 171, 171);
+  border: solid 2px rgb(208, 195, 187);
+}
 
+.memberName {
+  width: auto;
+  max-width: 52px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 10px;
+}
 /* 将滚动调设置成悬停出现 */
 .groupMemberBox:hover {
   overflow: overlay !important;
@@ -476,6 +540,23 @@ li:hover {
 </style>
 
 <style>
+.inviteDialog {
+  margin-top: 8vh !important;
+}
+.inviteDialog .el-dialog__header {
+  padding: 12px 15px !important;
+}
+.inviteDialog .el-dialog__headerbtn {
+  top: 6px;
+  right: 6px;
+}
+.inviteDialog .el-dialog__headerbtn i {
+  font-size: 18px;
+}
+.inviteDialog .el-dialog__body {
+  padding: 15px 12px;
+}
+
 .el-popover.memberPhotoPopover {
   margin-left: -24px !important;
   margin-right: -22px !important;
