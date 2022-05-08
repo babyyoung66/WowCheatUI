@@ -221,9 +221,9 @@ export default {
   justify-content: center;
   align-items: center;
 }
-.el-dialog {
+/* .el-dialog {
   min-width: 360px;
-}
+} */
 /*.el-form-item__content{*/
 /* display: flex;*/
 /*  align-items: center*/
