@@ -19,11 +19,19 @@ axios.defaults.timeout = 10000
 const base = constants.apiBase
 //给全局请求添加Token
 axios.interceptors.request.use(config => {
-  let local = JSON.parse(sessionStorage.getItem("currentUser"))
-  if (local != null) {
-    const token = local.token
+  let session = JSON.parse(sessionStorage.getItem("currentUser"))
+  if (session != null) {
+    const token = session.token
     if (token != null && token != "") {
       config.headers.token = token
+    }
+  } else {
+    let local = JSON.parse(localStorage.getItem("currentUser"))
+    if (local != null) {
+      const token = local.token
+      if (token != null && token != "") {
+        config.headers.token = token
+      }
     }
   }
 
@@ -94,7 +102,10 @@ axios.interceptors.response.use(success => {
     } else {
       Message.error({ message: '尚未登录，请登录!' });
     }
-    router.replace("/login");//跳转到登陆页
+    if (router.name != 'login') {
+      router.replace("/login");//跳转到登陆页
+    }
+
   } else if (error.response.status == 404) {
     Message.error({ message: '服务器未找到请求资源!' })
   } else if (error.response.status == 405) {
@@ -119,10 +130,15 @@ axios.interceptors.response.use(success => {
 const Api = {
 
   logoutRequest(url) {
-    let currentCheatObj = store.state['common'].currentCheatObj
+    logout()   
     //更新当前聊天对象的对话时间
-    store.dispatch('common/upDateConcatTimeForLogout', currentCheatObj).then(() => {
+    async function saveStatus() {
+      let currentCheatObj = store.state['common'].currentCheatObj
+      store.dispatch('common/upDateConcatTimeForLogout', currentCheatObj)
       store.commit('common/saveTalkList', {})
+    }
+    async function logout() {
+      await saveStatus()
       axios({
         method: 'post',
         url: `${base}${url}`,
@@ -130,7 +146,7 @@ const Api = {
         .then(res => {
           store.commit('removeState')
         })
-    })
+    }
 
   },
 
