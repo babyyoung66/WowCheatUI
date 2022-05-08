@@ -52,9 +52,9 @@
           checkDetial.type == 'personal'
         "
       >
-        <user-info-card
+        <user-info
           :userinfo="checkDetial"
-        ></user-info-card>
+        ></user-info>
       </div>
 
       <!-- 通讯录群聊信息展示 -->
@@ -66,8 +66,8 @@
           checkDetial.type == 'group'
         "
       >
-      <group-info-card :groupInfo="checkDetial">
-      </group-info-card>
+      <group-info :groupInfo="checkDetial">
+      </group-info>
       </div>
 
       <!-- 新朋友列表 -->
@@ -95,9 +95,9 @@ import sidebar from '@/components/sidebar.vue'
 import cheatTitle from '@/components/cheatTitle.vue'
 import messageform from '@/components/MessageForm.vue'
 import sendForm from '@/components/SendForm.vue'
-import UserInfoCard from '@/components/userInfoCard.vue'
+import userInfo from '@/components/userInfo.vue'
 import RequestList from '@/components/requestList.vue'
-import GroupInfoCard from '@/components/groupInfoCard.vue'
+import groupInfo from '@/components/groupInfo.vue'
 
 
 export default {
@@ -152,9 +152,9 @@ export default {
     cheatTitle,
     messageform,
     sendForm,
-    UserInfoCard,
+    userInfo,
     RequestList,
-    GroupInfoCard
+    groupInfo
   }
 }
 
@@ -296,4 +296,5 @@ button {
 .btnitem.el-tooltip__popper {
   max-width: 200px !important;
 }
+
 </style>
