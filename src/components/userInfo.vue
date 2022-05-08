@@ -2,7 +2,9 @@
   <div
     class="infocard"
     v-loading="userinfo == null || !userinfo"
-    v-if="userinfo != null && userinfo.uuid != null && userinfo.type == 'personal'"
+    v-if="
+      userinfo != null && userinfo.uuid != null && userinfo.type == 'personal'
+    "
   >
     <!-- 右三点图标 -->
     <div class="header">
@@ -115,70 +117,50 @@
 
       <el-form label-width="60px">
         <el-form-item label="备　注" v-if="userinfo.uuid != currentUserUUid">
-          <el-popover
-            ref="editRemarks"
-            placement="top"
-            width="auto"
-            trigger="click"
-          >
-            <div style="display: flex; align-items: center">
-              <input
-                type="text"
-                style="height: 20px"
-                placeholder="请输入备注进行修改"
-                v-model="edit.remarks"
-              />
-              <button
-                @click="editRemarks('editRemarks')"
-                style="height: 25px; margin: 0 0 0 5px"
-                type="button"
-              >
-                修改
-              </button>
-            </div>
+          <div @click="editRemarksPrompt">
             <span
               title="单击修改备注"
               class="addRemarks"
-              slot="reference"
-              @click="initRemarks"
-              v-if="userinfo.concatInfo != null && userinfo.concatInfo != ''"
+              v-if="userinfo.concatInfo != null && userinfo.concatInfo.remarks != null && userinfo.concatInfo.remarks.trim() != ''"
               >{{ userinfo.concatInfo.remarks }}</span
             >
-          </el-popover>
-
-          <el-popover
-            ref="addRemarks"
-            placement="top"
-            width="auto"
-            trigger="click"
-          >
-            <div style="display: flex; align-items: center">
-              <input
-                style="height: 20px"
-                type="text"
-                placeholder="请输入备注"
-                v-model="edit.remarks"
-              />
-              <button
-                @click="editRemarks('addRemarks')"
-                style="height: 25px; margin: 0 0 0 5px"
-                type="button"
-              >
-                添加
-              </button>
-            </div>
             <span
               v-if="
-                userinfo.concatInfo == null || userinfo.concatInfo.remarks == ''
+                userinfo.concatInfo == null || userinfo.concatInfo.remarks == null || userinfo.concatInfo.remarks.trim() == ''
               "
               class="addRemarks"
-              slot="reference"
               >点击添加备注</span
             >
-          </el-popover>
+          </div>
         </el-form-item>
+
         <el-form-item label="wowId"> {{ userinfo.wowId }} </el-form-item>
-        <el-form-item label="地　区"> {{ userinfo.address }} </el-form-item>
+
+        <!-- <el-form-item label="地　区">
+          </el-form-item> -->
+        <div class="addressBox">
+          <p
+            style="
+              text-align: left;
+              color: rgb(129, 129, 129);
+              font-size: 14px;
+              width: 12%;
+            "
+          >
+            地　区
+          </p>
+          <el-tooltip
+            popper-class="btnitem"
+            effect="dark"
+            :content="userinfo.address"
+            placement="bottom"
+          >
+            <!-- ellipsisWord -->
+            <p class="address">
+              {{ userinfo.address }}
+            </p>
+          </el-tooltip>
+        </div>
       </el-form>
 
       <!-- 分割线 -->
@@ -194,7 +176,7 @@
 <script>
 
 export default {
-  name: 'userInfoCard',
+  name: 'userInfo',
   //父组件传入
   props: {
     userinfo: null
@@ -217,19 +199,34 @@ export default {
       this.$store.state['common'].messageFormType = this.userinfo.type
     },
     initRemarks() {
-      if (this.userinfo.concatInfo != null && this.userinfo.concatInfo.remarks != null && this.userinfo.concatInfo.remarks != '') {
+      if (this.myutils.hasText(this.userinfo.concatInfo, 'remarks')) {
         this.edit.remarks = this.userinfo.concatInfo.remarks
       } else {
         this.edit.remarks = ''
       }
     },
-    editRemarks(propp) {
-      if (this.edit.remarks == this.userinfo.concatInfo.remarks) {
+    editRemarksPrompt() {
+      this.initRemarks() 
+      this.$prompt('请输入备注', '', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue:this.edit.remarks,
+      }).then(({ value }) => {
+        if(value != null){
+          this.edit.remarks = value
+        }
+        this.editRemarks()
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        });
+      });
+    },
+    editRemarks() {
+      if (this.edit.remarks == this.userinfo.concatInfo.remarks.trim()) {
         return
       }
-      //获取当前冒泡窗
-      let propper = this.$refs[propp]
-      //console.log(propper)  
       let friend = { "fUuid": this.userinfo.uuid, "remarks": this.edit.remarks }
       this.Api.postRequest('/friend/editRemarks', friend).then(res => {
         if (res.data.success) {
@@ -237,7 +234,6 @@ export default {
           this.$store.state['common'].FriendsMap[this.userinfo.uuid].concatInfo.remarks = this.edit.remarks
           this.userinfo.concatInfo.remarks = this.edit.remarks
           this.edit.remarks = ''
-          propper.doClose()
           this.$message({
             message: '修改成功',
             type: 'success'
@@ -254,8 +250,8 @@ export default {
       this.Api.postRequest('/friend/delete', friend).then(res => {
         if (res.data.success) {
           //删除本地信息
-          this.$store.commit('message/deleteMessageById',this.userinfo.uuid)
-          this.$store.commit('common/deleteUser',this.userinfo)
+          this.$store.commit('message/deleteMessageById', this.userinfo.uuid)
+          this.$store.commit('common/deleteUser', this.userinfo)
           this.$message({
             message: res.data.message,
             type: 'success'
@@ -332,9 +328,6 @@ li:hover {
 .infocard {
   background: rgb(244, 242, 242);
   height: 100%;
-  /* display: flex;
-  flex-direction: column;
-  align-content: space-around; */
 }
 .inner {
   padding: 70px 120px 90px 120px;
@@ -347,6 +340,7 @@ li:hover {
   justify-content: space-between;
 }
 .idname {
+  max-width: 70%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -357,8 +351,6 @@ li:hover {
 
 .idname .name {
   height: auto;
-}
-.idname .name {
   word-break: keep-all; /*不换行*/
   white-space: nowrap; /*不换行*/
   overflow: hidden;
@@ -407,6 +399,25 @@ li:hover {
 .addRemarks:hover {
   color: rgb(139, 203, 203);
   cursor: pointer;
+}
+
+.addressBox {
+  display: flex;
+  flex-direction: row;
+}
+.addressBox .address {
+  max-width: 80%;
+  width: fit-content;
+  height: auto;
+  /* border: solid #000; */
+  overflow: hidden;
+  margin-left: 27px;
+  display: list-item;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-align: left;
 }
 </style>
 
