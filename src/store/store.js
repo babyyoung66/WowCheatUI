@@ -24,12 +24,18 @@ const store = new Vuex.Store({
         DATA_INIT(state, data) {
             sessionStorage.setItem("uuid", data.user.uuid)
             sessionStorage.setItem("currentUser", JSON.stringify(data))
-            //使用action初始化common数据后再初始化其他模块
-            this.dispatch('common/INIT', data).then(() => {
-                // this.dispatch('message/INIT', data)
-                // this.dispatch('stompSocket/connect');
+            //异步初始化common数据后再初始化其他模块
+            INIT()
+            async function INIT_COMMON() {
+                //非箭头函数this指向的不是store本身
+                store.commit('common/INIT', data)
+            }
+            async function INIT() {
+                await INIT_COMMON()
+                store.dispatch('message/INIT', data)
+                store.dispatch('stompSocket/connect');
                 sessionStorage.setItem("isInit", "true")
-            })
+            }
 
         },
         saveState(state) {
