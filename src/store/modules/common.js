@@ -10,6 +10,7 @@ import Vue from 'vue'
 import Api from "@/utils/Api"
 var _ = require('lodash');
 import TimeUtils from '@/utils/TimeUtils'
+import utils from '@/utils/utils'
 
 let usr = JSON.parse(sessionStorage.getItem("currentUser"))
 if (usr != null) {
@@ -52,40 +53,17 @@ const mutations = {
 
         // 初始化好友列表
         if (state.isInit == false) {
+            this.commit('common/InitTalkList', data)
             //同时存入自己的信息
             Vue.set(data.user, 'type', 'personal')
             Vue.set(state.FriendsMap, data.user.uuid, data.user)
             state.currentUser = data
-            //获取好友列表
-            Api.postRequest('/friend/getList').then(res => {
-                if (res.data.success) {
-                    let list = res.data.data
-                    list.forEach(element => {
-                        Vue.set(element, 'type', 'personal')
-                        Vue.set(state.FriendsMap, element.uuid, element)
-                    });
-                }
-
-                //获取群聊列表 待添加
-                Api.postRequest('/group/getGroupList').then(res => {
-                    if (res.data.success) {
-                        let list = res.data.data
-                        list.forEach(element => {
-                            Vue.set(element, 'type', 'group')
-                            Vue.set(state.GroupsMap, element.uuid, element)
-                        });
-                    }
-                    //添加后将消息初始化放至该位置         
-                    this.commit('common/InitGroupMember', data)
-                    this.commit('common/InitTalkList', data) 
-                    this.commit('common/InitFriendRequet')
-                    this.dispatch('stompSocket/connect');
-                    this.dispatch('message/INIT', data)
-                    state.isInit = true
-                })
-
-            });
-
+        
+            this.commit('common/InitFriends')
+            this.commit('common/InitGroups')
+            this.commit('common/InitGroupMember', data)
+            this.commit('common/InitFriendRequet')
+            state.isInit = true
         }
 
     },
@@ -97,6 +75,30 @@ const mutations = {
             state.talkList = talk
         }
     },
+    InitFriends(state) {
+        //获取好友列表
+        Api.postRequest('/friend/getList').then(res => {
+            if (res.data.success) {
+                let list = res.data.data
+                list.forEach(element => {
+                    Vue.set(element, 'type', 'personal')
+                    Vue.set(state.FriendsMap, element.uuid, element)
+                });
+            }
+        });
+    },
+    InitGroups(state) {
+        //获取群聊列表 待添加
+        Api.postRequest('/group/getGroupList').then(res => {
+            if (res.data.success) {
+                let list = res.data.data
+                list.forEach(element => {
+                    Vue.set(element, 'type', 'group')
+                    Vue.set(state.GroupsMap, element.uuid, element)
+                });
+            }
+        })
+    },
     InitGroupMember(state, data) {
         //初始群成员，如新人入群则会在获取时添加没有信息的，加入新群时，根据新群信息增添
         let idkey = 'groupMember_' + data.user.uuid
@@ -105,16 +107,16 @@ const mutations = {
         // if (members != null) {
         //     state.GroupMember = members
         // }else{}
-            Api.postRequest('/groupMember/getMembers').then(res => {
-                if(res.data.success){
-                    let users = res.data.data
-                    users.forEach(element => {
-                        Vue.set(element, "type", 'personal')
-                        Vue.set(state.GroupMember, element.uuid, element)
-                    });
-                }
-            })
-        
+        Api.postRequest('/groupMember/getMembers').then(res => {
+            if (res.data.success) {
+                let users = res.data.data
+                users.forEach(element => {
+                    Vue.set(element, "type", 'personal')
+                    Vue.set(state.GroupMember, element.uuid, element)
+                });
+            }
+        })
+
     },
     InitFriendRequet(state) {
         //获取好友请求列表
@@ -123,12 +125,12 @@ const mutations = {
                 let list = res.data.data
                 for (let index = 0; index < list.length; index++) {
                     const element = list[index];
-                    if(element.userInfo != null){
+                    if (element.userInfo != null) {
                         element.userInfo.type = 'personal'
-                    }else{
+                    } else {
                         //用户信息不存在，删除该请求信息
-                        list.splice(index,1)
-                    } 
+                        list.splice(index, 1)
+                    }
                 }
                 state.FriendRequestList = list
             }
@@ -180,7 +182,7 @@ const mutations = {
     },
     //更新当前聊天对象
     setCurrentCheatObj(state, user) {
-        if(user.uuid == state.currentUser.user.uuid){
+        if (user.uuid == state.currentUser.user.uuid) {
             state.currentCheatObj = state.currentUser.user
             return
         }
@@ -289,15 +291,26 @@ const mutations = {
         if (user.uuid == state.checkDetial.uuid) {
             state.checkDetial = null
         }
-        if (user.type == 'personal' && state.FriendsMap[user.uuid] != null) {
-            Vue.delete(state.FriendsMap, user.uuid)
-            return
+        if(user.uuid == state.currentCheatObj.uuid){
+            state.currentCheatObj = null
         }
-        if (user.type == 'group' && state.GroupsMap[user.uuid] != null) {
-            Vue.delete(state.GroupsMap, user.uuid)
-            return
-        }
+        Vue.delete(state.FriendsMap, user.uuid)
+           
+        
+        
     },
+    deleteGroup(state, group) {
+        this.commit('common/removeFromTalkList', group)
+        if (group.uuid == state.checkDetial.uuid) {
+            state.checkDetial = null
+        }
+        if(group.uuid == state.currentCheatObj.uuid){
+            state.currentCheatObj = null
+        }
+        Vue.delete(state.GroupsMap, group.uuid)
+        
+    },
+    //添加好友
     addUser(state, user) {
         if (user == null || user.uuid == null) {
             return
@@ -305,12 +318,20 @@ const mutations = {
         Vue.set(user, 'type', 'personal')
         Vue.set(state.FriendsMap, user.uuid, user)
     },
-    addGroup(state, group) {
+    //更新或添加群聊，socket传回uuid，由axios去请求更新
+    updateGroup(state, group) {
         if (group == null || group.uuid == null) {
             return
         }
-        Vue.set(group, 'type', 'group')
-        Vue.set(state.GroupsMap, group.uuid, group)
+        Api.postByXWForm('/group/getGroupInfo', {"groupId":group.uuid}).then(res => {
+            console.log(res.data)
+            if(res.data.success){
+                let newGroup = res.data.data
+                Vue.set(newGroup, 'type', 'group')
+                Vue.set(state.GroupsMap, newGroup.uuid, newGroup)
+            }    
+        })
+        
     },
     addFriendRequest(state, request) {
         for (let index = 0; index < state.FriendRequestList.length; index++) {
@@ -321,7 +342,8 @@ const mutations = {
             }
         }
         state.FriendRequestList.unshift(request)
-    }
+    },
+    
 }
 
 //提交的是 mutation,即将mutations的方法异步执行
@@ -329,6 +351,12 @@ const actions = {
     //异步初始化
     INIT(context, data) {
         context.commit('INIT', data)
+        // context.commit('common/InitTalkList', data)
+        // context.commit('common/InitFriends')
+        // context.commit('common/InitGroups')
+        // context.commit('common/InitGroupMember', data)
+        // context.commit('common/InitFriendRequet')
+        // state.isInit = true
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {
@@ -400,6 +428,28 @@ const actions = {
 
 }
 
+//按照中英文首字母排序好友列表
+function SortListByNameAndRemarks(list){
+    //按备注和名字升序排
+    let result = list.sort((a, b) => {         
+        //utils.hasText() utils.mySort()
+        if (!utils.hasText(a.concatInfo,'remarks') && !utils.hasText(b.concatInfo,'remarks')) {     
+            return utils.mySort(a.name.trim(),b.name.trim())
+        }
+        if (utils.hasText(a.concatInfo,'remarks') && !utils.hasText(b.concatInfo,'remarks')) {
+            return utils.mySort(a.concatInfo.remarks.trim(),b.name.trim())
+        }
+        if (!utils.hasText(a.concatInfo,'remarks') && utils.hasText(b.concatInfo,'remarks')) {
+            return utils.mySort(a.name.trim(),b.concatInfo.remarks.trim())
+        }
+        if (utils.hasText(a.concatInfo,'remarks') && utils.hasText(b.concatInfo,'remarks')) {
+            return utils.mySort(a.concatInfo.remarks.trim(),b.concatInfo.remarks.trim())
+        }
+        return 0
+        
+    }) 
+    return result
+}
 //相当于vue的computed，计算过滤返回数据
 const getters = {
     getListType: (state) => {
@@ -438,31 +488,24 @@ const getters = {
 
             // });
             return _.orderBy(data, 'lastMessTime', 'desc')
-            
+
         }
         return null
     },
-    getFriendsList: (state) => {
+    getFriendsList: (state,getters) => {
         if (state.FriendsMap != null) {
             let data = []
             let object = state.FriendsMap
             for (const key in object) {
-                data.push(object[key])
-            }
-            //按名字升序排
-            let first = _.orderBy(data, 'name')
-            //按备注升序排
-            let second = first.sort((a, b) => {
-                if (a.uuid == state.currentUser.user.uuid || b.uuid == state.currentUser.user.uuid) {
-                    return
-                }
-                if (a.concatInfo == null || b.concatInfo == null) {
-                    return
-                }
-                return a.concatInfo.remarks.localeCompare(b.concatInfo.remarks, 'zh')
-            })
+                let curId = state.currentUser.user.uuid
+                if(object[key].uuid != curId){
+                    data.push(object[key])
+                }   
+            }           
+            
+            let first = SortListByNameAndRemarks(data)    
             //过滤已被拉黑的用户
-            return second.filter((usr) => {
+            return first.filter((usr) => {
                 if (usr.uuid == state.currentUser.user.uuid) {
                     return usr
                 }
@@ -481,17 +524,8 @@ const getters = {
             let object = state.GroupsMap
             for (const key in object) {
                 data.push(object[key])
-            }
-            //按名字升序排
-            let first = _.orderBy(data, 'name')
-            //按备注升序排
-            let second = first.sort((a, b) => {
-                if (a.concatInfo == null || b.concatInfo == null) {
-                    return
-                }
-                return a.concatInfo.remarks.localeCompare(b.concatInfo.remarks, 'zh')
-            })
-            return second
+            }       
+            return SortListByNameAndRemarks(data)   
         }
         return null
 
@@ -558,7 +592,7 @@ const getters = {
             return state.currentUser.user
         }
         //先从本地获取，不为空则返回，为空则查询数据库
-        if (uuid != null && state.GroupMember != null  ) {
+        if (uuid != null && state.GroupMember != null) {
             if (state.GroupMember[uuid] != null) {
                 return state.GroupMember[uuid]
             } else {
@@ -574,11 +608,11 @@ const getters = {
                         Vue.set(state.GroupMember, uuid, user)
                         //return state.noThatUser
                     }
-                    
+
                 })
                 return state.noThatUser
             }
-    
+
         }
     },
     getCurrentCheatObj: (state) => {
@@ -593,14 +627,14 @@ const getters = {
         }
         return { "name": "系统公告", "type": 'notice' }
     },
-    hasFriendsRequest: (state) =>{
+    hasFriendsRequest: (state) => {
         let hasRequest = false
         state.FriendRequestList.forEach(element => {
             let currentUid = state.currentUser.user.uuid
-            if(element.receiverUuid == currentUid && element.requestStatus == 0){
+            if (element.receiverUuid == currentUid && element.requestStatus == 0) {
                 hasRequest = true
             }
-            
+
         });
         return hasRequest
     }

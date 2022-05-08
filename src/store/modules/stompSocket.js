@@ -194,11 +194,12 @@ const actions = {
                 context.dispatch("updateFriendMap", message) 
                 return
             }
-            //更新群聊列表
+            //更新群聊信息（新人入群，群状态更新等）,返回一个群组uuid，然后axios查询相关信息
             if ('updateGroup' == type) {
                 context.dispatch("updateGroupMap", message) 
                 return
             }
+           
             //topic通知
             if ('notice' == type) {
                 //context.dispatch("messageAdapter", message) 
@@ -247,9 +248,9 @@ const actions = {
         });
     },
     updateGroupMap(context, group) {
-        this.commit('common/addGroup',group)
-    },
-
+        this.commit('common/updateGroup',group)
+    }
+    
 }
 const getters = {
 
