@@ -167,7 +167,7 @@ export default {
       if (res.success) {
         this.$message.success('修改成功！');
         //成功后更新本地信息
-        this.currentUser.photourl = res.data.photourl
+        this.$store.state['common'].currentUser.user.photourl = res.data.photourl
       } else {
         this.$message.warning(res.message);
       }

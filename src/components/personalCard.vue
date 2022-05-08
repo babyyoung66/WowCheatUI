@@ -131,10 +131,10 @@ export default {
         return
       }
       let info = null
-      if(this.userinfo.type == 'personal'){
+      if (this.userinfo.type == 'personal') {
         info = this.$store.state['common'].FriendsMap[this.userinfo.uuid]
       }
-      if(this.userinfo.type == 'group'){
+      if (this.userinfo.type == 'group') {
         info = this.$store.state['common'].GroupsMap[this.userinfo.uuid]
       }
       if (info != null) {
@@ -273,7 +273,10 @@ p {
   padding: 0 32px 0 32px;
 }
 .address p {
-  display: inline;
+  /* display: inline; */
+  display: list-item;
+  list-style: none;
+  width: fit-content;
 }
 .addrTi,
 .remarksLabel {

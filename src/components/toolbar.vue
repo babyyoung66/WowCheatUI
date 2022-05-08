@@ -11,7 +11,7 @@
         <!-- 个人信息卡片 -->
         <personal-card :userinfo="userinfo"></personal-card>
 
-        <el-image :src="userinfo.photourl" slot="reference"> </el-image>
+        <el-image fit="cover" :src="userinfo.photourl" slot="reference"> </el-image>
       </el-popover>
     </div>
     <!-- 菜单区域 -->

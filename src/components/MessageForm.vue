@@ -6,8 +6,7 @@
     <ul ref="MessageContainer" @scroll="handleScroll">
       <li
         v-show="
-          currentScrollTop <= 1 ||
-          this.currentScrollheight == this.ScrollclientHeight
+          currentScrollTop <= 1 || currentScrollheight == ScrollclientHeight
         "
         class="showmore"
       >
@@ -35,6 +34,9 @@
           v-if="message.showtime == null && showTheTime(index)"
           style="dispaly: none"
         ></span>
+        <span class="messageId" style="display: none">
+          {{ message._id }}
+        </span>
         <!-- 消息主体 -->
         <div
           class="messageli"
@@ -58,20 +60,25 @@
                 v-if="getUserInfo(message.from) != null"
                 :src="getUserInfo(message.from).photourl"
                 slot="reference"
+                fit="cover"
               >
               </el-image>
             </el-popover>
           </div>
           <!-- 消息及姓名 -->
-          <div class="message">
+          <div
+            class="message"
+            :class="{ message_self: message.from == currentUser.uuid }"
+          >
             <!-- 群聊时才显示名称,以及自身名称不显示 -->
-            <div class="nameBox">
+            <div
+              class="nameBox"
+              v-if="
+                currentTalkObj.type == 'group' &&
+                message.from != currentUser.uuid
+              "
+            >
               <p
-                v-if="
-                  (currentTalkObj.type == 'group' &&
-                    message.from != currentUser.uuid) ||
-                  message.from != currentUser.uuid
-                "
                 class="name"
                 :class="{
                   name_self: message.from == currentUser.uuid,
@@ -130,7 +137,7 @@
                 <el-image
                   :ref="'image' + message._id"
                   :src="message.fileDetail.fileUrl"
-                  fit="scale-down"
+                  fit="cover"
                   :preview-src-list="[message.fileDetail.fileUrl]"
                   lazy
                   @error="ImageloadError($event, 'image' + message._id)"
@@ -144,7 +151,8 @@
     </ul>
   </div>
 </template>
-<script>
+<script>// @ts-nocheck
+
 
 import PersonalCard from '@/components/personalCard.vue'
 import TimeUtils from '@/utils/TimeUtils'
@@ -379,7 +387,7 @@ export default {
       let times = 0
       var tryImage = setInterval(() => {
         //尝试5秒,通过refs时候或img标签的error状态
-        if (times >= 10 || this.$refs[targetId][0].error == false) {
+        if (times >= 10 || this.$refs[targetId][0] == null || this.$refs[targetId][0].error == false) {
           clearInterval(tryImage)
           //清空控制台错误内容
           console.clear()
@@ -526,21 +534,28 @@ li {
 .message {
   display: flex;
   flex-direction: column;
-  max-width: 56%;
+  /* max-width: 56%; */
+  width: 56%;
+}
+.message_self {
+  align-items: flex-end;
+}
+.nameBox {
+  width: auto;
+  width: 40%;
 }
 
 .name {
-  max-width: 45%;
   padding: 0 8px 0 8px;
   text-align: left;
   font-size: 12px;
   font-weight: 450;
   color: rgb(104, 100, 100);
+  text-align: left;
+  overflow: hidden;
   word-break: keep-all;
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left;
 }
 /* 自身发言时 */
 .name_self {
@@ -555,16 +570,16 @@ li {
   word-break: break-all;
 }
 .contentBox_personal {
-  margin: 7px 6px 0 6px !important;
+  margin: 15px 6px 0 6px !important;
 }
 
 /* 自身发言 */
 .contentBox_self {
-  margin: 12px 6px 0 6px;
+  margin: 15px 6px 0 6px !important;
   background-color: rgb(158, 234, 106) !important;
 }
 .TextContent {
-  padding: 6px;
+  padding: 3.5px 6px;
   font-weight: 450;
   text-align: justify;
 }
@@ -607,19 +622,21 @@ li {
   margin: 15px 0 0 8px;
 }
 .ImageContent {
+  /* max-width: 170px ;
+  max-height: 240px ; */
+  width: 155px;
+  height: 195px;
+  /* 以下样式解决element懒加载无法显示问题 */
+  min-height: 30px;
+  min-width: 30px;
+  overflow: auto;
   padding: 6px 8px 4px 8px;
 }
 .ImageContent .el-image {
-  padding: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  max-width: 170px !important;
-  max-height: 240px !important;
-  /* 以下样式解决element懒加载无法显示问题 */
-  display: block !important;
-  min-height: 30px !important;
-  min-width: 30px !important;
-  overflow: auto !important;
+  display: block;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* 将滚动调设置成悬停出现 */

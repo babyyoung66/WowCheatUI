@@ -97,13 +97,15 @@
                 v-if="
                   it.concatInfo == null ||
                   it.concatInfo.remarks == null ||
-                  it.concatInfo.remarks == ''
+                  it.concatInfo.remarks.trim() == ''
                 "
                 class="name"
-                style="font-size: 16px"
+                style="font-size: 14px"
               >
-                <p style="font-size: 16px" class="ellipsisWord">{{ it.name }}</p>
-                <p v-if="it.uuid == currentUser.uuid" style="font-size: 16px">
+                <p style="font-size: 14px" class="ellipsisWord">
+                  {{ it.name }}
+                </p>
+                <p v-if="it.uuid == currentUser.uuid" style="font-size: 14px;width: -webkit-fill-available;">
                   (自己)
                 </p>
               </span>
@@ -112,9 +114,9 @@
                 v-if="
                   it.concatInfo != null &&
                   it.concatInfo.remarks != null &&
-                  it.concatInfo.remarks != ''
+                  it.concatInfo.remarks.trim() != ''
                 "
-                class="name"
+                class="name ellipsisWord"
                 style="font-size: 16px"
                 >{{ it.concatInfo.remarks }}</span
               >
@@ -243,7 +245,7 @@
             >
             </el-image>
           </el-badge>
-          <span class="name" style="font-size: 16px; padding: 0 30px 0 15px">
+          <span class="name" style="font-size: 14px; padding: 0 30px 0 15px">
             新的朋友
           </span>
         </li>
@@ -281,10 +283,10 @@
             v-if="
               it.concatInfo == null ||
               it.concatInfo.remarks == null ||
-              it.concatInfo.remarks == ''
+              it.concatInfo.remarks.trim() == ''
             "
-            class="name"
-            style="font-size: 16px; padding: 0 30px 0 15px"
+            class="name ellipsisWord"
+            style="font-size: 14px; padding: 0 30px 0 15px"
           >
             {{ it.name }}
           </span>
@@ -293,10 +295,10 @@
             v-if="
               it.concatInfo != null &&
               it.concatInfo.remarks != null &&
-              it.concatInfo.remarks != ''
+              it.concatInfo.remarks.trim() != ''
             "
-            class="name"
-            style="font-size: 16px; padding: 0 30px 0 15px"
+            class="name ellipsisWord"
+            style="font-size: 14px; padding: 0 30px 0 15px"
           >
             {{ it.concatInfo.remarks }}
           </span>
@@ -327,28 +329,28 @@
           <!-- 头像 -->
           <el-image fit="cover" style="padding: 0 0 0 10px" :src="it.photourl">
           </el-image>
-          <div class="ellipsisWord" style="width: 65%">
-            <span
-              v-if="
-                it.concatInfo == null ||
-                it.concatInfo.remarks == null ||
-                it.concatInfo.remarks == ''
-              "
-              style="font-size: 16px; padding: 0 30px 0 15px"
-            >
-              {{ it.name }}
-            </span>
-          </div>
+          <!-- 原名称 -->
+          <span
+            v-if="
+              it.concatInfo == null ||
+              it.concatInfo.remarks == null ||
+              it.concatInfo.remarks.trim() == ''
+            "
+            class="ellipsisWord"
+            style="font-size: 14px; padding: 0 30px 0 15px; width: 65%"
+          >
+            {{ it.name }}
+          </span>
 
           <!-- 备注 -->
           <span
             v-if="
               it.concatInfo != null &&
               it.concatInfo.remarks != null &&
-              it.concatInfo.remarks != ''
+              it.concatInfo.remarks.trim() != ''
             "
-            class="name"
-            style="font-size: 16px; padding: 0 30px 0 15px"
+            class="name ellipsisWord"
+            style="font-size: 14px; padding: 0 30px 0 15px; width: 65%"
           >
             {{ it.concatInfo.remarks }}
           </span>
@@ -674,21 +676,22 @@ ul {
 }
 .peopleinfo .time {
   width: auto;
-  padding: 0 16px 0 0;
+  padding: 0 8px 0 0;
 }
 
 /* 超宽的名字和消息使用省略号 */
-.name,
 .recMessage .mess {
   width: auto;
   text-align: left;
   padding: 0 25px 0 0;
 }
 .name {
+  width: auto;
+  text-align: left;
   display: flex;
   flex-direction: row;
-  line-height: 15px;
-  max-width: 65%;
+  line-height: 16px;
+  max-width: 68%;
 }
 .recMessage {
   display: flex;
