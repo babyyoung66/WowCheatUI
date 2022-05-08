@@ -31,6 +31,32 @@ const utils = {
         // 返回最终结果
         return result;
     },
+    hasText(object,key){
+        if(object === null || object === undefined || typeof(object) === 'undefined' ){
+            return false
+        }
+        let value = object[key]
+        if( value === null || value === undefined || typeof(value) === 'undefined' || value.trim() === '' || value.length == 0){
+            return false
+        }
+        return true
+    },
+
+    // 中英文字符串排序
+    mySort(value1,value2){
+        let reg = /[a-zA-Z0-9]/
+        if(reg.test(value1)&& reg.test(value2)){
+            if(value1>value2){
+                return 1
+            }else if(value1<value2){
+                return -1
+            }else{
+                return 0
+            }
+         }else {
+            return value1.localeCompare(value2)
+         }
+    }
 
     
 }
