@@ -38,28 +38,34 @@ new Vue({
 
   },
   created() {
-  
+
     let currentUser = JSON.parse(localStorage.getItem("currentUser"))
     let isInit = JSON.parse(sessionStorage.getItem("isInit"))
     if (currentUser != null && isInit != true) {
-        if (this.$route.name != '' && this.$route.name != 'cheat') {
-          this.$router.replace("/cheat");
+      this.Api.postRequest('/ping', {}).then(res => {
+        if (res.data.success) {
+          if (this.$route.name != '' && this.$route.name != 'cheat') {
+            this.$router.replace("/cheat");
+            this.$message.success({
+              message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
+              duration: 3500
+            });
+          }
+          this.$store.commit('DATA_INIT', currentUser)
+          if (this.$route.name != '' && this.$route.name != 'cheat') {
+            this.$router.replace("/cheat");
+          }
           this.$message.success({
             message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
             duration: 3500
           });
-        }  
-      this.$store.commit('DATA_INIT', currentUser)
-      if (this.$route.name != '' && this.$route.name != 'cheat') {
-        this.$router.replace("/cheat");
-      }
-      this.$message.success({
-        message: '已自动登录，如需取消请重新登录，并取消记住登录选项！',
-        duration: 3500
-      });
 
-    } 
-    if(currentUser == null && isInit != true) {
+        }
+      })
+
+
+    }
+    if (currentUser == null && isInit != true) {
       if (this.$route.name != 'login') {
         this.$message.error({ message: '尚未登录，请登录!' });
         this.$router.replace("/login");//跳转到登陆页
