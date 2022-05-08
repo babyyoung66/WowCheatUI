@@ -131,7 +131,7 @@
     <el-dialog
       title="测试账号"
       :visible.sync="TestDialogVisible"
-      width="25%"
+      width="300px"
       center
     >
       <div class="testUserBox">
