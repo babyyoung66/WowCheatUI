@@ -328,33 +328,33 @@ li {
   right: 6px !important ;
 }
 .innerDialog .el-dialog__body {
-  padding: 5px 25px 15px 25px !important ;
-  text-align: center !important;
+  padding: 5px 25px 15px 25px  ;
+  text-align: center ;
   display: flex;
-  flex-direction: column !important;
+  flex-direction: column ;
 }
 .innerDialog .el-dialog__footer {
-  text-align: right !important;
-  padding: 10px 25px 20px 25px !important;
+  text-align: right ;
+  padding: 10px 25px 20px 25px ;
 }
 .innerDialog .el-input__inner,
-.el-input {
-  border-radius: 6px !important;
-  background-color: rgb(226, 226, 226) !important;
-  height: 28px !important;
+.innerDialog .el-input {
+  border-radius: 6px ;
+  background-color: rgb(226, 226, 226) ;
+  height: 28px ;
 }
 .innerDialog .el-form-item__content,
-.el-input__icon,
-.el-input__prefix,
-.el-input__suffix {
-  line-height: 28px !important;
+.innerDialog .el-input__icon,
+.innerDialog .el-input__prefix,
+.innerDialog .el-input__suffix {
+  line-height: 28px ;
 }
 .innerDialog .el-form-item__content {
   display: flex;
   justify-content: space-between;
 }
 .innerDialog .el-input__prefix,
-.el-input__suffix {
-  top: 0 !important;
+.innerDialog .el-input__suffix {
+  top: 0 ;
 }
 </style>

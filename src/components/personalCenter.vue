@@ -274,4 +274,5 @@ export default {
 .personalCenter .inputwidth {
   width: 220px;
 }
+
 </style>

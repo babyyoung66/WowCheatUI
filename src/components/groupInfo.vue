@@ -215,7 +215,7 @@
           <!-- 尾部添加按钮 -->
           <span @click="inviteMember" class="groupMemberAvatar" style="">
             <i class="el-icon-plus"></i>
-            <p class="memberName ellipsisWord">添加</p>
+            <p style="padding: 3px 0 0;" class="memberName ellipsisWord">添加</p>
           </span>
         </div>
       </el-form>
@@ -503,7 +503,7 @@ li:hover {
   height: 31px;
   font-size: 28px;
   color: rgb(176, 171, 171);
-  border: solid 2px rgb(208, 195, 187);
+  border: solid 1.5px rgb(208, 195, 187);
 }
 
 .memberName {
@@ -555,6 +555,7 @@ li:hover {
 }
 .inviteDialog .el-dialog__body {
   padding: 15px 12px;
+  text-align: -webkit-center;
 }
 
 .el-popover.memberPhotoPopover {

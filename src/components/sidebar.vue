@@ -691,7 +691,7 @@ ul {
   display: flex;
   flex-direction: row;
   line-height: 16px;
-  max-width: 68%;
+  width: 68%;
 }
 .recMessage {
   display: flex;

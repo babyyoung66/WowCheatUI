@@ -133,7 +133,7 @@
         type="textarea"
         placeholder="请输入内容"
         v-model="content"
-        maxlength="150"
+        maxlength="300"
         :show-word-limit="content.length > 0"
         resize="none"
         @keyup.ctrl.18.native="sendTextMessage"

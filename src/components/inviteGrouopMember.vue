@@ -205,9 +205,10 @@ export default {
 }
 .invateMember {
   text-align: -webkit-center;
+  width: 85%;
 }
 .friendList {
-  width: 85%;
+  width: 100%;
   height: 300px;
 }
 .friendList ul {

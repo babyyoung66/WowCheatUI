@@ -88,6 +88,7 @@
       :modal="false"
       :before-close="handleClose"
       custom-class="requestMessageDialog"
+      :modal-append-to-body="false"
     >
       <div v-if="currentCheck != null" style="text-align: left; width: 100%">
         请求时间：{{ currentCheck.requestTime }}
@@ -272,10 +273,10 @@ p {
 }
 
 </style>
-<style>
+<style >
 .el-popper.requestListPopover{
-  margin-left: -20% !important;
-  margin-right: -22px !important;
+  margin-left: -20% ;
+  margin-right: -22px ;
 }
 .requestMessageDialog .el-dialog {
   min-width: 0;
@@ -303,12 +304,12 @@ p {
   background-color: rgb(226, 226, 226);
   height: 28px;
 }
-.requestMessageDialog .el-form-item__content,
+/* .requestMessageDialog .el-form-item__content,
 .el-input__icon,
 .el-input__prefix,
 .el-input__suffix {
   line-height: 28px;
-}
+} */
 .requestMessageDialog .el-form-item__content {
   display: flex;
   justify-content: space-between;

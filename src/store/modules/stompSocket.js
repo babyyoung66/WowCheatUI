@@ -4,6 +4,7 @@ import SockJS from 'sockjs-client'
 // @ts-ignore
 import Stomp from 'stompjs'
 import router from '@/router/router'
+import Api from "@/utils/Api"
 import TimeUtils from '@/utils/TimeUtils'
 import constants from '@/utils/constans'
 const state = {
@@ -43,10 +44,10 @@ const mutations = {
 const actions = {
     connect(context) {
         //正在连接或已连接
-        if (context.state.connecting ) {
+        if (context.state.connecting) {
             return
         }
-        if(context.state.stomp != null && context.state.stomp.connected){
+        if (context.state.stomp != null && context.state.stomp.connected) {
             return
         }
 
@@ -54,45 +55,63 @@ const actions = {
         if (local == null || local == undefined) {
             return
         }
-        context.state.stomp = Stomp.over(new SockJS(constants.socketUrl));
-        context.state.stomp.debug = null
-        // stompClient.reconnectDelay = 5000
-        //心跳设置
-        context.state.stomp.heartbeatIncoming = 30000
-        context.state.stomp.heartbeatOutgoing = 30000
-
-        let headers = { "token": local.token }
-
         context.state.connecting = true
-        context.state.stomp.connect(headers, success => {
-            console.log("聊天服务连接成功~" + TimeUtils.dateForMatDefault(new Date()))
-            //关闭当前可能存在的重连通知
-            Notification.closeAll()
-            //Subscribe()
-            context.dispatch('Subscribe')
-            //第一次进入，或者重连时提示
-            let isInit = JSON.parse(sessionStorage.getItem("isInit"))
-            if (!isInit || isInit == null || context.state.reConnec == true) {
-                Notification.success({
-                    title: '系统消息',
-                    message: "聊天服务连接成功~",
-                    position: "top-right"
+        //验证与服务器的是否正常通信
+        Api.postRequest('/ping', {}).then(res => {
+            if (res.data != null && res.data.success) {
+                context.state.stomp = Stomp.over(new SockJS(constants.socketUrl));
+                context.state.stomp.debug = null
+                // stompClient.reconnectDelay = 5000
+                //心跳设置
+                context.state.stomp.heartbeatIncoming = 20000
+                context.state.stomp.heartbeatOutgoing = 15000
+                let headers = { "token": local.token }  
+                context.state.stomp.connect(headers, success => {
+                    console.log("聊天服务连接成功~" + TimeUtils.dateForMatDefault(new Date()))
+                    //关闭当前可能存在的重连通知
+                    Notification.closeAll()
+                    //Subscribe()
+                    context.dispatch('Subscribe')
+                    //第一次进入，或者重连时提示
+                    let isInit = JSON.parse(sessionStorage.getItem("isInit"))
+                    if (!isInit || isInit == null || context.state.reConnec == true) {
+                        Notification.success({
+                            title: '系统消息',
+                            message: "聊天服务连接成功~",
+                            position: "top-right"
 
+                        });
+                    }
+                    context.state.isInit = true
+                    context.state.reConnec = false
+                    context.state.reConnectTimes = 0
+                    context.state.connecting = false
+                }, error => {
+                    context.state.connecting = false
+                    if (context.state.reConnectTimes == 0) {
+                        context.state.reConnec = true
+                    }
+                    if (context.state.reConnec && context.state.needreConnec && !context.state.stomp.connected) {
+                        context.dispatch('ReConnect', error)
+                    }
+                })
+            }else if(res.response.status == 401){
+                //关闭当前可能存在的重连通知
+                Notification.closeAll()
+                Notification.error({
+                    dangerouslyUseHTMLString: true,
+                    title: '系统消息',
+                    message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>账号已在其他地方登录，如非本人操作请及时更改密码！' ,
+                    position: "top-right",
+                    duration: 0
                 });
             }
-            context.state.isInit = true
-            context.state.reConnec = false
-            context.state.reConnectTimes = 0
+
+        }).finally(()=>{
             context.state.connecting = false
-        }, error => {
-            context.state.connecting = false
-            if (context.state.reConnectTimes == 0) {
-                context.state.reConnec = true
-            }
-            if (context.state.reConnec && context.state.needreConnec && !context.state.stomp.connected) {
-                context.dispatch('ReConnect', error)
-            }
         })
+
+
     },
     //订阅
     Subscribe(context) {
@@ -126,7 +145,7 @@ const actions = {
 
     },
     ReConnect(context, error) {
-        if (router.app._route.name == 'login'|| context.state.connecting) {
+        if (router.app._route.name == 'login' || context.state.connecting) {
             return
         }
         setTimeout(() => {
@@ -145,7 +164,7 @@ const actions = {
 
                 }
             } else {
-                if(context.state.connecting){
+                if (context.state.connecting) {
                     return
                 }
                 if (!context.state.reConnec || context.state.reConnectTimes == 0) {
@@ -186,20 +205,20 @@ const actions = {
             }
             //好友请求
             if ('friendRequest' == type) {
-                context.dispatch("updateFriendRequest", message) 
+                context.dispatch("updateFriendRequest", message)
                 return
             }
             //更新好友列表
             if ('updateFriend' == type) {
-                context.dispatch("updateFriendMap", message) 
+                context.dispatch("updateFriendMap", message)
                 return
             }
             //更新群聊信息（新人入群，群状态更新等）,返回一个群组uuid，然后axios查询相关信息
             if ('updateGroup' == type) {
-                context.dispatch("updateGroupMap", message) 
+                context.dispatch("updateGroupMap", message)
                 return
             }
-           
+
             //topic通知
             if ('notice' == type) {
                 //context.dispatch("messageAdapter", message) 
@@ -221,9 +240,9 @@ const actions = {
             fromid = message.to
             //为群聊时，判断是否已屏蔽
             let GroupsMap = this.state['common'].GroupsMap
-            if(GroupsMap[fromid].concatInfo.notifyStatus !== 0){
+            if (GroupsMap[fromid].concatInfo.notifyStatus !== 0) {
                 return
-            } 
+            }
         }
         let user = { "uuid": fromid, "type": msgType }
         let msgData = { "user": user, "message": message }
@@ -236,10 +255,10 @@ const actions = {
         this.commit('common/setUserOnTopOfTalkList', user)
     },
     updateFriendRequest(context, request) {
-        this.commit('common/addFriendRequest',request)
+        this.commit('common/addFriendRequest', request)
     },
     updateFriendMap(context, friend) {
-        this.commit('common/addUser',friend)
+        this.commit('common/addUser', friend)
         Notification.success({
             title: '系统消息',
             message: '已成功添加【' + friend.name + '】为好友！',
@@ -248,9 +267,9 @@ const actions = {
         });
     },
     updateGroupMap(context, group) {
-        this.commit('common/updateGroup',group)
+        this.commit('common/updateGroup', group)
     }
-    
+
 }
 const getters = {
 

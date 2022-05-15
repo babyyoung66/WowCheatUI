@@ -322,5 +322,13 @@ export default {
 .PersonalCenterDialog .el-dialog__close{
   font-size: 22px !important;
 }
+
+.personalCenter .el-form-item__content,
+.personalCenter .el-input__icon,
+.personalCenter .el-input__prefix,
+.personalCenter .el-input__suffix {
+  line-height: 40px;
+  height: auto;
+}
 </style>
   

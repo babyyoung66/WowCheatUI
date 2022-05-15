@@ -121,7 +121,7 @@ axios.interceptors.response.use(success => {
       Message.error({ message: '未知错误!' })
     }
   }
-  return;
+  return error;
 })
 // Content-Type: application/json ： 请求体中的数据会以json字符串的形式发送到后端
 // Content-Type: application/x-www-form-urlencoded：请求体中的数据会以普通表单形式（键值对）发送到后端
