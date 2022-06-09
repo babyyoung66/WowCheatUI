@@ -65,7 +65,7 @@ const actions = {
                 //心跳设置
                 context.state.stomp.heartbeatIncoming = 20000
                 context.state.stomp.heartbeatOutgoing = 15000
-                let headers = { "token": local.token }  
+                let headers = { "token": local.token }
                 context.state.stomp.connect(headers, success => {
                     console.log("聊天服务连接成功~" + TimeUtils.dateForMatDefault(new Date()))
                     //关闭当前可能存在的重连通知
@@ -95,19 +95,29 @@ const actions = {
                         context.dispatch('ReConnect', error)
                     }
                 })
-            }else if(res.response.status == 401){
+            } else if (res.response.status == 401) {
                 //关闭当前可能存在的重连通知
                 Notification.closeAll()
                 Notification.error({
                     dangerouslyUseHTMLString: true,
                     title: '系统消息',
-                    message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>账号已在其他地方登录，如非本人操作请及时更改密码！' ,
+                    message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>账号已在其他地方登录，如非本人操作请及时更改密码！',
+                    position: "top-right",
+                    duration: 0
+                });
+            } else {
+                //关闭当前可能存在的重连通知
+                Notification.closeAll()
+                Notification.error({
+                    dangerouslyUseHTMLString: true,
+                    title: '系统消息',
+                    message: '【' + TimeUtils.dateForMatDefault(new Date()) + '】<br>无法连接服务器，请尝试刷新！',
                     position: "top-right",
                     duration: 0
                 });
             }
 
-        }).finally(()=>{
+        }).finally(() => {
             context.state.connecting = false
         })
 

@@ -101,19 +101,22 @@
               </p>
             </div>
 
-            <!-- 文本消息 -->
+            <!-- 文本、html消息 -->
             <div
-              v-if="message.contentType == 'text'"
+              v-if="message.contentType == 'text' || message.contentType == 'html'"
               class="contentBox"
               :class="{
                 contentBox_self: message.from == currentUser.uuid,
                 contentBox_personal: currentTalkObj.type !== 'group',
               }"
             >
-              <!-- 消息 -->
+              <!-- 文本消息 -->
               <p v-if="message.contentType == 'text'" class="TextContent">
                 {{ message.content }}
               </p>
+              <!-- html消息 -->
+              <span v-if="message.contentType == 'html'" v-html="message.content" class="TextContent">               
+              </span>
               <!-- 侧边小箭头 -->
               <div
                 :class="{

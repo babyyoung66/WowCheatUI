@@ -147,7 +147,7 @@ export default {
           //console.log(this.loginForm)
           this.Api.postRequest('/auth/login', this.loginForm).then(result => {
            
-            if ( result != null && result.data.success == true) {
+            if ( result != null && result.data != null && result.data.success == true) {
               localStorage.setItem("remember", this.loginForm.rememberMe)
               this.$store.commit('DATA_INIT',result.data.data)
               //是否记住用户

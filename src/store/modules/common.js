@@ -188,13 +188,13 @@ const mutations = {
         }
         if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
             state.currentCheatObj = state.FriendsMap[user.uuid]
-            state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0
+            //state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0
             return
         }
         if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
             state.currentCheatObj = state.GroupsMap[user.uuid]
             //未读清0
-            state.GroupsMap[user.uuid].concatInfo.unReadTotal = 0
+            //state.GroupsMap[user.uuid].concatInfo.unReadTotal = 0
             return
         }
     },
@@ -343,6 +343,38 @@ const mutations = {
         }
         state.FriendRequestList.unshift(request)
     },
+    upDateConcatTime(state, user) {
+        if (user == null || user == undefined) {
+            return
+        }  
+        let uuid = user.uuid
+        //自己则不处理
+        if (uuid == state.currentUser.user.uuid) {
+            return
+        }
+        if (user.type == 'personal' && state.FriendsMap[uuid] != null) {
+            //console.log(state.FriendsMap[uuid].concatInfo)
+            if (state.FriendsMap[uuid].concatInfo != null && state.FriendsMap[uuid].concatInfo.unReadTotal <= 0) {
+                //未读已清0，不重复请求
+                return
+            }
+           
+            //个人 context.state.FriendsMap[uuid]
+            state.FriendsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
+            Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": uuid })
+            return
+        } 
+        if (user.type == 'group' && state.GroupsMap[uuid] != null) {
+            if (state.GroupsMap[uuid].concatInfo != null && state.GroupsMap[uuid].concatInfo.unReadTotal <= 0) {
+                //未读已清0，不重复请求
+                return
+            }
+            //群聊，预留，后台未开发 context.state.GroupsMap[uuid]
+            state.GroupsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
+            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": uuid })
+            return
+        }
+    },
     
 }
 
@@ -360,40 +392,7 @@ const actions = {
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {
-        if (user == null || user == undefined) {
-            return
-        }
-        let uuid = user.uuid
-        //自己则不处理
-        if (uuid == context.state.currentUser.user.uuid) {
-            return
-        }
-        let Data = null
-        if (user.type == 'personal') {
-            //个人
-            Data = context.state.FriendsMap
-
-        } else if (user.type == 'group') {
-            //群聊，预留，后台未开发
-            Data = context.state.GroupsMap
-        }
-        if (Data == null) {
-            return
-        }
-        if (Data[uuid].concatInfo != null && Data[uuid].concatInfo.unReadTotal <= 0) {
-            //未读已清0，不重复请求
-            return
-        }
-        if (user.type == 'personal') {
-            //个人 context.state.FriendsMap[uuid]
-            Data[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": uuid })
-
-        } else if (user.type == 'group') {
-            //群聊，预留，后台未开发 context.state.GroupsMap[uuid]
-            Data[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": uuid })
-        }
+       context.commit('upDateConcatTime',user)
     },
     //用于退出时
     upDateConcatTimeForLogout(context, user) {

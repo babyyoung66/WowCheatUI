@@ -253,13 +253,13 @@ p {
 
 .splice {
   border-top: solid rgb(217, 217, 217) 0.1mm;
-  margin: 22px 40px 0 40px;
+  margin: 15px 40px 0 40px;
 }
 
 .remarks {
   width: auto;
   height: auto;
-  padding: 20px 32px 0 32px;
+  padding: 14px 32px 0 32px;
 }
 .remarksLabel {
   height: auto !important;
@@ -268,7 +268,7 @@ p {
 .address {
   width: auto;
   max-height: 60px;
-  overflow: hidden;
+  /* overflow: hidden; */
   margin: 8px 0 0 0;
   padding: 0 32px 0 32px;
 }
@@ -296,17 +296,16 @@ p {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   overflow: hidden;
   text-align: left;
 }
 .menue {
   height: 68px;
-
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  padding: 0 32px 10px 32px;
+  padding: 0 22px 10px 32px;
 }
 .menue i {
   font-size: 24px;

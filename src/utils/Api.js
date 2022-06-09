@@ -111,7 +111,7 @@ axios.interceptors.response.use(success => {
   } else if (error.response.status == 405) {
     Message.error({ message: '服务请求方式错误!' })
   }
-  else if (error.response.status == 500) {
+  else if (505 >= error.response.status >= 500) {
     Message.error({ message: '服务器内部错误，无法完成请求!' })
   } else {
     if (error.response.data) {
