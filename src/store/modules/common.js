@@ -58,7 +58,7 @@ const mutations = {
             Vue.set(data.user, 'type', 'personal')
             Vue.set(state.FriendsMap, data.user.uuid, data.user)
             state.currentUser = data
-        
+
             this.commit('common/InitFriends')
             this.commit('common/InitGroups')
             this.commit('common/InitGroupMember', data)
@@ -186,15 +186,22 @@ const mutations = {
             state.currentCheatObj = state.currentUser.user
             return
         }
-        if ('personal' == user.type && state.FriendsMap[user.uuid] != null) {
+        if (user.type == 'personal' && state.FriendsMap[user.uuid] != null) {
             state.currentCheatObj = state.FriendsMap[user.uuid]
-            //state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0
+            if (state.FriendsMap[user.uuid].concatInfo != null && state.FriendsMap[user.uuid].concatInfo.unReadTotal > 0) {
+                state.FriendsMap[user.uuid].concatInfo.unReadTotal = 0  //未读清0
+                //更新数据库时间
+                Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": user.uuid })
+            }
             return
         }
-        if ('group' == user.type && state.GroupsMap[user.uuid] != null) {
+        if (user.type == 'group' && state.GroupsMap[user.uuid] != null) {
             state.currentCheatObj = state.GroupsMap[user.uuid]
-            //未读清0
-            //state.GroupsMap[user.uuid].concatInfo.unReadTotal = 0
+            if (state.GroupsMap[user.uuid].concatInfo != null && state.GroupsMap[user.uuid].concatInfo.unReadTotal > 0) {
+                state.GroupsMap[user.uuid].concatInfo.unReadTotal = 0  //未读清0 
+                Api.postByXWForm('/group/UpdateConcatTime', { "uuid": user.uuid })
+            }
+            //群聊，预留，后台未开发 context.state.GroupsMap[uuid]   
             return
         }
     },
@@ -291,24 +298,24 @@ const mutations = {
         if (user.uuid == state.checkDetial.uuid) {
             state.checkDetial = null
         }
-        if(user.uuid == state.currentCheatObj.uuid){
+        if (user.uuid == state.currentCheatObj.uuid) {
             state.currentCheatObj = null
         }
         Vue.delete(state.FriendsMap, user.uuid)
-           
-        
-        
+
+
+
     },
     deleteGroup(state, group) {
         this.commit('common/removeFromTalkList', group)
         if (group.uuid == state.checkDetial.uuid) {
             state.checkDetial = null
         }
-        if(group.uuid == state.currentCheatObj.uuid){
+        if (group.uuid == state.currentCheatObj.uuid) {
             state.currentCheatObj = null
         }
         Vue.delete(state.GroupsMap, group.uuid)
-        
+
     },
     //添加好友
     addUser(state, user) {
@@ -323,15 +330,15 @@ const mutations = {
         if (group == null || group.uuid == null) {
             return
         }
-        Api.postByXWForm('/group/getGroupInfo', {"groupId":group.uuid}).then(res => {
+        Api.postByXWForm('/group/getGroupInfo', { "groupId": group.uuid }).then(res => {
             console.log(res.data)
-            if(res.data.success){
+            if (res.data.success) {
                 let newGroup = res.data.data
                 Vue.set(newGroup, 'type', 'group')
                 Vue.set(state.GroupsMap, newGroup.uuid, newGroup)
-            }    
+            }
         })
-        
+
     },
     addFriendRequest(state, request) {
         for (let index = 0; index < state.FriendRequestList.length; index++) {
@@ -346,36 +353,21 @@ const mutations = {
     upDateConcatTime(state, user) {
         if (user == null || user == undefined) {
             return
-        }  
-        let uuid = user.uuid
+        }
         //自己则不处理
-        if (uuid == state.currentUser.user.uuid) {
+        if (user.uuid == state.currentUser.user.uuid) {
             return
         }
-        if (user.type == 'personal' && state.FriendsMap[uuid] != null) {
-            //console.log(state.FriendsMap[uuid].concatInfo)
-            if (state.FriendsMap[uuid].concatInfo != null && state.FriendsMap[uuid].concatInfo.unReadTotal <= 0) {
-                //未读已清0，不重复请求
-                return
-            }
-           
-            //个人 context.state.FriendsMap[uuid]
-            state.FriendsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": uuid })
+        if (user.type == 'personal' && state.FriendsMap[user.uuid] != null) {
+            Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": user.uuid })
             return
-        } 
-        if (user.type == 'group' && state.GroupsMap[uuid] != null) {
-            if (state.GroupsMap[uuid].concatInfo != null && state.GroupsMap[uuid].concatInfo.unReadTotal <= 0) {
-                //未读已清0，不重复请求
-                return
-            }
-            //群聊，预留，后台未开发 context.state.GroupsMap[uuid]
-            state.GroupsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": uuid })
+        }
+        if (user.type == 'group' && state.GroupsMap[user.uuid] != null) {
+            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": user.uuid })
             return
         }
     },
-    
+
 }
 
 //提交的是 mutation,即将mutations的方法异步执行
@@ -392,28 +384,7 @@ const actions = {
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {
-       context.commit('upDateConcatTime',user)
-    },
-    //用于退出时
-    upDateConcatTimeForLogout(context, user) {
-        if (user == null || user == undefined) {
-            return
-        }
-        let uuid = user.uuid
-        //自己则不处理
-        if (uuid == context.state.currentUser.user.uuid) {
-            return
-        }
-        if (user.type == 'personal') {
-            //个人
-            context.state.FriendsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/friend/UpdateConcatTime', { "uuid": uuid })
-
-        } else if (user.type == 'group') {
-            //群聊，预留，后台未开发
-            context.state.GroupsMap[uuid].concatInfo.unReadTotal = 0  //未读清0
-            Api.postByXWForm('/group/UpdateConcatTime', { "uuid": uuid })
-        }
+        context.commit('upDateConcatTime', user)
     },
     //user={"uuid":,"type":"personal(group)"}
     addUnreadTotal(context, user) {
@@ -428,25 +399,25 @@ const actions = {
 }
 
 //按照中英文首字母排序好友列表
-function SortListByNameAndRemarks(list){
+function SortListByNameAndRemarks(list) {
     //按备注和名字升序排
-    let result = list.sort((a, b) => {         
+    let result = list.sort((a, b) => {
         //utils.hasText() utils.mySort()
-        if (!utils.hasText(a.concatInfo,'remarks') && !utils.hasText(b.concatInfo,'remarks')) {     
-            return utils.mySort(a.name.trim(),b.name.trim())
+        if (!utils.hasText(a.concatInfo, 'remarks') && !utils.hasText(b.concatInfo, 'remarks')) {
+            return utils.mySort(a.name.trim(), b.name.trim())
         }
-        if (utils.hasText(a.concatInfo,'remarks') && !utils.hasText(b.concatInfo,'remarks')) {
-            return utils.mySort(a.concatInfo.remarks.trim(),b.name.trim())
+        if (utils.hasText(a.concatInfo, 'remarks') && !utils.hasText(b.concatInfo, 'remarks')) {
+            return utils.mySort(a.concatInfo.remarks.trim(), b.name.trim())
         }
-        if (!utils.hasText(a.concatInfo,'remarks') && utils.hasText(b.concatInfo,'remarks')) {
-            return utils.mySort(a.name.trim(),b.concatInfo.remarks.trim())
+        if (!utils.hasText(a.concatInfo, 'remarks') && utils.hasText(b.concatInfo, 'remarks')) {
+            return utils.mySort(a.name.trim(), b.concatInfo.remarks.trim())
         }
-        if (utils.hasText(a.concatInfo,'remarks') && utils.hasText(b.concatInfo,'remarks')) {
-            return utils.mySort(a.concatInfo.remarks.trim(),b.concatInfo.remarks.trim())
+        if (utils.hasText(a.concatInfo, 'remarks') && utils.hasText(b.concatInfo, 'remarks')) {
+            return utils.mySort(a.concatInfo.remarks.trim(), b.concatInfo.remarks.trim())
         }
         return 0
-        
-    }) 
+
+    })
     return result
 }
 //相当于vue的computed，计算过滤返回数据
@@ -491,18 +462,18 @@ const getters = {
         }
         return null
     },
-    getFriendsList: (state,getters) => {
+    getFriendsList: (state, getters) => {
         if (state.FriendsMap != null) {
             let data = []
             let object = state.FriendsMap
             for (const key in object) {
                 let curId = state.currentUser.user.uuid
-                if(object[key].uuid != curId){
+                if (object[key].uuid != curId) {
                     data.push(object[key])
-                }   
-            }           
-            
-            let first = SortListByNameAndRemarks(data)    
+                }
+            }
+
+            let first = SortListByNameAndRemarks(data)
             //过滤已被拉黑的用户
             return first.filter((usr) => {
                 if (usr.uuid == state.currentUser.user.uuid) {
@@ -523,8 +494,8 @@ const getters = {
             let object = state.GroupsMap
             for (const key in object) {
                 data.push(object[key])
-            }       
-            return SortListByNameAndRemarks(data)   
+            }
+            return SortListByNameAndRemarks(data)
         }
         return null
 

@@ -105,7 +105,10 @@
                 <p style="font-size: 14px" class="ellipsisWord">
                   {{ it.name }}
                 </p>
-                <p v-if="it.uuid == currentUser.uuid" style="font-size: 14px;width: -webkit-fill-available;">
+                <p
+                  v-if="it.uuid == currentUser.uuid"
+                  style="font-size: 14px; width: -webkit-fill-available"
+                >
                   (自己)
                 </p>
               </span>
@@ -474,9 +477,11 @@ export default {
         this.$store.commit('common/setListType', 'talkList')
       }
       if (this.ListType == 'talkList') {
+        //更新当前聊天对象的联系时间，如果不为空且不为公告
+        if (this.currentCheatObj != null && this.currentCheatObj.type != 'notice') {
+          this.$store.dispatch('common/upDateConcatTime', this.currentCheatObj)
+        }
         this.$store.commit('common/setCurrentCheatObj', item)
-        //更新好友联系时间
-        this.$store.dispatch('common/upDateConcatTime', item)
         return
       }
       if (this.ListType == 'friend') {
@@ -587,6 +592,9 @@ export default {
     },
     hasNewRequest() {
       return this.$store.getters['common/hasFriendsRequest']
+    },
+    currentCheatObj() {
+      return this.$store.state['common'].currentCheatObj
     }
 
 
