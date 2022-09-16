@@ -53,12 +53,12 @@ const mutations = {
 
         // 初始化好友列表
         if (state.isInit == false) {
-            this.commit('common/InitTalkList', data)
+            console.log("开始初始化好友、群聊...")
             //同时存入自己的信息
             Vue.set(data.user, 'type', 'personal')
             Vue.set(state.FriendsMap, data.user.uuid, data.user)
             state.currentUser = data
-
+            this.commit('common/InitTalkList', data)
             this.commit('common/InitFriends')
             this.commit('common/InitGroups')
             this.commit('common/InitGroupMember', data)
@@ -83,6 +83,22 @@ const mutations = {
                 list.forEach(element => {
                     Vue.set(element, 'type', 'personal')
                     Vue.set(state.FriendsMap, element.uuid, element)
+                    //存在未读消息时，判断聊天列表是否已有该用户
+                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
+                        let inList = false
+                        for (let index = 0; index < state.talkList.length; index++) {
+                            const e = state.talkList[index];
+                            if (element.uuid == e.uuid) {
+                                inList = true
+                                break
+                            }
+                        }
+                        if (!inList) {
+                            let info = { "uuid": element.uuid, "type": element.type }
+                            state.talkList.unshift(info)
+                        }
+                    }
+
                 });
             }
         });
@@ -95,6 +111,22 @@ const mutations = {
                 list.forEach(element => {
                     Vue.set(element, 'type', 'group')
                     Vue.set(state.GroupsMap, element.uuid, element)
+
+                    //存在未读消息时，判断聊天列表是否已有该用户
+                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
+                        let inList = false
+                        for (let index = 0; index < state.talkList.length; index++) {
+                            const e = state.talkList[index];
+                            if (element.uuid == e.uuid) {
+                                inList = true
+                                break
+                            }
+                        }
+                        if (!inList) {
+                            let info = { "uuid": element.uuid, "type": element.type }
+                            state.talkList.unshift(info)
+                        }
+                    }                    
                 });
             }
         })
@@ -374,13 +406,45 @@ const mutations = {
 const actions = {
     //异步初始化
     INIT(context, data) {
-        context.commit('INIT', data)
-        // context.commit('common/InitTalkList', data)
-        // context.commit('common/InitFriends')
-        // context.commit('common/InitGroups')
-        // context.commit('common/InitGroupMember', data)
-        // context.commit('common/InitFriendRequet')
-        // state.isInit = true
+        //context.commit('INIT', data)
+        // 初始化好友列表
+        if (state.isInit == false) {
+            console.log("初始化好友数据...")
+            //同时存入自己的信息
+            Vue.set(data.user, 'type', 'personal')
+            Vue.set(state.FriendsMap, data.user.uuid, data.user)
+            state.currentUser = data
+            INIT_ALL().then(() => {
+                state.isInit = true
+            })
+        }
+
+        async function InitFriends() {
+            context.commit('InitFriends')
+        }
+
+        async function InitGroups() {
+            context.commit('InitGroups')
+        }
+        async function InitGroupMember() {
+            context.commit('InitGroupMember', data)
+        }
+        async function InitFriendRequet() {
+            context.commit('InitFriendRequet')
+        }
+
+        async function InitTalkList() {
+            context.commit('InitTalkList', data)
+        }
+        async function INIT_ALL() {
+            context.commit('InitTalkList', data)
+            await InitFriends()
+            await InitGroups()
+            //await InitTalkList()
+            await InitGroupMember()
+            await InitFriendRequet()         
+        }
+
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {

@@ -52,7 +52,7 @@ const mutations = {
     Init_Local(state, data) {
         //初始化本地消息列表相关好友的记录
         let talk = this.state['common'].talkList
-        if(talk == null){
+        if(talk == null || talk.length == 0){
             //为空时尝试从localstorage获取
             let key = 'talkList_' + data.user.uuid
             talk = JSON.parse(localStorage.getItem(key))

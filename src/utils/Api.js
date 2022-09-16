@@ -134,7 +134,7 @@ const Api = {
     //更新当前聊天对象的对话时间
     async function saveStatus() {
       let currentCheatObj = store.state['common'].currentCheatObj
-      store.dispatch('common/upDateConcatTimeForLogout', currentCheatObj)
+      store.dispatch('common/upDateConcatTime', currentCheatObj)
       store.commit('common/saveTalkList', {})
     }
     async function logout() {
