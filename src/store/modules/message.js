@@ -20,15 +20,11 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
 }
 
 const mutations = {
-    INIT(state, data) {
+    INIT(state, cur_user) {
         if (!state.isInit) {
             console.log("初始化消息中...")
             // 获取list的消息列表
-            this.commit('message/Init_Local', data)
-            //查找包含未读记录的联系人并初始化消息
-            this.commit('message/Init_Friend')
-            //查找包含未读记录的群聊并初始化消息（预留方法）
-            this.commit('message/Init_Group')
+            this.commit('message/Init_Local')
             state.isInit = true
             console.log("初始化消息完毕...")
         }
@@ -49,15 +45,11 @@ const mutations = {
         sessionStorage.setItem(key, JSON.stringify(state))
     },
 
-    Init_Local(state, data) {
+    Init_Local(state) {
         //初始化本地消息列表相关好友的记录
         let talk = this.state['common'].talkList
-        if(talk == null || talk.length == 0){
-            //为空时尝试从localstorage获取
-            let key = 'talkList_' + data.user.uuid
-            talk = JSON.parse(localStorage.getItem(key))
-        }
-        if (talk != null && talk.length > 0) {
+
+        if (talk != null) {
             for (let index = 0; index < talk.length; index++) {
                 const user = talk[index];
                 Api.postRequest('/message/getByPage', { "to": user.uuid, "msgType": user.type }).then(res => {
@@ -73,7 +65,7 @@ const mutations = {
                             let mess = { "from": user.uuid, "to": user.uuid, "time": '1990-01-01 01:40:43.796', 'msgType': user.type }
                             this.dispatch('common/setLastMessTime', mess)
                         }
-                    }else{
+                    } else {
                         //初始化错误，从列表移除 
                         this.commit('common/removeFromTalkList', user)
                     }
@@ -82,60 +74,9 @@ const mutations = {
             }
         }
     },
-    //初始化存在未读记录的用户和群聊，并放到talkList
-    Init_Friend(state) {
-        let friendsMap = this.state['common'].FriendsMap
-        if (friendsMap != null) {
-            for (const key in friendsMap) {
-                const friend = friendsMap[key];
-                if (friend.concatInfo != null && friend.concatInfo.unReadTotal > 0) {
-                    Api.postRequest('/message/getByPage', { "to": friend.uuid,"msgType":"personal" }).then(res => {
-                        if (res.data.success) {
-                            let mss = res.data.data
-                            if (mss != null) {
-                                Vue.set(state.messageMap, friend.uuid, mss)
-                                //标记最后消息时间
-                                let lastmess = mss[mss.length - 1]
-                                this.commit('common/setLastMessTime', lastmess)
-                                //加入消息列表,有可能重复，所以使用现有方法
-                                // this.state['common'].talkList.push(friend)
-                                this.commit('common/setUserOnTopOfTalkList', friend)
-                            }
-
-                        }
-                    })
-                }
-            }
-        }           
-          
-    },
-    Init_Group(state) {
-        let GroupsMap = this.state['common'].GroupsMap
-        if (GroupsMap != null) {
-            for (const key in GroupsMap) {
-                const Group = GroupsMap[key];
-                if (Group.concatInfo != null && Group.concatInfo.unReadTotal > 0) {
-                    Api.postRequest('/message/getByPage', { "to": Group.uuid ,"msgType":"group" }).then(res => {
-                        if (res.data.success) {
-                            let mss = res.data.data
-                            if (mss != null) {
-                                Vue.set(state.messageMap, Group.uuid, mss)
-                                //标记最后消息时间
-                                let lastmess = mss[mss.length - 1]
-                                this.commit('common/setLastMessTime', lastmess)
-                                //加入消息列表
-                                // this.state['common'].talkList.push(Group)
-                                this.commit('common/setUserOnTopOfTalkList', Group)
-                            }
-                        }
-                    })
-                }
-            }
-        }
-    },
 
     //追加单条（新发送的）消息到尾部，并置顶当前对象到聊天列表{ "user": "", "message": "" }
-    pushOneMessageByUUID(state, messageData) {   
+    pushOneMessageByUUID(state, messageData) {
         if (state.messageMap[messageData.user.uuid] != null) {
             //存在则追加到底部
             state.messageMap[messageData.user.uuid].push(messageData.message)
@@ -145,8 +86,8 @@ const mutations = {
             messArry.push(messageData.message)
             Vue.set(state.messageMap, messageData.user.uuid, messArry)
         }
-         //当前缓存内容相关
-         if(messageData.user.uuid == state.messageChche.uuid){
+        //当前缓存内容相关
+        if (messageData.user.uuid == state.messageChche.uuid) {
             let message = state.messageMap[messageData.user.uuid]
             let curSize = state.messageChche.message.length
             let total = message.length
@@ -173,35 +114,22 @@ const mutations = {
     },
     //初始化用户消息{"to":'',"msgType":'',"time":''},time为空时则默认查询，to及msgType必填
     InitUserMessage(state, user) {
-        //是否在talkList中，存在则已初始化
-        //如果不在消息列表中则初始化消息
-        let talkList = this.state['common'].talkList
-        let notIn = true
-        talkList.forEach(element => {
-            if (element.uuid == user.uuid) {
-                notIn = false
-                return
+        let message = { "to": user.uuid, "msgType": user.type }
+        Api.postRequest('/message/getByPage', message).then(res => {
+            if (res.data.success) {
+                let messDta = { "user": user, "message": res.data.data }
+                // 初始化时直接赋值，如果已初始化则使用新增
+                this.dispatch('message/setMessageMapByUUID', messDta)
             }
-        });
-        //本地是否已初始化过
-        let oldmess = state.messageMap[user.uuid]
-        if (notIn && oldmess == null) {
-            let message = { "to": user.uuid, "msgType": user.type }
-            Api.postRequest('/message/getByPage', message).then(res => {
-                if (res.data.success) {
-                    let messDta = { "user": user, "message": res.data.data }
-                    // 初始化时直接赋值，如果已初始化则使用新增
-                    this.dispatch('message/setMessageMapByUUID', messDta)
-                }
-            })
-        }
+        })
+
 
     },
     //{ "uuid":"", "length": }
     updateMessageCache(state, info) {
         //每次根据刷新的数量递增的方式获取
         let message = state.messageMap[info.uuid]
-        if (message == null || typeof(message)  == undefined || message.length == 0) {
+        if (message == null || typeof (message) == undefined || message.length == 0) {
             return
         }
         //默认返回20条数据
@@ -219,7 +147,7 @@ const mutations = {
         //     state.messageChche.message = mess.concat(state.messageChche.message)
         // }
     },
-    deleteMessageById(state,uuid){
+    deleteMessageById(state, uuid) {
         Vue.delete(state.messageMap, uuid)
     },
 
@@ -236,7 +164,7 @@ const getters = {
         return state.defaultMessage
     },
     //返回消息
-    getMessagesByuuid: (state) => (uid, length) => {  
+    getMessagesByuuid: (state) => (uid, length) => {
         //每次根据刷新的数量递增的方式获取
         let message = state.messageMap[uid]
         if (message == null || message == undefined || message.length == 0) {
@@ -255,22 +183,22 @@ const getters = {
     },
     getCheatMessages: (state) => (uuid) => {
         //消息为空，或切换用户时尝试加载消息
-        if(state.messageChche.uuid != uuid || state.messageChche.message.length == 0){
+        if (state.messageChche.uuid != uuid || state.messageChche.message.length == 0) {
             //初始化
-            state.messageChche.uuid = uuid  
+            state.messageChche.uuid = uuid
             state.messageChche.message = []
             let message = state.messageMap[uuid]
-            if (message == null || typeof(message)  == undefined || message.length == 0) {
+            if (message == null || typeof (message) == undefined || message.length == 0) {
                 return null
             }
             if (message.length > 20) {
                 state.messageChche.message = _.slice(message, message.length - 20)
-            }else{
+            } else {
                 state.messageChche.message = message
             }
         }
         let mess = state.messageChche.message
-        if(mess.length > 0){
+        if (mess.length > 0) {
             return state.messageChche.message
         }
         return null
@@ -280,9 +208,9 @@ const getters = {
 
 const actions = {
     //异步初始方法，返回promise
-    INIT(context, data) {
+    INIT(context, cur_user) {
         //message组件依赖数据，所以得保证common初始化完成后再初始化message
-        this.commit('message/INIT', data)
+        this.commit('message/INIT', cur_user)
     },
 
     setMessageMapByUUID(context, messageData) {

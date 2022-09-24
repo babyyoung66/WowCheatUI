@@ -49,91 +49,35 @@ const state = sessionStorage.getItem(key) != null ? JSON.parse(sessionStorage.ge
 //更新state对象数据的方法
 const mutations = {
     //初始化数据
-    INIT(state, data) {
-
+    INIT(state, cur_user) {
         // 初始化好友列表
         if (state.isInit == false) {
             console.log("开始初始化好友、群聊...")
             //同时存入自己的信息
-            Vue.set(data.user, 'type', 'personal')
-            Vue.set(state.FriendsMap, data.user.uuid, data.user)
-            state.currentUser = data
-            this.commit('common/InitTalkList', data)
-            this.commit('common/InitFriends')
-            this.commit('common/InitGroups')
-            this.commit('common/InitGroupMember', data)
+            Vue.set(cur_user.user, 'type', 'personal')
+            Vue.set(state.FriendsMap, cur_user.user.uuid, cur_user.user)
+            state.currentUser = cur_user
+            this.commit('common/InitTalkList', cur_user)
+            this.dispatch('common/InitFriends')
+            this.dispatch('common/InitGroups')
+            this.commit('common/InitGroupMember', cur_user)
             this.commit('common/InitFriendRequet')
             state.isInit = true
+            console.log("初始化好友、群聊完毕...")
         }
 
     },
-    InitTalkList(state, data) {
+    InitTalkList(state, cur_user) {
         //初始化消息列表
-        let idkey = 'talkList_' + data.user.uuid
+        let idkey = 'talkList_' + cur_user.user.uuid
         let talk = JSON.parse(localStorage.getItem(idkey))
         if (talk != null) {
             state.talkList = talk
         }
     },
-    InitFriends(state) {
-        //获取好友列表
-        Api.postRequest('/friend/getList').then(res => {
-            if (res.data.success) {
-                let list = res.data.data
-                list.forEach(element => {
-                    Vue.set(element, 'type', 'personal')
-                    Vue.set(state.FriendsMap, element.uuid, element)
-                    //存在未读消息时，判断聊天列表是否已有该用户
-                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
-                        let inList = false
-                        for (let index = 0; index < state.talkList.length; index++) {
-                            const e = state.talkList[index];
-                            if (element.uuid == e.uuid) {
-                                inList = true
-                                break
-                            }
-                        }
-                        if (!inList) {
-                            let info = { "uuid": element.uuid, "type": element.type }
-                            state.talkList.unshift(info)
-                        }
-                    }
-
-                });
-            }
-        });
-    },
-    InitGroups(state) {
-        //获取群聊列表 待添加
-        Api.postRequest('/group/getGroupList').then(res => {
-            if (res.data.success) {
-                let list = res.data.data
-                list.forEach(element => {
-                    Vue.set(element, 'type', 'group')
-                    Vue.set(state.GroupsMap, element.uuid, element)
-
-                    //存在未读消息时，判断聊天列表是否已有该用户
-                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
-                        let inList = false
-                        for (let index = 0; index < state.talkList.length; index++) {
-                            const e = state.talkList[index];
-                            if (element.uuid == e.uuid) {
-                                inList = true
-                                break
-                            }
-                        }
-                        if (!inList) {
-                            let info = { "uuid": element.uuid, "type": element.type }
-                            state.talkList.unshift(info)
-                        }
-                    }                    
-                });
-            }
-        })
-    },
-    InitGroupMember(state, data) {
+    InitGroupMember(state, cur_user) {
         //初始群成员，如新人入群则会在获取时添加没有信息的，加入新群时，根据新群信息增添
-        let idkey = 'groupMember_' + data.user.uuid
+        let idkey = 'groupMember_' + cur_user.user.uuid
         let members = JSON.parse(localStorage.getItem(idkey))
         //数据实时性低，暂时不存入localStorage
         // if (members != null) {
@@ -405,46 +349,8 @@ const mutations = {
 //提交的是 mutation,即将mutations的方法异步执行
 const actions = {
     //异步初始化
-    INIT(context, data) {
-        //context.commit('INIT', data)
-        // 初始化好友列表
-        if (state.isInit == false) {
-            console.log("初始化好友数据...")
-            //同时存入自己的信息
-            Vue.set(data.user, 'type', 'personal')
-            Vue.set(state.FriendsMap, data.user.uuid, data.user)
-            state.currentUser = data
-            INIT_ALL().then(() => {
-                state.isInit = true
-            })
-        }
-
-        async function InitFriends() {
-            context.commit('InitFriends')
-        }
-
-        async function InitGroups() {
-            context.commit('InitGroups')
-        }
-        async function InitGroupMember() {
-            context.commit('InitGroupMember', data)
-        }
-        async function InitFriendRequet() {
-            context.commit('InitFriendRequet')
-        }
-
-        async function InitTalkList() {
-            context.commit('InitTalkList', data)
-        }
-        async function INIT_ALL() {
-            context.commit('InitTalkList', data)
-            await InitFriends()
-            await InitGroups()
-            //await InitTalkList()
-            await InitGroupMember()
-            await InitFriendRequet()         
-        }
-
+    async INIT(context, cur_user) {     
+        context.commit('INIT', cur_user)
     },
     //更新好友或群聊联系时间,更新friendMap数据，而不是talkList
     upDateConcatTime(context, user) {
@@ -458,7 +364,70 @@ const actions = {
     //message类,标记最后消息时间,只用于初始化时排序
     setLastMessTime(context, mess) {
         context.commit('setLastMessTime', mess)
-    }
+    },
+    //初始化群聊及未读群消息
+    InitGroups(context) {
+        //获取群聊列表 待添加
+        Api.postRequest('/group/getGroupList').then(res => {
+            if (res.data.success) {
+                let list = res.data.data
+                list.forEach(element => {
+                    Vue.set(element, 'type', 'group')
+                    Vue.set(context.state.GroupsMap, element.uuid, element)
+
+                    //存在未读消息时，判断聊天列表是否已有该用户
+                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
+                        let inList = false
+                        for (let index = 0; index < context.state.talkList.length; index++) {
+                            const e = context.state.talkList[index];
+                            if (element.uuid == e.uuid) {
+                                inList = true
+                                break
+                            }
+                        }
+                        if (!inList) {
+                            let info = { "uuid": element.uuid, "type": element.type }
+                            context.state.talkList.unshift(info)
+                           //初始化消息
+                           context.commit('message/InitUserMessage',info, { root: true }) 
+                        }
+                    } 
+                                     
+                });
+            }
+        })
+    },
+    // 初始化好友及未读信息
+    InitFriends(context) {      
+        //获取好友列表
+        Api.postRequest('/friend/getList').then(res => {
+            if (res.data.success) {
+                let list = res.data.data
+                list.forEach(element => {
+                    Vue.set(element, 'type', 'personal')
+                    Vue.set(context.state.FriendsMap, element.uuid, element)
+                    //存在未读消息时，判断聊天列表是否已有该用户
+                    if (element.concatInfo != null && element.concatInfo.unReadTotal > 0) {
+                        let inList = false
+                        for (let index = 0; index < context.state.talkList.length; index++) {
+                            const e = context.state.talkList[index];
+                            if (element.uuid == e.uuid) {
+                                inList = true
+                                break
+                            }
+                        }
+                        if (!inList) {
+                            let info = { "uuid": element.uuid, "type": element.type }
+                            context.state.talkList.unshift(info)
+                            //初始化消息
+                            context.commit('message/InitUserMessage',info, { root: true })  
+                        }
+                    }
+
+                });
+            }
+        });
+    },
 
 }
 

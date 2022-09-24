@@ -11,7 +11,6 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
 
-
     modules: {
         common,
         message,
@@ -21,27 +20,18 @@ const store = new Vuex.Store({
     //更新state对象数据的方法
     mutations: {
         // 初始化数据
-        DATA_INIT(state, data) {
-            sessionStorage.setItem("uuid", data.user.uuid)
-            sessionStorage.setItem("currentUser", JSON.stringify(data))
-            //异步初始化common数据后再初始化其他模块
-            INIT()
-            async function INIT_COMMON() {
-                //非箭头函数this指向的不是store本身
-                store.commit('common/INIT', data)
-            }
-            async function INIT() {
-                await INIT_COMMON()
-                store.dispatch('message/INIT', data)
-                store.dispatch('stompSocket/connect');
-                sessionStorage.setItem("isInit", "true")
-            }
+        DATA_INIT(state, cur_user) {
+            sessionStorage.setItem("uuid", cur_user.user.uuid)
+            sessionStorage.setItem("currentUser", JSON.stringify(cur_user))
+            store.commit('common/INIT', cur_user)
+            store.commit('message/INIT', cur_user);
+            store.commit('stompSocket/INIT_SOCKET');
+            sessionStorage.setItem("isInit", "true")
 
         },
         saveState(state) {
             this.commit('common/saveState')
             this.commit('message/saveState')
-            this.commit('common/upDateConcatTime')
         },
         removeState(state) {
             this.commit('common/removeState', {}, { root: true })
@@ -60,7 +50,6 @@ const store = new Vuex.Store({
         }
     },
     actions: {
-
 
     }
 
